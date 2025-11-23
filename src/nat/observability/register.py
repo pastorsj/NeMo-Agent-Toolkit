@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import logging
+from pathlib import Path
 
 from pydantic import Field
 
@@ -93,6 +94,7 @@ class FileLoggingMethod(LoggingBaseConfig, name="file"):
 
     path: str = Field(description="The file path to save the logging output.")
     level: str = Field(description="The logging level of file logger.")
+    create_if_not_exists: bool = Field(description="Create the file to write to if it does not exist", default=False)
 
 
 @register_logging_method(config_type=FileLoggingMethod)
@@ -100,6 +102,15 @@ async def file_logging_method(config: FileLoggingMethod, builder: Builder):
     """
     Build and return a FileHandler for file-based logging.
     """
+
+    path_to_log_file = Path(config.path).resolve()
+
+    if config.create_if_not_exists and not path_to_log_file.exists():
+        path_to_log_file.parent.mkdir(parents=True, exist_ok=True)
+        path_to_log_file.touch()
+    elif not path_to_log_file.exists():
+        raise FileNotFoundError("Path is not found. Please create it.")
+
     level = getattr(logging, config.level.upper(), logging.INFO)
     handler = logging.FileHandler(filename=config.path, mode="a", encoding="utf-8")
     handler.setLevel(level)

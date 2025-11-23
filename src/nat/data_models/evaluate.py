@@ -19,6 +19,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 from pydantic import Discriminator
+from pydantic import PlainSerializer
 from pydantic import model_validator
 
 from nat.data_models.common import TypedBaseModel
@@ -80,7 +81,7 @@ class EvalGeneralConfig(BaseModel):
     workflow_alias: str | None = None
 
     # Output directory for the workflow and evaluation results
-    output_dir: Path = Path("./.tmp/nat/examples/default/")
+    output_dir: typing.Annotated[Path, PlainSerializer(str)] = Path("./.tmp/nat/examples/default/")
 
     # If present overrides output_dir
     output: EvalOutputConfig | None = None

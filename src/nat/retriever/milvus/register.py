@@ -12,9 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Annotated
 
 from pydantic import Field
 from pydantic import HttpUrl
+from pydantic import PlainSerializer
 
 from nat.builder.builder import Builder
 from nat.builder.builder import LLMFrameworkEnum
@@ -28,7 +30,7 @@ class MilvusRetrieverConfig(RetrieverBaseConfig, name="milvus_retriever"):
     """
     Configuration for a Retriever which pulls data from a Milvus service.
     """
-    uri: HttpUrl = Field(description="The uri of Milvus service")
+    uri: Annotated[HttpUrl, PlainSerializer(str)] = Field(description="The uri of Milvus service")
     connection_args: dict = Field(
         description="Dictionary of arguments used to connect to and authenticate with the Milvus service",
         default={},

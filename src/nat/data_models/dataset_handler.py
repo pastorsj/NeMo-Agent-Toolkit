@@ -23,6 +23,7 @@ import pandas as pd
 from pydantic import BaseModel
 from pydantic import Discriminator
 from pydantic import FilePath
+from pydantic import PlainSerializer
 from pydantic import Tag
 
 from nat.data_models.common import BaseModelRegistryTag
@@ -70,7 +71,7 @@ class EvalDatasetBaseConfig(TypedBaseModel, BaseModelRegistryTag):
     s3: EvalS3Config | None = None
 
     remote_file_path: str | None = None  # only for s3
-    file_path: Path | str = Path(".tmp/nat/examples/default/default.json")
+    file_path: typing.Annotated[Path | str, PlainSerializer(str)] = Path(".tmp/nat/examples/default/default.json")
 
 
 class EvalDatasetJsonConfig(EvalDatasetBaseConfig, name="json"):
