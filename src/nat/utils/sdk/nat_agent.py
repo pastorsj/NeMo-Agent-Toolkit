@@ -52,13 +52,13 @@ from nat.runtime.loader import discover_and_register_plugins
 from nat.utils import run_workflow
 from nat.utils.sdk.nat_embedder import NatEmbedder
 from nat.utils.sdk.nat_evaluator import NatEvaluator
+from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_function_group import NatFunctionGroup
 from nat.utils.sdk.nat_general_configuraton import NatGeneralConfiguration
 from nat.utils.sdk.nat_llm import NatLLM
 from nat.utils.sdk.nat_memory import NatMemory
 from nat.utils.sdk.nat_object_store import NatObjectStore
 from nat.utils.sdk.nat_retriever import NatRetriever
-from nat.utils.sdk.nat_tool import NatTool
-from nat.utils.sdk.nat_tool_group import NatToolGroup
 
 logger = logging.getLogger(__name__)
 
@@ -71,9 +71,9 @@ class NatAgent(BaseModel):
 
     memory: NatMemory | list[NatMemory] | None = Field(description="The memory configuration for the agent.",
                                                        default=None)
-    tools: list[Union[NatTool, "NatAgent"]] = Field(description="List of tools to be used by the agent.",
-                                                    default=[])  # noqa: UP007
-    tool_groups: list[NatToolGroup] = Field(description="List of tool groups to be used by the agent.", default=[])
+    tools: list[Union[NatFunction, "NatAgent"]] = Field(description="List of tools to be used by the agent.",
+                                                        default=[])  # noqa: UP007
+    tool_groups: list[NatFunctionGroup] = Field(description="List of tool groups to be used by the agent.", default=[])
     object_stores: list[NatObjectStore] = Field(description="List of object stores used across the agent", default=[])
     llm: NatLLM = Field(description="The LLM model to use with the agent.")
     referenced_embedders: list[NatEmbedder] = Field(
@@ -404,7 +404,7 @@ class NatAgent(BaseModel):
 
         registered_functions = {}
         for tool in self.tools:
-            if isinstance(tool, NatTool):
+            if isinstance(tool, NatFunction):
                 registered_functions[tool.tool_name] = tool.config
             elif isinstance(tool, NatAgent):
                 if tool.agent_name == "":
@@ -427,7 +427,10 @@ class NatAgent(BaseModel):
         if (self.tool_groups is None or len(self.tool_groups) == 0) and (self.tools is None or len(self.tools) == 0):
             return None
 
-        registered_function_groups = {tool_group.tool_group_name: tool_group.config for tool_group in self.tool_groups}
+        registered_function_groups = {
+            tool_group.function_group_name: tool_group.config
+            for tool_group in self.tool_groups
+        }
 
         # Check if an agent registered as a function contains tool groups that were not registered at the top level
         if self.tools is not None or len(self.tools) > 0:
@@ -535,7 +538,7 @@ class NatAgent(BaseModel):
     def _build_tool_names(self) -> list[FunctionRef | FunctionGroupRef]:
         tool_names = []
         for tool in self.tools:
-            if isinstance(tool, NatTool):
+            if isinstance(tool, NatFunction):
                 tool_names.append(FunctionRef(value=tool.tool_name))
             elif isinstance(tool, NatAgent):
                 if tool.agent_name == "":
@@ -546,7 +549,7 @@ class NatAgent(BaseModel):
             else:
                 raise ValueError("Tools need to either be instances of NatTool or NatAgent")
 
-        tool_group_names = [FunctionGroupRef(value=tool_group.tool_group_name) for tool_group in self.tool_groups]
+        tool_group_names = [FunctionGroupRef(value=tool_group.function_group_name) for tool_group in self.tool_groups]
 
         return tool_names + tool_group_names
 

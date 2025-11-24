@@ -18,17 +18,17 @@ from collections.abc import Callable
 from pydantic import BaseModel
 from pydantic import Field
 
-from nat.data_models.function import FunctionGroupBaseConfig
+from nat.data_models.authentication import AuthProviderBaseConfig
 
 
-class NatToolGroup(BaseModel):
+class NatAuthentication(BaseModel):
 
-    config: FunctionGroupBaseConfig = Field(description="Configuration for the tool")
-    tool_group: Callable = Field(description="Generator yielding FunctionInfo instances")
-    name: str | None = Field(description="Name of the tool", default=None)
+    config: AuthProviderBaseConfig = Field(description="Configuration for the object store")
+    function: Callable = Field(description="Generator yielding FunctionInfo instances")
+    name: str | None = Field(description="Name of the authentication", default=None)
 
     @property
-    def tool_group_name(self) -> str:
+    def authentication_name(self) -> str:
         if self.name is not None:
             return self.name
         else:

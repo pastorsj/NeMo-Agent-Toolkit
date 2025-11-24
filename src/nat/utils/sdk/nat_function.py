@@ -26,7 +26,7 @@ from pydantic import Field
 from nat.data_models.function import FunctionBaseConfig
 
 
-class NatTool(BaseModel):
+class NatFunction(BaseModel):
 
     config: FunctionBaseConfig = Field(description="Configuration for the tool")
     function: Callable = Field(description="Generator yielding FunctionInfo instances")
