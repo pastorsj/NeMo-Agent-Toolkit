@@ -44,6 +44,7 @@ from nat.data_models.function import FunctionBaseConfig
 from nat.data_models.function import FunctionGroupBaseConfig
 from nat.data_models.llm import LLMBaseConfig
 from nat.data_models.memory import MemoryBaseConfig
+from nat.data_models.object_store import ObjectStoreBaseConfig
 from nat.data_models.retriever import RetrieverBaseConfig
 from nat.eval.config import EvaluationRunConfig
 from nat.runtime.loader import PluginTypes
@@ -54,6 +55,7 @@ from nat.utils.sdk.nat_evaluator import NatEvaluator
 from nat.utils.sdk.nat_general_configuraton import NatGeneralConfiguration
 from nat.utils.sdk.nat_llm import NatLLM
 from nat.utils.sdk.nat_memory import NatMemory
+from nat.utils.sdk.nat_object_store import NatObjectStore
 from nat.utils.sdk.nat_retriever import NatRetriever
 from nat.utils.sdk.nat_tool import NatTool
 from nat.utils.sdk.nat_tool_group import NatToolGroup
@@ -72,6 +74,7 @@ class NatAgent(BaseModel):
     tools: list[Union[NatTool, "NatAgent"]] = Field(description="List of tools to be used by the agent.",
                                                     default=[])  # noqa: UP007
     tool_groups: list[NatToolGroup] = Field(description="List of tool groups to be used by the agent.", default=[])
+    object_stores: list[NatObjectStore] = Field(description="List of object stores used across the agent", default=[])
     llm: NatLLM = Field(description="The LLM model to use with the agent.")
     referenced_embedders: list[NatEmbedder] = Field(
         description="List of embedders referenced by tools used by the agent", default=[])
@@ -310,38 +313,42 @@ class NatAgent(BaseModel):
 
         config_args = {}
 
-        general_configuration = self._build_general_configuration()
+        general_configuration = self.build_general_configuration()
         if general_configuration is not None:
             config_args["general"] = general_configuration
 
-        config_functions = self._build_functions()
+        config_functions = self.build_functions()
         if config_functions is not None and len(config_functions) > 0:
             config_args["functions"] = config_functions
 
-        config_function_groups = self._build_function_groups()
+        config_function_groups = self.build_function_groups()
         if config_function_groups is not None and len(config_function_groups) > 0:
             config_args["function_groups"] = config_function_groups
 
-        config_llms = self._build_llms()
+        config_llms = self.build_llms()
         if config_llms is not None and len(config_llms) > 0:
             config_args["llms"] = config_llms
 
-        config_embedders = self._build_embedders()
+        config_embedders = self.build_embedders()
         if config_embedders is not None and len(config_embedders) > 0:
             config_args["embedders"] = config_embedders
 
-        config_memory = self._build_memory()
+        config_memory = self.build_memory()
         if config_memory is not None:
             config_args["memory"] = config_memory
 
-        config_retrievers = self._build_retrievers()
+        config_object_stores = self.build_object_stores()
+        if config_object_stores is not None and len(config_object_stores) > 0:
+            config_args["object_stores"] = config_object_stores
+
+        config_retrievers = self.build_retrievers()
         if config_retrievers is not None and len(config_retrievers) > 0:
             config_args["retrievers"] = config_retrievers
 
         workflow = self.build_workflow()
         config_args["workflow"] = workflow
 
-        evaluator = self.__build_evaluator()
+        evaluator = self.build_evaluator()
         if evaluator is not None:
             config_args["eval"] = evaluator
 
@@ -353,14 +360,14 @@ class NatAgent(BaseModel):
 
         return config
 
-    def _build_memory(self) -> dict[str, MemoryBaseConfig] | None:
+    def build_memory(self) -> dict[str, MemoryBaseConfig] | None:
         if self.memory is None or (isinstance(self.memory, list) and len(self.memory) == 0):
             return None
         if isinstance(self.memory, NatMemory):
             return {self.memory.memory_name: self.memory.config}
         return {mem.memory_name: mem.config for mem in self.memory}
 
-    def _build_general_configuration(self) -> GeneralConfig | None:
+    def build_general_configuration(self) -> GeneralConfig | None:
         if self.configuration is None:
             return None
 
@@ -391,7 +398,7 @@ class NatAgent(BaseModel):
 
         return GeneralConfig(**general_configuration)
 
-    def _build_functions(self) -> dict[str, FunctionBaseConfig] | None:
+    def build_functions(self) -> dict[str, FunctionBaseConfig] | None:
         if self.tools is None or len(self.tools) == 0:
             return None
 
@@ -408,7 +415,7 @@ class NatAgent(BaseModel):
                     # register the other functions or agents.
                     registered_functions[tool.agent_name] = tool.build_workflow()
 
-                    agent_functions = tool._build_functions()
+                    agent_functions = tool.build_functions()
                     if agent_functions is not None and len(agent_functions) > 0:
                         registered_functions = {**registered_functions, **agent_functions}
             else:
@@ -416,7 +423,7 @@ class NatAgent(BaseModel):
 
         return registered_functions
 
-    def _build_function_groups(self) -> dict[str, FunctionGroupBaseConfig] | None:
+    def build_function_groups(self) -> dict[str, FunctionGroupBaseConfig] | None:
         if (self.tool_groups is None or len(self.tool_groups) == 0) and (self.tools is None or len(self.tools) == 0):
             return None
 
@@ -426,13 +433,13 @@ class NatAgent(BaseModel):
         if self.tools is not None or len(self.tools) > 0:
             for tool in self.tools:
                 if isinstance(tool, NatAgent):
-                    agent_function_groups = tool._build_function_groups()
+                    agent_function_groups = tool.build_function_groups()
                     if agent_function_groups is not None and len(agent_function_groups) > 0:
                         registered_function_groups = {**registered_function_groups, **agent_function_groups}
 
         return registered_function_groups
 
-    def _build_llms(self) -> dict[str, LLMBaseConfig] | None:
+    def build_llms(self) -> dict[str, LLMBaseConfig] | None:
         if ((self.referenced_llms is None or len(self.referenced_llms) == 0) and (self.llm is None)
                 and (self.evaluator is None or len(self.evaluator.evaluation_llms) == 0)
                 and (self.tools is None or len(self.tools) == 0)):
@@ -459,13 +466,13 @@ class NatAgent(BaseModel):
         if self.tools is not None or len(self.tools) > 0:
             for tool in self.tools:
                 if isinstance(tool, NatAgent):
-                    agent_llms = tool._build_llms()
+                    agent_llms = tool.build_llms()
                     if agent_llms is not None and len(agent_llms) > 0:
                         registered_llms = {**registered_llms, **agent_llms}
 
         return registered_llms
 
-    def _build_embedders(self) -> dict[str, EmbedderBaseConfig] | None:
+    def build_embedders(self) -> dict[str, EmbedderBaseConfig] | None:
         if (self.referenced_embedders is None or len(self.referenced_embedders) == 0) and (self.tools is None
                                                                                            or len(self.tools) == 0):
             return None
@@ -475,13 +482,13 @@ class NatAgent(BaseModel):
         if self.tools is not None or len(self.tools) > 0:
             for tool in self.tools:
                 if isinstance(tool, NatAgent):
-                    agent_embedders = tool._build_embedders()
+                    agent_embedders = tool.build_embedders()
                     if agent_embedders is not None and len(agent_embedders) > 0:
                         registered_embedders = {**registered_embedders, **agent_embedders}
 
         return registered_embedders
 
-    def _build_retrievers(self) -> dict[str, RetrieverBaseConfig] | None:
+    def build_retrievers(self) -> dict[str, RetrieverBaseConfig] | None:
         # Gather retrievers from tools if any
         if (self.retrievers is None or len(self.retrievers) == 0) and (self.tools is None or len(self.tools) == 0):
             return None
@@ -492,13 +499,25 @@ class NatAgent(BaseModel):
         if self.tools is not None or len(self.tools) > 0:
             for tool in self.tools:
                 if isinstance(tool, NatAgent):
-                    agent_retrievers = tool._build_retrievers()
+                    agent_retrievers = tool.build_retrievers()
                     if agent_retrievers is not None and len(agent_retrievers) > 0:
                         registered_retrievers = {**registered_retrievers, **agent_retrievers}
 
         return registered_retrievers
 
-    def __build_evaluator(self) -> EvalConfig | None:
+    def build_object_stores(self) -> dict[str, ObjectStoreBaseConfig] | None:
+        # Gather retrievers from tools if any
+        if (self.object_stores is None or len(self.object_stores) == 0):
+            return None
+
+        registered_object_stores = {
+            object_store.object_store_name: object_store.config
+            for object_store in self.object_stores
+        }
+
+        return registered_object_stores
+
+    def build_evaluator(self) -> EvalConfig | None:
         if self.evaluator is None:
             return None
 
