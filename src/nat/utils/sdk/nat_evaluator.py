@@ -13,21 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pathlib import Path
-
-from pydantic import BaseModel
-from pydantic import Field
-
-from nat.eval.config import EvaluationRunConfig
-from nat.utils.sdk.nat_general_evaluator import NatGeneralEvaluator
-from nat.utils.sdk.nat_llm import NatLLM
-from nat.utils.sdk.nat_targeted_evaluator import NatTargetedEvaluator
+from nat.data_models.common import TypedBaseModel
+from nat.utils.sdk.nat_base import NatBase
 
 
-class NatEvaluator(EvaluationRunConfig):
-
-    config_file: Path | BaseModel = Field(description="Configuration file for the evaluation run", default=Path(""))
-    general_evaluator: NatGeneralEvaluator = Field(description="Configuration for the general generator evaluator")
-    evaluators: list[NatTargetedEvaluator] = Field(default_factory=list,
-                                                   description="List of targeted evaluators for specific aspects.")
-    evaluation_llms: list[NatLLM] = Field(description="List of LLMs used during the evaluation process.", default=[])
+class NatEvaluator(TypedBaseModel, NatBase):
+    """Wrapper for targeted evaluator configurations."""
+    pass

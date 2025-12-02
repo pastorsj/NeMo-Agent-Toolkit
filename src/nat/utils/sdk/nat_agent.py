@@ -40,18 +40,23 @@ from nat.data_models.config import Config
 from nat.data_models.config import GeneralConfig
 from nat.data_models.embedder import EmbedderBaseConfig
 from nat.data_models.evaluate import EvalConfig
+from nat.data_models.evaluate import EvalGeneralConfig
+from nat.data_models.evaluator import EvaluatorBaseConfig
+from nat.data_models.front_end import FrontEndBaseConfig
 from nat.data_models.function import FunctionBaseConfig
 from nat.data_models.function import FunctionGroupBaseConfig
 from nat.data_models.llm import LLMBaseConfig
+from nat.data_models.logging import LoggingBaseConfig
 from nat.data_models.memory import MemoryBaseConfig
 from nat.data_models.object_store import ObjectStoreBaseConfig
 from nat.data_models.retriever import RetrieverBaseConfig
+from nat.data_models.telemetry_exporter import TelemetryExporterBaseConfig
 from nat.eval.config import EvaluationRunConfig
 from nat.runtime.loader import PluginTypes
 from nat.runtime.loader import discover_and_register_plugins
 from nat.utils import run_workflow
 from nat.utils.sdk.nat_embedder import NatEmbedder
-from nat.utils.sdk.nat_evaluator import NatEvaluator
+from nat.utils.sdk.nat_evaluation import NatEvaluation
 from nat.utils.sdk.nat_function import NatFunction
 from nat.utils.sdk.nat_function_group import NatFunctionGroup
 from nat.utils.sdk.nat_general_configuraton import NatGeneralConfiguration
@@ -82,7 +87,7 @@ class NatAgent(BaseModel):
                                           default=[])
     retrievers: list[NatRetriever] = Field(description="List of retrievers referenced by the tools used by the agent.",
                                            default=[])
-    evaluator: NatEvaluator | None = Field(description="The evaluator to use with the agent", default=None)
+    evaluator: NatEvaluation | None = Field(description="The evaluator to use with the agent", default=None)
 
     @cached_property
     def _config(self) -> Config:
@@ -111,7 +116,7 @@ class NatAgent(BaseModel):
         )
         return await run_and_evaluate(config)
 
-    def add_evaluator(self, evaluator: NatEvaluator):
+    def add_evaluator(self, evaluator: NatEvaluation):
         self.evaluator = evaluator
 
         # Reset the _config property cache
@@ -364,48 +369,53 @@ class NatAgent(BaseModel):
         if self.memory is None or (isinstance(self.memory, list) and len(self.memory) == 0):
             return None
         if isinstance(self.memory, NatMemory):
-            return {self.memory.memory_name: self.memory.config}
-        return {mem.memory_name: mem.config for mem in self.memory}
+            return {self.memory.name: self.__cast_to_base_ancestor(self.memory, MemoryBaseConfig)}
+        return {mem.name: self.__cast_to_base_ancestor(mem, MemoryBaseConfig) for mem in self.memory}
 
     def build_general_configuration(self) -> GeneralConfig | None:
         if self.configuration is None:
             return None
+        else:
+            general_configuration = {}
 
-        general_configuration = {}
-
-        loggers = self.configuration.loggers
-        if len(loggers) > 0:
-            general_configuration["telemetry"] = {"logging": {lgr.logger_name: lgr.config for lgr in loggers}}
-
-        telemetry_exporters = self.configuration.tracers
-        if len(telemetry_exporters) > 0:
-            if general_configuration.get("telemetry") is not None:
-                general_configuration["telemetry"]["tracing"] = {
-                    tracer.tracer_name: tracer.config
-                    for tracer in telemetry_exporters
-                }
-            else:
+            loggers = self.configuration.loggers
+            if len(loggers) > 0:
                 general_configuration["telemetry"] = {
-                    "tracing": {
-                        tracer.tracer_name: tracer.config
-                        for tracer in telemetry_exporters
+                    "logging": {
+                        lgr.name: self.__cast_to_base_ancestor(lgr, LoggingBaseConfig)
+                        for lgr in loggers
                     }
                 }
 
-        front_end = self.configuration.front_end_configuration
-        if front_end is not None:
-            general_configuration["front_end"] = front_end
+            telemetry_exporters = self.configuration.telemetry_exporters
+            if len(telemetry_exporters) > 0:
+                if general_configuration.get("telemetry") is not None:
+                    general_configuration["telemetry"]["tracing"] = {
+                        tracer.name: self.__cast_to_base_ancestor(tracer, TelemetryExporterBaseConfig)
+                        for tracer in telemetry_exporters
+                    }
+                else:
+                    general_configuration["telemetry"] = {
+                        "tracing": {
+                            tracer.name: self.__cast_to_base_ancestor(tracer, TelemetryExporterBaseConfig)
+                            for tracer in telemetry_exporters
+                        }
+                    }
 
-        return GeneralConfig(**general_configuration)
+            front_end = self.configuration.front_end_configuration
+            if front_end is not None:
+                general_configuration["front_end"] = self.__cast_to_base_ancestor(front_end, FrontEndBaseConfig)
 
-    def build_functions(self) -> dict[str, FunctionBaseConfig] | None:
+            return GeneralConfig(**general_configuration)
+
+    def build_functions(self) -> dict[str, NatFunction] | None:
         if self.tools is None or len(self.tools) == 0:
             return None
 
         registered_functions = {}
         for tool in self.tools:
             if isinstance(tool, NatFunction):
-                registered_functions[tool.tool_name] = tool.config
+                registered_functions[tool.name] = self.__cast_to_base_ancestor(tool, FunctionBaseConfig)
             elif isinstance(tool, NatAgent):
                 if tool.agent_name == "":
                     raise ValueError(
@@ -428,7 +438,7 @@ class NatAgent(BaseModel):
             return None
 
         registered_function_groups = {
-            tool_group.function_group_name: tool_group.config
+            tool_group.name: self.__cast_to_base_ancestor(tool_group, FunctionGroupBaseConfig)
             for tool_group in self.tool_groups
         }
 
@@ -449,9 +459,9 @@ class NatAgent(BaseModel):
             return None
 
         registered_llms = {
-            self.llm.llm_name: self.llm.config,
+            self.llm.name: self.__cast_to_base_ancestor(self.llm, LLMBaseConfig),
             **{
-                llm.llm_name: llm.config
+                llm.name: self.__cast_to_base_ancestor(llm, LLMBaseConfig)
                 for llm in self.referenced_llms
             },
         }
@@ -460,7 +470,7 @@ class NatAgent(BaseModel):
             registered_llms = {
                 **registered_llms,
                 **{
-                    llm.llm_name: llm.config
+                    llm.name: self.__cast_to_base_ancestor(llm, LLMBaseConfig)
                     for llm in self.evaluator.evaluation_llms
                 },
             }
@@ -479,7 +489,10 @@ class NatAgent(BaseModel):
         if (self.referenced_embedders is None or len(self.referenced_embedders) == 0) and (self.tools is None
                                                                                            or len(self.tools) == 0):
             return None
-        registered_embedders = {embedder.embedder_name: embedder.config for embedder in self.referenced_embedders}
+        registered_embedders = {
+            embedder.name: self.__cast_to_base_ancestor(embedder, EmbedderBaseConfig)
+            for embedder in self.referenced_embedders
+        }
 
         # Check if an agent registered as a function contains embedders that were not registered at the top level
         if self.tools is not None or len(self.tools) > 0:
@@ -496,7 +509,10 @@ class NatAgent(BaseModel):
         if (self.retrievers is None or len(self.retrievers) == 0) and (self.tools is None or len(self.tools) == 0):
             return None
 
-        registered_retrievers = {retriever.retriever_name: retriever.config for retriever in self.retrievers}
+        registered_retrievers = {
+            retriever.name: self.__cast_to_base_ancestor(retriever, RetrieverBaseConfig)
+            for retriever in self.retrievers
+        }
 
         # Check if an agent registered as a function contains embedders that were not registered at the top level
         if self.tools is not None or len(self.tools) > 0:
@@ -514,9 +530,11 @@ class NatAgent(BaseModel):
             return None
 
         registered_object_stores = {
-            object_store.object_store_name: object_store.config
+            object_store.name: self.__cast_to_base_ancestor(object_store, ObjectStoreBaseConfig)
             for object_store in self.object_stores
         }
+
+        print(registered_object_stores)
 
         return registered_object_stores
 
@@ -527,9 +545,13 @@ class NatAgent(BaseModel):
         eval_config = {}
 
         if self.evaluator.general_evaluator is not None:
-            eval_config["general"] = self.evaluator.general_evaluator
+            eval_config["general"] = EvalGeneralConfig(**self.evaluator.general_evaluator.model_dump(
+                exclude_unset=True))
         if self.evaluator.evaluators is not None and len(self.evaluator.evaluators) > 0:
-            eval_config["evaluators"] = {ev.evaluator_name: ev.config for ev in self.evaluator.evaluators}
+            eval_config["evaluators"] = {
+                ev.name: self.__cast_to_base_ancestor(ev, EvaluatorBaseConfig)
+                for ev in self.evaluator.evaluators
+            }
 
         eval_config = EvalConfig(**eval_config)
 
@@ -539,7 +561,7 @@ class NatAgent(BaseModel):
         tool_names = []
         for tool in self.tools:
             if isinstance(tool, NatFunction):
-                tool_names.append(FunctionRef(value=tool.tool_name))
+                tool_names.append(FunctionRef(value=tool.name))
             elif isinstance(tool, NatAgent):
                 if tool.agent_name == "":
                     raise ValueError(
@@ -549,12 +571,39 @@ class NatAgent(BaseModel):
             else:
                 raise ValueError("Tools need to either be instances of NatTool or NatAgent")
 
-        tool_group_names = [FunctionGroupRef(value=tool_group.function_group_name) for tool_group in self.tool_groups]
+        tool_group_names = [FunctionGroupRef(value=tool_group.name) for tool_group in self.tool_groups]
 
         return tool_names + tool_group_names
 
     def build_workflow(self) -> AgentBaseConfig:
         raise NotImplementedError("Subclasses must implement build_workflow method.")
+
+    def __cast_to_base_ancestor(self, instance, marker_cls):
+        """
+        Finds the specific ancestor class in the hierarchy that inherits from
+        'marker_cls' but is closest to it (the 'root' of that branch).
+        """
+        # 1. Get the linear history of the class (e.g., [Admin, SuperUser, User, Person, ...])
+        mro = instance.__class__.mro()
+
+        # 2. Filter the list:
+        #    - Must be a subclass of the marker (Person)
+        #    - Must NOT be the marker itself (we want User, not Person)
+        candidates = [
+            cls for cls in mro
+            if issubclass(cls, marker_cls) and cls is not marker_cls and cls is not instance.__class__
+        ]
+
+        if not candidates:
+            raise TypeError(f"No ancestor of {instance.__class__.__name__} inherits from {marker_cls.__name__}")
+
+        # 3. Pick the LAST candidate.
+        #    In the MRO, the class "closest" to the marker (User) appears
+        #    after the children (Admin, SuperUser).
+        target_cls = candidates[-1]
+
+        # 4. Instantiate (Pydantic ignores extra fields by default)
+        return target_cls(**instance.model_dump(exclude_unset=True))
 
 
 class NatReactAgent(NatAgent, ReActAgentWorkflowConfig):
@@ -562,11 +611,12 @@ class NatReactAgent(NatAgent, ReActAgentWorkflowConfig):
     def build_workflow(self) -> ReActAgentWorkflowConfig:
         return ReActAgentWorkflowConfig(
             tool_names=self._build_tool_names(),
-            llm_name=LLMRef(value=self.llm.llm_name),
+            llm_name=LLMRef(value=self.llm.name),
             **self.model_dump(
                 exclude_unset=True,
                 exclude={
-                    "tool_namesllm_name",
+                    "tool_names",
+                    "llm_name",
                     "tools",
                     "tool_groups",
                     "llm",
@@ -582,11 +632,12 @@ class NatRewooAgent(NatAgent, ReWOOAgentWorkflowConfig):
     def build_workflow(self) -> ReWOOAgentWorkflowConfig:
         return ReWOOAgentWorkflowConfig(
             tool_names=self._build_tool_names(),
-            llm_name=LLMRef(value=self.llm.llm_name),
+            llm_name=LLMRef(value=self.llm.name),
             **self.model_dump(
                 exclude_unset=True,
                 exclude={
-                    "tool_namesllm_name",
+                    "tool_names",
+                    "llm_name",
                     "tools",
                     "tool_groups",
                     "llm",
@@ -602,11 +653,12 @@ class NatToolCallingAgent(NatAgent, ToolCallAgentWorkflowConfig):
     def build_workflow(self) -> ToolCallAgentWorkflowConfig:
         return ToolCallAgentWorkflowConfig(
             tool_names=self._build_tool_names(),
-            llm_name=LLMRef(value=self.llm.llm_name),
+            llm_name=LLMRef(value=self.llm.name),
             **self.model_dump(
                 exclude_unset=True,
                 exclude={
-                    "tool_namesllm_name",
+                    "tool_names",
+                    "llm_name",
                     "tools",
                     "tool_groups",
                     "llm",

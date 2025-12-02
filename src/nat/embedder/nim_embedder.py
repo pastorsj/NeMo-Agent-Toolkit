@@ -26,6 +26,7 @@ from nat.cli.register_workflow import register_embedder_provider
 from nat.data_models.common import OptionalSecretStr
 from nat.data_models.embedder import EmbedderBaseConfig
 from nat.data_models.retry_mixin import RetryMixin
+from nat.utils.sdk.nat_embedder import NatEmbedder
 
 allowed_truncate_values = ["NONE", "START", "END"]
 
@@ -52,6 +53,10 @@ class NIMEmbedderModelConfig(EmbedderBaseConfig, RetryMixin, name="nim"):
                                                     "server side if it's too large."))
 
     model_config = ConfigDict(protected_namespaces=(), extra="allow")
+
+
+class NIMEmbedder(NIMEmbedderModelConfig, NatEmbedder):
+    """NIM Model Embedder Provider"""
 
 
 @register_embedder_provider(config_type=NIMEmbedderModelConfig)

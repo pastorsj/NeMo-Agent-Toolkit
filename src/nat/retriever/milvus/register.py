@@ -24,6 +24,7 @@ from nat.builder.retriever import RetrieverProviderInfo
 from nat.cli.register_workflow import register_retriever_client
 from nat.cli.register_workflow import register_retriever_provider
 from nat.data_models.retriever import RetrieverBaseConfig
+from nat.utils.sdk.nat_retriever import NatRetriever
 
 
 class MilvusRetrieverConfig(RetrieverBaseConfig, name="milvus_retriever"):
@@ -51,6 +52,10 @@ class MilvusRetrieverConfig(RetrieverBaseConfig, name="milvus_retriever"):
                                     description="If present it will be used as the tool description",
                                     alias="collection_description")
     use_async_client: bool = Field(default=False, description="Use AsyncMilvusClient for async I/O operations. ")
+
+
+class MilvusRetriever(MilvusRetrieverConfig, NatRetriever):
+    """Milvus Retriever Provider"""
 
 
 @register_retriever_provider(config_type=MilvusRetrieverConfig)

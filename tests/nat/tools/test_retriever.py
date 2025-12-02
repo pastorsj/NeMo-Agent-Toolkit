@@ -17,7 +17,7 @@ import typing
 
 import pytest
 
-from nat.tool.retriever import RetrieverConfig
+from nat.tool.retriever import RetrieverToolConfig
 
 
 @pytest.mark.parametrize("config_values",
@@ -41,10 +41,10 @@ def test_retriever_config(config_values: dict[str, typing.Any]):
     Test the RetrieverConfig class.
     """
 
-    RetrieverConfig.model_validate(config_values, strict=True)
-    config = RetrieverConfig(**config_values)
+    RetrieverToolConfig.model_validate(config_values, strict=True)
+    config = RetrieverToolConfig(**config_values)
 
     model_dump = config.model_dump()
     model_dump.pop('type')
 
-    RetrieverConfig.model_validate(model_dump, strict=True)
+    RetrieverToolConfig.model_validate(model_dump, strict=True)

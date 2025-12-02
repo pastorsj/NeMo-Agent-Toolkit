@@ -21,11 +21,12 @@ from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
 
 log = logging.getLogger(__name__)
 
 
-class CodeGenerationTool(FunctionBaseConfig, name="code_generation"):
+class CodeGenerationToolConfig(FunctionBaseConfig, name="code_generation"):
     """
     Tool for generating code using the configured LLM.
     """
@@ -36,8 +37,12 @@ class CodeGenerationTool(FunctionBaseConfig, name="code_generation"):
                         "this tool!")
 
 
-@register_function(config_type=CodeGenerationTool)
-async def code_generation_tool(config: CodeGenerationTool, builder: Builder):
+class CodeGenerationTool(CodeGenerationToolConfig, NatFunction):
+    """Code Generation Tool"""
+
+
+@register_function(config_type=CodeGenerationToolConfig)
+async def code_generation_tool(config: CodeGenerationToolConfig, builder: Builder):
     from langchain_core.prompts.chat import ChatPromptTemplate
 
     log.info('Initializing code generation tool\nGetting tool LLM from config')

@@ -26,6 +26,7 @@ from nat.cli.register_workflow import register_evaluator
 from nat.data_models.evaluator import EvaluatorBaseConfig
 from nat.eval.evaluator.evaluator_model import EvalInput
 from nat.eval.evaluator.evaluator_model import EvalOutput
+from nat.utils.sdk.nat_evaluator import NatEvaluator
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +85,10 @@ class RagasEvaluatorConfig(EvaluatorBaseConfig, name="ragas"):
         if isinstance(self.metric, dict) and self.metric:
             return next(iter(self.metric.values()))
         return RagasMetricConfig()  # Default config when an invalid type is provided
+
+
+class RagasEvaluator(RagasEvaluatorConfig, NatEvaluator):
+    """RAGAS Evaluator"""
 
 
 @register_evaluator(config_type=RagasEvaluatorConfig)

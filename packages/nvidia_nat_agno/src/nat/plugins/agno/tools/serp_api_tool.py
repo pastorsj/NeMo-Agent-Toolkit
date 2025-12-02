@@ -25,6 +25,7 @@ from nat.data_models.common import OptionalSecretStr
 from nat.data_models.common import get_secret_value
 from nat.data_models.common import set_secret_from_env
 from nat.data_models.function import FunctionBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,10 @@ class SerpApiToolConfig(FunctionBaseConfig, name="serp_api_tool"):
     """
     api_key: OptionalSecretStr = Field(default=None, description="The API key for the SerpAPI service.")
     max_results: int = Field(default=5, description="The maximum number of results to return.")
+
+
+class SerpApiTool(SerpApiToolConfig, NatFunction):
+    """SerpAPI Search Tool"""
 
 
 @register_function(config_type=SerpApiToolConfig, framework_wrappers=[LLMFrameworkEnum.AGNO])

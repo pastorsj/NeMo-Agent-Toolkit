@@ -21,6 +21,7 @@ from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import EmbedderRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,10 @@ class WebQueryToolConfig(FunctionBaseConfig, name="webpage_query"):
     description: str
     chunk_size: int = 1024
     embedder_name: EmbedderRef = "nvidia/nv-embedqa-e5-v5"
+
+
+class WebQueryTool(WebQueryToolConfig, NatFunction):
+    """Web Query Tool"""
 
 
 @register_function(config_type=WebQueryToolConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])

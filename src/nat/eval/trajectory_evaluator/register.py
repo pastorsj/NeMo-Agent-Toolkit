@@ -19,12 +19,17 @@ from nat.builder.builder import EvalBuilder
 from nat.builder.evaluator import EvaluatorInfo
 from nat.cli.register_workflow import register_evaluator
 from nat.data_models.evaluator import EvaluatorBaseConfig
+from nat.utils.sdk.nat_evaluator import NatEvaluator
 
 
 class TrajectoryEvaluatorConfig(EvaluatorBaseConfig, name="trajectory"):
     """Agent Trajectory Evaluation."""
 
     llm_name: str = Field(description="LLM as a judge.")
+
+
+class TrajectoryEvaluator(TrajectoryEvaluatorConfig, NatEvaluator):
+    """Trajectory Evaluator"""
 
 
 @register_evaluator(config_type=TrajectoryEvaluatorConfig)

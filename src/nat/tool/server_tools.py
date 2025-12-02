@@ -17,6 +17,7 @@ from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
 
 
 class RequestAttributesTool(FunctionBaseConfig, name="current_request_attributes"):
@@ -27,6 +28,10 @@ class RequestAttributesTool(FunctionBaseConfig, name="current_request_attributes
     custom route using a YAML file and associate it with a corresponding function to acquire request attributes.
     """
     pass
+
+
+class RequestAttributes(RequestAttributesTool, NatFunction):
+    """Request Attributes Tool"""
 
 
 @register_function(config_type=RequestAttributesTool)

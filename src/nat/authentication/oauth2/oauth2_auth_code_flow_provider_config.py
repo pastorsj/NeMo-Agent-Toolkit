@@ -17,6 +17,7 @@ from pydantic import Field
 
 from nat.data_models.authentication import AuthProviderBaseConfig
 from nat.data_models.common import SerializableSecretStr
+from nat.utils.sdk.nat_auth_provider import NatAuthProvider
 
 
 class OAuth2AuthCodeFlowProviderConfig(AuthProviderBaseConfig, name="oauth2_auth_code_flow"):
@@ -38,3 +39,7 @@ class OAuth2AuthCodeFlowProviderConfig(AuthProviderBaseConfig, name="oauth2_auth
     authorization_kwargs: dict[str, str] | None = Field(description=("Additional keyword arguments for the "
                                                                      "authorization request."),
                                                         default=None)
+
+
+class OAuth2AuthCodeFlow(OAuth2AuthCodeFlowProviderConfig, NatAuthProvider):
+    """OAuth2 Authorization Code Flow Authentication Provider"""

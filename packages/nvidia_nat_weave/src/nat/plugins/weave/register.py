@@ -21,11 +21,12 @@ from pydantic import Field
 from nat.builder.builder import Builder
 from nat.cli.register_workflow import register_telemetry_exporter
 from nat.data_models.telemetry_exporter import TelemetryExporterBaseConfig
+from nat.utils.sdk.nat_telemetry_exporter import NatTelemetryExporter
 
 logger = logging.getLogger(__name__)
 
 
-class WeaveTelemetryExporter(TelemetryExporterBaseConfig, name="weave"):
+class WeaveTelemetryExporterConfig(TelemetryExporterBaseConfig, name="weave"):
     """A telemetry exporter to transmit traces to Weights & Biases Weave using OpenTelemetry."""
     project: str = Field(description="The W&B project name.")
     entity: str | None = Field(default=None,
@@ -46,8 +47,12 @@ class WeaveTelemetryExporter(TelemetryExporterBaseConfig, name="weave"):
                                                      description="Custom attributes to include in the traces.")
 
 
-@register_telemetry_exporter(config_type=WeaveTelemetryExporter)
-async def weave_telemetry_exporter(config: WeaveTelemetryExporter, builder: Builder):
+class WeaveTelemetryExporter(WeaveTelemetryExporterConfig, NatTelemetryExporter):
+    """A telemetry exporter to transmit traces to Weights & Biases Weave using OpenTelemetry."""
+
+
+@register_telemetry_exporter(config_type=WeaveTelemetryExporterConfig)
+async def weave_telemetry_exporter(config: WeaveTelemetryExporterConfig, builder: Builder):
     import weave
     from nat.plugins.weave.weave_exporter import WeaveExporter
 

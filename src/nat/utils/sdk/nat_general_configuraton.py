@@ -18,11 +18,11 @@ from pydantic import Field
 
 from nat.utils.sdk.nat_front_end import NatFrontEnd
 from nat.utils.sdk.nat_logger import NatLogger
-from nat.utils.sdk.nat_tracer import NatTracer
+from nat.utils.sdk.nat_telemetry_exporter import NatTelemetryExporter
 
 
 class NatGeneralConfiguration(BaseModel):
 
     loggers: list[NatLogger] = Field(description="A list of loggers", default=[])
-    tracers: list[NatTracer] = Field(description="A list of tracers", default=[])
+    telemetry_exporters: list[NatTelemetryExporter] = Field(description="A list of telemetry exporters", default=[])
     front_end_configuration: NatFrontEnd | None = Field(description="A configuration for a FAST API", default=None)

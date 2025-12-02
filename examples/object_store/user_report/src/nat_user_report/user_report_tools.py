@@ -24,6 +24,7 @@ from nat.data_models.component_ref import ObjectStoreRef
 from nat.data_models.function import FunctionGroupBaseConfig
 from nat.data_models.object_store import KeyAlreadyExistsError
 from nat.object_store.models import ObjectStoreItem
+from nat.utils.sdk.nat_function_group import NatFunctionGroup
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,10 @@ class UserReportConfig(FunctionGroupBaseConfig, name="user_report"):
     put_description: str
     update_description: str
     delete_description: str
+
+
+class UserReportToolGroup(UserReportConfig, NatFunctionGroup):
+    """User Report Function Group"""
 
 
 @register_function_group(config_type=UserReportConfig)

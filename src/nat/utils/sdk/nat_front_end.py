@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from nat.front_ends.fastapi.fastapi_front_end_config import FastApiFrontEndConfig
+from nat.data_models.common import TypedBaseModel
+from nat.utils.sdk.nat_base import NatBase
 
 
-class NatFrontEnd(FastApiFrontEndConfig):
+class NatFrontEnd(TypedBaseModel, NatBase):
 
     pass

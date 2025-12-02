@@ -24,6 +24,7 @@ from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,10 @@ class MilvusDocumentSearchToolConfig(FunctionBaseConfig, name="milvus_document_s
     collection_descriptions: list = Field(default=["Documents about NVIDIA's product catalog"],
                                           description=("Collection descriptions that map to collection names by "
                                                        "index position."))
+
+
+class MilvusDocumentSearchTool(MilvusDocumentSearchToolConfig, NatFunction):
+    """Milvus Document Search Tool"""
 
 
 @register_function(config_type=MilvusDocumentSearchToolConfig)

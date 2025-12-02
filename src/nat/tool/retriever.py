@@ -26,11 +26,12 @@ from nat.data_models.function import FunctionBaseConfig
 from nat.retriever.interface import Retriever
 from nat.retriever.models import RetrieverError
 from nat.retriever.models import RetrieverOutput
+from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
 
-class RetrieverConfig(FunctionBaseConfig, name="nat_retriever"):
+class RetrieverToolConfig(FunctionBaseConfig, name="nat_retriever"):
     """
     Retriever tool which provides a common interface for different vectorstores. Its
     configuration uses clients, which are the vectorstore-specific implementaiton of the retriever interface.
@@ -44,7 +45,11 @@ class RetrieverConfig(FunctionBaseConfig, name="nat_retriever"):
     description: str | None = Field(default=None, description="If present it will be used as the tool description")
 
 
-def _get_description_from_config(config: RetrieverConfig) -> str:
+class NatRetrieverTool(RetrieverToolConfig, NatFunction):
+    """NAT Retriever Tool"""
+
+
+def _get_description_from_config(config: RetrieverToolConfig) -> str:
     """
     Generate a description of what the tool will do based on how it is configured.
     """
@@ -55,8 +60,8 @@ def _get_description_from_config(config: RetrieverConfig) -> str:
     return description.format(topic=_topic) if not config.description else config.description
 
 
-@register_function(config_type=RetrieverConfig)
-async def retriever_tool(config: RetrieverConfig, builder: Builder):
+@register_function(config_type=RetrieverToolConfig)
+async def retriever_tool(config: RetrieverToolConfig, builder: Builder):
     """
     Configure a NAT Retriever Tool which supports different clients such as Milvus and Nemo Retriever.
 
@@ -91,5 +96,5 @@ async def retriever_tool(config: RetrieverConfig, builder: Builder):
 
 
 # Compatibility aliases with previous releases
-AIQRetrieverConfig = RetrieverConfig
+AIQRetrieverConfig = RetrieverToolConfig
 aiq_retriever_tool = retriever_tool

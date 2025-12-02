@@ -29,6 +29,8 @@ from nat.cli.register_workflow import register_function
 from nat.cli.register_workflow import register_function_group
 from nat.data_models.function import FunctionBaseConfig
 from nat.data_models.function import FunctionGroupBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_function_group import NatFunctionGroup
 
 
 class GithubCreateIssueModel(BaseModel):
@@ -146,6 +148,10 @@ class GithubGroupConfig(FunctionGroupBaseConfig, name="github"):
     # Required for commit function
     local_repo_dir: str | None = Field(default=None,
                                        description="Absolute path to the local clone. Required for 'commit' function")
+
+
+class GithubGroup(GithubGroupConfig, NatFunctionGroup):
+    """GitHub Function Group"""
 
 
 @register_function_group(config_type=GithubGroupConfig)
@@ -372,6 +378,10 @@ async def github_tool(config: GithubGroupConfig, _builder: Builder):
 
 class GithubFilesGroupConfig(FunctionBaseConfig, name="github_files_tool"):
     timeout: int = Field(default=5, description="Timeout in seconds for HTTP requests")
+
+
+class GithubFilesTool(GithubFilesGroupConfig, NatFunction):
+    """Github Files Tool"""
 
 
 @register_function(config_type=GithubFilesGroupConfig)

@@ -13,23 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections.abc import Callable
-
-from pydantic import BaseModel
-from pydantic import Field
-
-from nat.data_models.function import FunctionGroupBaseConfig
+from nat.data_models.common import TypedBaseModel
+from nat.utils.sdk.nat_base import NatBase
 
 
-class NatFunctionGroup(BaseModel):
-
-    config: FunctionGroupBaseConfig = Field(description="Configuration for the tool")
-    function_group: Callable = Field(description="Generator yielding FunctionInfo instances")
-    name: str | None = Field(description="Name of the tool", default=None)
-
-    @property
-    def function_group_name(self) -> str:
-        if self.name is not None:
-            return self.name
-        else:
-            return self.config.type
+class NatFunctionGroup(TypedBaseModel, NatBase):
+    """Base class for function group configurations that inherit from both FunctionGroupBaseConfig and NatBase."""
+    pass

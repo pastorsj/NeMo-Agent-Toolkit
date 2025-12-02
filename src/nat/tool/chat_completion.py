@@ -26,6 +26,7 @@ from nat.builder.framework_enum import LLMFrameworkEnum
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
 
 
 class ChatCompletionConfig(FunctionBaseConfig, name="chat_completion"):
@@ -37,6 +38,10 @@ class ChatCompletionConfig(FunctionBaseConfig, name="chat_completion"):
                                description="The system prompt to use for chat completion.")
 
     llm_name: LLMRef = Field(description="The LLM to use for generating responses.")
+
+
+class ChatCompletion(ChatCompletionConfig, NatFunction):
+    """Chat Completion Tool"""
 
 
 @register_function(config_type=ChatCompletionConfig)

@@ -23,6 +23,7 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import MemoryRef
 from nat.data_models.function import FunctionBaseConfig
 from nat.memory.models import DeleteMemoryInput
+from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,10 @@ class DeleteToolConfig(FunctionBaseConfig, name="delete_memory"):
     memory: MemoryRef = Field(default=MemoryRef("saas_memory"),
                               description=("Instance name of the memory client instance from the workflow "
                                            "configuration object."))
+
+
+class DeleteMemoryTool(DeleteToolConfig, NatFunction):
+    """Delete Memory Tool"""
 
 
 @register_function(config_type=DeleteToolConfig)

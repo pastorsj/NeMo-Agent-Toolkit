@@ -29,6 +29,7 @@ from nat.data_models.front_end import FrontEndBaseConfig
 from nat.data_models.step_adaptor import StepAdaptorConfig
 from nat.eval.evaluator.evaluator_model import EvalInputItem
 from nat.eval.evaluator.evaluator_model import EvalOutputItem
+from nat.utils.sdk.nat_front_end import NatFrontEnd
 
 logger = logging.getLogger(__name__)
 
@@ -291,6 +292,10 @@ class FastApiFrontEndConfig(FrontEndBaseConfig, name="fastapi"):
             "Object store reference for the FastAPI app. If present, static files can be uploaded via a POST "
             "request to '/static' and files will be served from the object store. The files will be served from the "
             "object store at '/static/{file_name}'."))
+
+
+class FastApiFrontEnd(FastApiFrontEndConfig, NatFrontEnd):
+    pass
 
 
 # Compatibility aliases with previous releases

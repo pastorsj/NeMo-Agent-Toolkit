@@ -16,10 +16,15 @@
 from nat.builder.builder import Builder
 from nat.cli.register_workflow import register_auth_provider
 from nat.data_models.authentication import AuthProviderBaseConfig
+from nat.utils.sdk.nat_auth_provider import NatAuthProvider
 
 
 class HTTPBasicAuthProviderConfig(AuthProviderBaseConfig, name="http_basic"):
     pass
+
+
+class HTTPBasicAuth(HTTPBasicAuthProviderConfig, NatAuthProvider):
+    """HTTP Basic Authentication Provider"""
 
 
 @register_auth_provider(config_type=HTTPBasicAuthProviderConfig)

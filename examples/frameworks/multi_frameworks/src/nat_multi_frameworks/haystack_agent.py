@@ -20,12 +20,18 @@ from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
 
 class HaystackChitchatConfig(FunctionBaseConfig, name="haystack_chitchat_agent"):
     llm_name: LLMRef
+
+
+class HaystackChitchatTool(HaystackChitchatConfig, NatFunction):
+    """Haystack Chitchat Tool"""
+    pass
 
 
 @register_function(config_type=HaystackChitchatConfig)

@@ -21,6 +21,7 @@ from nat.data_models.common import OptionalSecretStr
 from nat.data_models.common import get_secret_value
 from nat.data_models.component_ref import EmbedderRef
 from nat.data_models.memory import MemoryBaseConfig
+from nat.utils.sdk.nat_memory import NatMemory
 
 
 class RedisMemoryClientConfig(MemoryBaseConfig, name="redis_memory"):
@@ -31,6 +32,10 @@ class RedisMemoryClientConfig(MemoryBaseConfig, name="redis_memory"):
     key_prefix: str = Field(default="nat", description="Key prefix to use for redis keys")
     embedder: EmbedderRef = Field(description=("Instance name of the memory client instance from the workflow "
                                                "configuration object."))
+
+
+class RedisMemory(RedisMemoryClientConfig, NatMemory):
+    """Redis Memory Provider"""
 
 
 @register_memory(config_type=RedisMemoryClientConfig)

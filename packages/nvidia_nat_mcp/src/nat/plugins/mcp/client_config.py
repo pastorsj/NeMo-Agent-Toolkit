@@ -23,6 +23,7 @@ from pydantic import model_validator
 
 from nat.data_models.component_ref import AuthenticationRef
 from nat.data_models.function import FunctionGroupBaseConfig
+from nat.utils.sdk.nat_function_group import NatFunctionGroup
 
 
 class MCPToolOverrideConfig(BaseModel):
@@ -116,9 +117,11 @@ class MCPClientConfig(FunctionGroupBaseConfig, name="mcp_client"):
         """)
     session_aware_tools: bool = Field(default=True,
                                       description="Session-aware tools are created if True. Defaults to True.")
-    max_sessions: int = Field(default=100,
-                              ge=1,
-                              description="Maximum number of concurrent session clients. Defaults to 100.")
+    max_sessions: int = Field(default=100, ge=0, description="Maximum number of concurrent sessions. Defaults to 100.")
+
+
+class MCPClient(MCPClientConfig, NatFunctionGroup):
+    """MCP Client Function Group"""
     session_idle_timeout: timedelta = Field(
         default=timedelta(hours=1),
         description="Time after which inactive sessions are cleaned up. Defaults to 1 hour.")

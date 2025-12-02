@@ -30,6 +30,7 @@ from nat.data_models.component_ref import LLMRef
 from nat.data_models.component_ref import RetrieverRef
 from nat.data_models.function import FunctionBaseConfig
 from nat.plugins.vanna.db_utils import RequiredSecretStr
+from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +96,10 @@ class Text2SQLConfig(FunctionBaseConfig, name="text2sql"):
 
     chat_models: set[str] = Field(default={"meta/llama-3.1-70b-instruct"},
                                   description="Models using standard response handling without think tags")
+
+
+class Text2SQLTool(Text2SQLConfig, NatFunction):
+    """Text2SQL Tool"""
 
 
 @register_function(config_type=Text2SQLConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])
