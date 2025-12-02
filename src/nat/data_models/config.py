@@ -13,10 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import logging
+import re
 import sys
+import textwrap
+import traceback
 import typing
+from pathlib import Path
 
+import yaml
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Discriminator
@@ -444,6 +450,197 @@ class Config(HashableBaseModel):
             return cls.model_rebuild(force=True)
 
         return False
+
+    def save_to_file(self, file_path: str | Path) -> None:
+        """Saves the agent's configuration to a YAML file.
+
+        Args:
+            file_path (str | Path): The path to the YAML file where the configuration will be saved.
+        """
+
+        # Check if path exists
+        file_path = Path(file_path)
+        if file_path.exists() and file_path.is_dir():
+            raise ValueError(f"file_path '{file_path}' is a directory, expected a file path")
+        if not file_path.parent.exists():
+            raise ValueError(f"Directory '{file_path.parent}' does not exist.")
+        if file_path.suffix.lower() != ".yaml" and file_path.suffix.lower() != ".yml":
+            raise ValueError(f"file_path '{file_path}' does not have a .yaml or .yml extension.")
+
+        # Example usage: serialize agent._config and print YAML
+        try:
+            serialized = self.model_dump(exclude_unset=True, by_alias=True, round_trip=True)
+            self.__add_type_field_for_model(serialized, self)
+
+            # Prepare long strings: wrap long single-line strings at word boundaries
+            # and leave existing newlines intact. Then dump using a dumper that
+            # represents multiline strings with the block scalar `|` style.
+            self.__prepare_multiline_strings(serialized, width=100)
+
+            # Custom dumper that will use our representation for str values.
+            # Use SafeDumper subclass
+            class _BlockSafeDumper(yaml.SafeDumper):
+                pass
+
+            def _str_representer(dumper, data):
+                # If the string contains a newline, or contains explicit line breaks
+                # (we prepared long strings to contain line breaks), represent
+                # using the literal block style `|` so YAML preserves formatting.
+                if isinstance(data, str) and ("\n" in data):
+                    return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
+                # Otherwise, use default representation (flow style)
+                return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+            _BlockSafeDumper.add_representer(str, _str_representer)
+
+            # Dump with our custom dumper and preserve key order
+            # Dump to a string so we can post-process the YAML output
+            # to insert a blank line between top-level declarations.
+            yaml_str = yaml.dump(
+                json.loads(json.dumps(serialized, sort_keys=False)),
+                sort_keys=False,
+                Dumper=_BlockSafeDumper,
+            )
+
+            # Insert a blank line before each top-level mapping key.
+            # Top-level keys start at column 0 (no leading whitespace). We look
+            # for a newline followed by a non-space character and a colon later
+            # on the line, and insert an extra newline to separate sections.
+            yaml_str = re.sub(r"\n(?=[^ \t].+?:)", "\n\n", yaml_str)
+
+            with open(file_path, "w") as f:
+                f.write(yaml_str)
+        except Exception as e:
+            # Fallback debugging output
+            logger.error(f"Serialization failed: {e}")
+            print(traceback.format_exc())
+
+    def __wrap_long_string(self, s: str, width: int) -> str:
+        """Wrap a single-line string at word boundaries to a maximum width.
+        If the string already contains newline characters, return it unchanged.
+        """
+        if s is None:
+            return s
+        if "\n" in s:
+            # already multiline — preserve natural breaks
+            return s
+        # Use a TextWrapper that avoids breaking long words or inserting hyphenation.
+        # This avoids inserting `-` into wrapped lines.
+        wrapper = textwrap.TextWrapper(width=width, break_long_words=False, break_on_hyphens=False)
+        return "\n".join(wrapper.wrap(s))
+
+    def __prepare_multiline_strings(self, obj: typing.Any, width: int = 100) -> None:
+        """Recursively walk the data structure and replace long strings with
+        wrapped versions that include line breaks, so the YAML dumper will
+        emit them using block scalars.
+        This function mutates `obj` in place.
+        """
+        if isinstance(obj, dict):
+            for k, v in list(obj.items()):
+                if isinstance(v, str):
+                    obj[k] = self.__wrap_long_string(v, width)
+                else:
+                    self.__prepare_multiline_strings(v, width)
+        elif isinstance(obj, list):
+            for i, v in enumerate(obj):
+                if isinstance(v, str):
+                    obj[i] = self.__wrap_long_string(v, width)
+                else:
+                    self.__prepare_multiline_strings(v, width)
+
+    def __add_type_field_for_model(self, data: typing.Any, model: typing.Any) -> None:
+        """Recursively add a `_type` key to dict nodes based on the corresponding pydantic BaseModel instance.
+        - `data` is the dict/list/primitive produced by `model.model_dump(...)`.
+        - `model` is the pydantic BaseModel instance (if available) that produced `data`.
+        This function mutates `data` in-place.
+        """
+        # Only operate when we have a BaseModel and a dict to annotate
+        if not isinstance(model, BaseModel):
+            return
+
+        # Try to get a `type` attribute from the model instance. Many Config classes in this project
+        # expose a `type` attribute which we want to serialize as `_type`.
+        t = getattr(model, "type", None)
+        if t is None:
+            # fallback: some classes may use `type_` or `_type` or a class-level mapping; try a couple common names
+            t = getattr(model, "type_", None) or getattr(model, "_type", None)
+
+        if t is not None and isinstance(data, dict):
+            # only add `_type` when something meaningful is present
+            # Insert `_type` as the first key in the mapping so it always
+            # appears first in the emitted YAML.
+            # We mutate `data` in-place so callers keep the same object.
+            existing_items = list(data.items())
+            data.clear()
+            data["_type"] = t
+            for k, v in existing_items:
+                if k == "_type":
+                    # if `_type` existed already, skip duplicate
+                    continue
+                data[k] = v
+
+        # Walk model fields to recurse into nested BaseModel instances, lists and dicts
+        # `model.model_fields` is provided by pydantic v2 and describes declared fields.
+        try:
+            model_fields = getattr(model.__class__, "model_fields", None) or getattr(model, "model_fields", None)
+        except Exception:
+            model_fields = None
+
+        if not model_fields or not isinstance(data, dict):
+            return
+
+        # For each declared field, find corresponding dumped value and the actual attribute on the model
+        for field_name in model_fields:
+            if field_name not in data:
+                continue
+
+            dumped_value = data[field_name]
+            try:
+                real_value = getattr(model, field_name)
+            except Exception:
+                real_value = None
+
+            # Recurse for BaseModel child
+            if isinstance(real_value, BaseModel) and isinstance(dumped_value, dict):
+                self.__add_type_field_for_model(dumped_value, real_value)
+
+            # Recurse for lists whose elements may be BaseModel instances
+            elif isinstance(real_value, list) and isinstance(dumped_value, list):
+                for i, elem in enumerate(dumped_value):
+                    try:
+                        real_elem = real_value[i]
+                    except Exception:
+                        real_elem = None
+                    if isinstance(real_elem, BaseModel) and isinstance(elem, dict):
+                        self.__add_type_field_for_model(elem, real_elem)
+
+            # Recurse for dicts where values are BaseModel instances (mapping-of-models)
+            elif isinstance(real_value, dict) and isinstance(dumped_value, dict):
+                for k, v in dumped_value.items():
+                    corresponding = None
+                    try:
+                        corresponding = real_value.get(k)
+                    except Exception:
+                        corresponding = None
+                    if isinstance(corresponding, BaseModel) and isinstance(v, dict):
+                        self.__add_type_field_for_model(v, corresponding)
+
+        # Ensure that if `_type` was added by recursion on children or previously
+        # present, it sits as the first key in this mapping as well.
+        if isinstance(data, dict) and "_type" in data:
+            existing_items = list(data.items())
+            data.clear()
+            # Re-insert `_type` first, then the rest in original order skipping duplicate
+            data["_type"] = None
+            for k, v in existing_items:
+                if k == "_type":
+                    # set the real value for `_type`
+                    data["_type"] = v
+                    break
+            for k, v in existing_items:
+                if k == "_type":
+                    continue
+                data[k] = v
 
 
 # Compatibility aliases with previous releases
