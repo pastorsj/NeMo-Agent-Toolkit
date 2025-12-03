@@ -17,6 +17,7 @@ from typing import Annotated
 from pydantic import Field
 from pydantic import HttpUrl
 from pydantic import PlainSerializer
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.builder import LLMFrameworkEnum
@@ -24,6 +25,7 @@ from nat.builder.retriever import RetrieverProviderInfo
 from nat.cli.register_workflow import register_retriever_client
 from nat.cli.register_workflow import register_retriever_provider
 from nat.data_models.retriever import RetrieverBaseConfig
+from nat.utils.sdk.nat_embedder import NatEmbedder
 from nat.utils.sdk.nat_retriever import NatRetriever
 
 
@@ -57,6 +59,15 @@ class MilvusRetrieverConfig(RetrieverBaseConfig, name="milvus_retriever"):
 class MilvusRetriever(MilvusRetrieverConfig, NatRetriever):
     """Milvus Retriever Provider"""
 
+    embedder: NatEmbedder
+    embedding_model: str = Field(description="", default="", init=False, exclude=True)
+
+    @model_validator(mode='after')
+    def set_embedder_name(self):
+        """Set embedder name from embedder object if embedder is provided."""
+        self.embedding_model = self.embedder.compute_name(RetrieverBaseConfig)
+        return self
+
 
 @register_retriever_provider(config_type=MilvusRetrieverConfig)
 async def milvus_retriever(retriever_config: MilvusRetrieverConfig, builder: Builder):
@@ -89,6 +100,36 @@ async def milvus_retriever_client(config: MilvusRetrieverConfig, builder: Builde
     # Using parameters in the config to set default values which can be overridden during the function call.
     optional_fields = ["collection_name", "top_k", "output_fields", "search_params", "vector_field"]
     model_dict = config.model_dump()
+    optional_args = {field: model_dict[field] for field in optional_fields if model_dict[field] is not None}
+
+    retriever.bind(**optional_args)
+
+    yield retriever
+    yield retriever
+    yield retriever
+    yield retriever
+    yield retriever
+    yield retriever
+    optional_args = {field: model_dict[field] for field in optional_fields if model_dict[field] is not None}
+
+    retriever.bind(**optional_args)
+
+    yield retriever
+    yield retriever
+    yield retriever
+    yield retriever
+    yield retriever
+    yield retriever
+    optional_args = {field: model_dict[field] for field in optional_fields if model_dict[field] is not None}
+
+    retriever.bind(**optional_args)
+
+    yield retriever
+    yield retriever
+    yield retriever
+    yield retriever
+    yield retriever
+    yield retriever
     optional_args = {field: model_dict[field] for field in optional_fields if model_dict[field] is not None}
 
     retriever.bind(**optional_args)

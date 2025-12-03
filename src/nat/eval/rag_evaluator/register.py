@@ -24,9 +24,11 @@ from nat.builder.evaluator import EvaluatorInfo
 from nat.builder.framework_enum import LLMFrameworkEnum
 from nat.cli.register_workflow import register_evaluator
 from nat.data_models.evaluator import EvaluatorBaseConfig
+from nat.data_models.llm import LLMBaseConfig
 from nat.eval.evaluator.evaluator_model import EvalInput
 from nat.eval.evaluator.evaluator_model import EvalOutput
 from nat.utils.sdk.nat_evaluator import NatEvaluator
+from nat.utils.sdk.nat_llm import NatLLM
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +91,15 @@ class RagasEvaluatorConfig(EvaluatorBaseConfig, name="ragas"):
 
 class RagasEvaluator(RagasEvaluatorConfig, NatEvaluator):
     """RAGAS Evaluator"""
+
+    llm: NatLLM
+    llm_name: str = Field(description="", default="", init=False, exclude=True)
+
+    @model_validator(mode='after')
+    def set_llm_name_from_llm(self):
+        """Set llm_name from llm object if llm is provided."""
+        self.llm_name = self.llm.compute_name(LLMBaseConfig)
+        return self
 
 
 @register_evaluator(config_type=RagasEvaluatorConfig)

@@ -16,6 +16,7 @@
 import logging
 
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
@@ -24,6 +25,7 @@ from nat.data_models.component_ref import MemoryRef
 from nat.data_models.function import FunctionBaseConfig
 from nat.memory.models import SearchMemoryInput
 from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_memory import NatMemory
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +43,15 @@ class GetToolConfig(FunctionBaseConfig, name="get_memory"):
 
 class GetMemoryTool(GetToolConfig, NatFunction):
     """Get Memory Tool"""
+
+    nat_memory: NatMemory
+    memory: MemoryRef = Field(description="", default=MemoryRef(value=""), init=False, exclude=True)
+
+    @model_validator(mode='after')
+    def set_memory_name_from_memory(self):
+        """Set memory name from memory object if memory is provided."""
+        self.memory = MemoryRef(value=self.nat_memory.compute_name(FunctionBaseConfig))
+        return self
 
 
 @register_function(config_type=GetToolConfig)

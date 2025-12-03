@@ -17,6 +17,7 @@ import logging
 
 from pydantic import BaseModel
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
@@ -27,6 +28,7 @@ from nat.retriever.interface import Retriever
 from nat.retriever.models import RetrieverError
 from nat.retriever.models import RetrieverOutput
 from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_retriever import NatRetriever
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +49,15 @@ class RetrieverToolConfig(FunctionBaseConfig, name="nat_retriever"):
 
 class NatRetrieverTool(RetrieverToolConfig, NatFunction):
     """NAT Retriever Tool"""
+
+    nat_retriever: NatRetriever
+    retriever: RetrieverRef = Field(description="", default=RetrieverRef(value=""), init=False, exclude=True)
+
+    @model_validator(mode='after')
+    def set_retriever_name_from_retriever(self):
+        """Set retriever name from retriever object if retriever is provided."""
+        self.retriever = RetrieverRef(value=self.nat_retriever.compute_name(FunctionBaseConfig))
+        return self
 
 
 def _get_description_from_config(config: RetrieverToolConfig) -> str:
