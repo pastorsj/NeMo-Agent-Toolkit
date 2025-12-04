@@ -14,12 +14,16 @@
 # limitations under the License.
 
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.data_models.llm import LLMBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_llm import NatLLM
 
 from . import utils
 from .playbooks import HOST_PERFORMANCE_CHECK_PLAYBOOK
@@ -29,12 +33,29 @@ from .prompts import HostPerformanceCheckPrompts
 class HostPerformanceCheckToolConfig(FunctionBaseConfig, name="host_performance_check"):
     description: str = Field(default=HostPerformanceCheckPrompts.TOOL_DESCRIPTION,
                              description="Description of the tool.")
-    llm_name: LLMRef
+    llm_name: LLMRef = Field(description="LLM to use for the host performance check task.")
     parsing_prompt: str = Field(default=HostPerformanceCheckPrompts.PARSING_PROMPT,
                                 description="Prompt for parsing the raw host performance data.")
     analysis_prompt: str = Field(default=HostPerformanceCheckPrompts.ANALYSIS_PROMPT,
                                  description="Prompt for analyzing the parsed host performance data.")
     offline_mode: bool = Field(default=True, description="Whether to run in offline model")
+
+
+class HostPerformanceCheckTool(HostPerformanceCheckToolConfig, NatFunction):
+    """Host Performance Check Tool"""
+
+    llm_name: LLMRef = Field(description="LLM to use for the host performance check task.",
+                             default=LLMRef(value=""),
+                             init=False)
+
+    llm: NatLLM = Field(exclude=True)
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set llm_name from llm object if llm is provided."""
+        if self.llm:
+            self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+        return self
 
 
 async def _run_ansible_playbook_for_host_performance_check(config: HostPerformanceCheckToolConfig,

@@ -92,13 +92,14 @@ class RagasEvaluatorConfig(EvaluatorBaseConfig, name="ragas"):
 class RagasEvaluator(RagasEvaluatorConfig, NatEvaluator):
     """RAGAS Evaluator"""
 
-    llm: NatLLM
-    llm_name: str = Field(description="", default="", init=False, exclude=True)
+    llm: NatLLM = Field(exclude=True)
+    llm_name: str = Field(description="", default="", init=False)
 
     @model_validator(mode='after')
-    def set_llm_name_from_llm(self):
+    def set_references(self):
         """Set llm_name from llm object if llm is provided."""
-        self.llm_name = self.llm.compute_name(LLMBaseConfig)
+        if self.llm:
+            self.llm_name = self.llm.compute_name(LLMBaseConfig)
         return self
 
 

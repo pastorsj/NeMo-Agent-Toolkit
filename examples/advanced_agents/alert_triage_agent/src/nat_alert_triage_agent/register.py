@@ -17,6 +17,7 @@ import asyncio
 import logging
 import typing
 
+from pydantic import model_validator
 from pydantic.fields import Field
 
 from nat.builder.builder import Builder
@@ -24,21 +25,24 @@ from nat.builder.framework_enum import LLMFrameworkEnum
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.profiler.decorators.function_tracking import track_function
+from nat.data_models.llm import LLMBaseConfig
 from nat.data_models.optimizable import OptimizableMixin
+from nat.profiler.decorators.function_tracking import track_function
+from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_llm import NatLLM
 
 # flake8: noqa
 # Import any tools which need to be automatically registered here
-from . import categorizer
-from . import hardware_check_tool
-from . import host_performance_check_tool
-from . import maintenance_check
-from . import monitoring_process_check_tool
-from . import network_connectivity_check_tool
-from . import telemetry_metrics_analysis_agent
-from . import telemetry_metrics_host_heartbeat_check_tool
-from . import telemetry_metrics_host_performance_check_tool
-from . import utils
+from . import (categorizer,
+               hardware_check_tool,
+               host_performance_check_tool,
+               maintenance_check,
+               monitoring_process_check_tool,
+               network_connectivity_check_tool,
+               telemetry_metrics_analysis_agent,
+               telemetry_metrics_host_heartbeat_check_tool,
+               telemetry_metrics_host_performance_check_tool,
+               utils)
 # Import custom evaluator
 from .classification_evaluator import register_classification_evaluator
 from .prompts import ALERT_TRIAGE_AGENT_PROMPT
@@ -54,7 +58,7 @@ class AlertTriageAgentWorkflowConfig(FunctionBaseConfig, OptimizableMixin, name=
     4. Categorizing the root cause based on collected evidence
     """
     tool_names: list[str] = []
-    llm_name: LLMRef
+    llm_name: LLMRef = Field(description="LLM to use for the alert triage agent workflow.")
     offline_mode: bool = Field(default=True, description="Whether to run in offline mode")
     offline_data_path: str | None = Field(
         default="examples/advanced_agents/alert_triage_agent/data/offline_data.csv",
@@ -66,16 +70,29 @@ class AlertTriageAgentWorkflowConfig(FunctionBaseConfig, OptimizableMixin, name=
                               description="The system prompt to use for the alert triage agent.")
 
 
+class AlertTriageAgentWorkflow(AlertTriageAgentWorkflowConfig, NatFunction):
+    """Alert Triage Agent Workflow"""
+
+    llm_name: LLMRef = Field(description="LLM to use for the alert triage agent workflow.",
+                             default=LLMRef(value=""),
+                             init=False,
+                             exclude=True)
+    llm: NatLLM = Field(exclude=True)
+
+    @model_validator(mode="after")
+    def set_references(self):
+        """Set llm name from llm object if llm is provided."""
+        if self.llm:
+            self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+        return self
+
+
 @register_function(config_type=AlertTriageAgentWorkflowConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])
 async def alert_triage_agent_workflow(config: AlertTriageAgentWorkflowConfig, builder: Builder):
 
-    from langchain_core.messages import HumanMessage
-    from langchain_core.messages import SystemMessage
-    from langgraph.graph import START
-    from langgraph.graph import MessagesState
-    from langgraph.graph import StateGraph
-    from langgraph.prebuilt import ToolNode
-    from langgraph.prebuilt import tools_condition
+    from langchain_core.messages import HumanMessage, SystemMessage
+    from langgraph.graph import START, MessagesState, StateGraph
+    from langgraph.prebuilt import ToolNode, tools_condition
     if typing.TYPE_CHECKING:
         from langchain_core.language_models.chat_models import BaseChatModel
 

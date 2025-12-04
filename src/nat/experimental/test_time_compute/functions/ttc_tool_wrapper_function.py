@@ -17,6 +17,7 @@ import logging
 
 from pydantic import BaseModel
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
@@ -26,6 +27,9 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import FunctionRef
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.data_models.llm import LLMBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_llm import NatLLM
 from nat.utils.string_utils import convert_to_str
 
 logger = logging.getLogger(__name__)
@@ -62,6 +66,25 @@ class TTCToolWrapperFunctionConfig(FunctionBaseConfig, name="ttc_tool_wrapper"):
 
     tool_description: str | None = Field(description="The description of the tool to be used for the function.",
                                          default=None)
+
+
+class TTCToolWrapperFunction(TTCToolWrapperFunctionConfig, NatFunction):
+    """TTCTool Wrapper Tool"""
+
+    augmented_fn: FunctionRef = Field(description="The name of the function to reason on.", init=False)
+    input_llm: LLMRef = Field(description="The LLM that will generate input to the function.", init=False)
+
+    augmented_function: NatFunction = Field(exclude=True)
+    llm: NatLLM = Field(exclude=True)
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set augmented function name from augmented function object if augmented function is provided."""
+        if self.augmented_function:
+            self.augmented_fn = FunctionRef(value=self.augmented_function.compute_name(FunctionBaseConfig))
+        if self.llm:
+            self.input_llm = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+        return self
 
 
 @register_function(config_type=TTCToolWrapperFunctionConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])

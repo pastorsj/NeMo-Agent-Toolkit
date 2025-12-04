@@ -18,13 +18,17 @@ import logging
 
 import httpx
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
+from nat.data_models.authentication import AuthProviderBaseConfig
 from nat.data_models.authentication import BearerTokenCred
 from nat.data_models.component_ref import AuthenticationRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.utils.sdk.nat_auth_provider import NatAuthProvider
+from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +42,21 @@ class WhoAmIConfig(FunctionBaseConfig, name="who_am_i"):
 
     api_url: str = Field(default="http://localhost:5001/api/me", description="Base URL for the who am i API")
     timeout: int = Field(default=10, description="Request timeout in seconds")
+
+
+class WhoAmITool(WhoAmIConfig, NatFunction):
+
+    auth_provider: AuthenticationRef = Field(description=("Reference to the authentication provider to use for "
+                                                          "authentication before making the who am i request."))
+
+    nat_auth_provider: NatAuthProvider = Field(exclude=True)
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set auth provider name from nat_auth_provider object if provided."""
+        if self.nat_auth_provider:
+            self.auth_provider = AuthenticationRef(value=self.nat_auth_provider.compute_name(AuthProviderBaseConfig))
+        return self
 
 
 @register_function(config_type=WhoAmIConfig)

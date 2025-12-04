@@ -35,7 +35,7 @@ class CodeGenerationToolConfig(FunctionBaseConfig, name="code_generation"):
     """
     Tool for generating code using the configured LLM.
     """
-    llm_name: LLMRef
+    llm_name: LLMRef = Field(description="LLM to use for code generation.")
     verbose: bool = False
     programming_language: str = "Python"
     description: str = ("Useful to generate Python code. For any questions about code generation, you must only use "
@@ -45,13 +45,14 @@ class CodeGenerationToolConfig(FunctionBaseConfig, name="code_generation"):
 class CodeGenerationTool(CodeGenerationToolConfig, NatFunction):
     """Code Generation Tool"""
 
-    llm: NatLLM
-    llm_name: LLMRef = Field(description="", default=LLMRef(value=""), init=False, exclude=True)
+    llm_name: LLMRef = Field(description="LLM to use for code generation.", default=LLMRef(value=""), init=False)
+    llm: NatLLM = Field(exclude=True)
 
     @model_validator(mode='after')
-    def set_llm_name_from_llm(self):
+    def set_references(self):
         """Set llm_name from llm object if llm is provided."""
-        self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+        if self.llm:
+            self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
         return self
 
 

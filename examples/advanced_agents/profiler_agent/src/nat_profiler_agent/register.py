@@ -17,6 +17,7 @@ import logging
 from datetime import datetime
 
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
@@ -24,6 +25,9 @@ from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.data_models.llm import LLMBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_llm import NatLLM
 from nat_profiler_agent import tool  # noqa: F401
 from nat_profiler_agent.prompts import RETRY_PROMPT
 from nat_profiler_agent.prompts import SYSTEM_PROMPT
@@ -54,6 +58,21 @@ class ProfilerAgentConfig(FunctionBaseConfig, name="profiler_agent"):
         ...,
         description="The maximum number of retries for the profiler agent",
     )
+
+
+class ProfilerAgent(ProfilerAgentConfig, NatFunction):
+    """Profiler Agent"""
+
+    llm_name: LLMRef = Field(description="", default=LLMRef(value=""), init=False)
+
+    llm: NatLLM = Field(exclude=True)
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set llm_name from llm object if llm is provided."""
+        if self.llm:
+            self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+        return self
 
 
 @register_function(config_type=ProfilerAgentConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])

@@ -27,6 +27,7 @@ from nat.agent.rewoo_agent.register import ReWOOAgentWorkflowConfig
 from nat.agent.tool_calling_agent.register import ToolCallAgentWorkflowConfig
 from nat.cli.commands.evaluate import run_and_evaluate
 from nat.data_models.agent import AgentBaseConfig
+from nat.data_models.authentication import AuthProviderBaseConfig
 from nat.data_models.component_ref import FunctionGroupRef
 from nat.data_models.component_ref import FunctionRef
 from nat.data_models.component_ref import LLMRef
@@ -45,10 +46,12 @@ from nat.data_models.memory import MemoryBaseConfig
 from nat.data_models.object_store import ObjectStoreBaseConfig
 from nat.data_models.retriever import RetrieverBaseConfig
 from nat.data_models.telemetry_exporter import TelemetryExporterBaseConfig
+from nat.data_models.ttc_strategy import TTCStrategyBaseConfig
 from nat.eval.config import EvaluationRunConfig
 from nat.runtime.loader import PluginTypes
 from nat.runtime.loader import discover_and_register_plugins
 from nat.utils import run_workflow
+from nat.utils.sdk.nat_auth_provider import NatAuthProvider
 from nat.utils.sdk.nat_embedder import NatEmbedder
 from nat.utils.sdk.nat_evaluation import NatEvaluation
 from nat.utils.sdk.nat_function import NatFunction
@@ -58,6 +61,7 @@ from nat.utils.sdk.nat_llm import NatLLM
 from nat.utils.sdk.nat_memory import NatMemory
 from nat.utils.sdk.nat_object_store import NatObjectStore
 from nat.utils.sdk.nat_retriever import NatRetriever
+from nat.utils.sdk.nat_ttc_strategy import NatTTCStrategy
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +85,10 @@ class NatAgent(BaseModel):
                                           default=[])
     retrievers: list[NatRetriever] = Field(description="List of retrievers referenced by the tools used by the agent.",
                                            default=[])
+    ttc_strategies: list[NatTTCStrategy] = Field(
+        description="List of TTC strategies referenced by the tools used by the agent.", default=[])
+    authentication_providers: list[NatAuthProvider] = Field(
+        description="List of authentication providers referenced by the tools used by the agent.", default=[])
     evaluator: NatEvaluation | None = Field(description="The evaluator to use with the agent", default=None)
 
     @cached_property
@@ -155,6 +163,14 @@ class NatAgent(BaseModel):
         config_retrievers = self.build_retrievers()
         if config_retrievers is not None and len(config_retrievers) > 0:
             config_args["retrievers"] = config_retrievers
+
+        ttc_strategies = self.build_ttc_strategies()
+        if ttc_strategies is not None and len(ttc_strategies) > 0:
+            config_args["ttc_strategies"] = ttc_strategies
+
+        authentication_providers = self.configuration.build_authentication_providers()
+        if authentication_providers is not None and len(authentication_providers) > 0:
+            config_args["authentication"] = authentication_providers
 
         workflow = self.build_workflow()
         config_args["workflow"] = workflow
@@ -322,6 +338,14 @@ class NatAgent(BaseModel):
         registered_object_stores = dict(
             object_store.compute_name_and_config(ObjectStoreBaseConfig) for object_store in self.object_stores)
 
+        # Check if an agent registered as a function contains embedders that were not registered at the top level
+        if self.tools is not None or len(self.tools) > 0:
+            for tool in self.tools:
+                if isinstance(tool, NatAgent):
+                    agent_object_stores = tool.build_object_stores()
+                    if agent_object_stores is not None and len(agent_object_stores) > 0:
+                        registered_object_stores = {**registered_object_stores, **agent_object_stores}
+
         return registered_object_stores
 
     def build_evaluator(self) -> EvalConfig | None:
@@ -353,13 +377,53 @@ class NatAgent(BaseModel):
                 else:
                     tool_names.append(FunctionRef(value=tool.agent_name))
             else:
-                raise ValueError("Tools need to either be instances of NatTool or NatAgent")
+                raise ValueError("Tools need to either be instances of NatFunction or NatAgent")
 
         tool_group_names = [
             FunctionGroupRef(value=tool_group.compute_name(FunctionGroupBaseConfig)) for tool_group in self.tool_groups
         ]
 
         return tool_names + tool_group_names
+
+    def build_ttc_strategies(self) -> dict[str, TTCStrategyBaseConfig] | None:
+        # Gather TTC strategies from tools if any
+        if (self.ttc_strategies is None or len(self.ttc_strategies) == 0):
+            return None
+
+        registered_ttc_strategies = dict(
+            ttc_strategy.compute_name_and_config(TTCStrategyBaseConfig) for ttc_strategy in self.ttc_strategies)
+
+        # Check if an agent registered as a function contains TTC strategies that were not registered at the top level
+        if self.tools is not None or len(self.tools) > 0:
+            for tool in self.tools:
+                if isinstance(tool, NatAgent):
+                    agent_ttc_strategies = tool.build_ttc_strategies()
+                    if agent_ttc_strategies is not None and len(agent_ttc_strategies) > 0:
+                        registered_ttc_strategies = {**registered_ttc_strategies, **agent_ttc_strategies}
+
+        return registered_ttc_strategies
+
+    def build_authentication_providers(self) -> dict[str, AuthProviderBaseConfig] | None:
+        # Gather authentication providers from tools if any
+        if (self.authentication_providers is None or len(self.authentication_providers) == 0):
+            return None
+
+        registered_authentication_providers = dict(
+            auth_provider.compute_name_and_config(AuthProviderBaseConfig)
+            for auth_provider in self.authentication_providers)
+
+        # Check if an agent registered as a function contains
+        # authentication providers that were not registered at the top level
+        if self.tools is not None or len(self.tools) > 0:
+            for tool in self.tools:
+                if isinstance(tool, NatAgent):
+                    agent_authentication_providers = tool.build_authentication_providers()
+                    if agent_authentication_providers is not None and len(agent_authentication_providers) > 0:
+                        registered_authentication_providers = {
+                            **registered_authentication_providers, **agent_authentication_providers
+                        }
+
+        return registered_authentication_providers
 
     def build_workflow(self) -> AgentBaseConfig:
         raise NotImplementedError("Subclasses must implement build_workflow method.")

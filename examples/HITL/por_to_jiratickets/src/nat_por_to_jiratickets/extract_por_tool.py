@@ -18,12 +18,18 @@ import logging
 import os
 import re
 
+from pydantic import Field
+from pydantic import model_validator
+
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.data_models.llm import LLMBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_llm import NatLLM
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +129,20 @@ class ExtractPORToolConfig(FunctionBaseConfig, name="extract_por_tool"):
     llm: LLMRef
 
 
+class ExtractPORTool(ExtractPORToolConfig, NatFunction):
+
+    llm: LLMRef = Field(description="LLM to use for extraction", init=False)
+
+    nat_llm: NatLLM = Field(exclude=True)
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set llm name from llm object if llm is provided."""
+        if self.nat_llm:
+            self.llm = LLMRef(value=self.nat_llm.compute_name(LLMBaseConfig))
+        return self
+
+
 @register_function(config_type=ExtractPORToolConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])
 async def extract_from_por_tool(config: ExtractPORToolConfig, builder: Builder):
     """
@@ -181,6 +201,10 @@ async def extract_from_por_tool(config: ExtractPORToolConfig, builder: Builder):
 
 class ShowTicketsToolConfig(FunctionBaseConfig, name="show_jira_tickets"):
     root_path: str
+
+
+class ShowTicketsTool(ShowTicketsToolConfig, NatFunction):
+    pass
 
 
 @register_function(config_type=ShowTicketsToolConfig)

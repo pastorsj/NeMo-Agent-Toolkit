@@ -15,12 +15,17 @@
 
 import logging
 
+from pydantic import Field
+from pydantic import model_validator
+
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import EmbedderRef
+from nat.data_models.embedder import EmbedderBaseConfig
 from nat.data_models.function import FunctionBaseConfig
+from nat.utils.sdk.nat_embedder import NatEmbedder
 from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
@@ -35,6 +40,17 @@ class WebQueryToolConfig(FunctionBaseConfig, name="webpage_query"):
 
 class WebQueryTool(WebQueryToolConfig, NatFunction):
     """Web Query Tool"""
+
+    embedder_name: EmbedderRef = Field(description="", default=EmbedderRef(value="nvidia/nv-embedqa-e5-v5"), init=False)
+
+    embedder: NatEmbedder = Field(exclude=True)
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set embedder name from embedder object if embedder is provided."""
+        if self.embedder:
+            self.embedder_name = EmbedderRef(value=self.embedder.compute_name(EmbedderBaseConfig))
+        return self
 
 
 @register_function(config_type=WebQueryToolConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])

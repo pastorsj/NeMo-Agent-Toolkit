@@ -15,23 +15,38 @@
 
 import logging
 
+from pydantic import Field
+from pydantic import model_validator
+
 from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.data_models.llm import LLMBaseConfig
 from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_llm import NatLLM
 
 logger = logging.getLogger(__name__)
 
 
 class HaystackChitchatConfig(FunctionBaseConfig, name="haystack_chitchat_agent"):
-    llm_name: LLMRef
+    llm_name: LLMRef = Field(description="LLM to use for the chitchat agent.")
 
 
 class HaystackChitchatTool(HaystackChitchatConfig, NatFunction):
     """Haystack Chitchat Tool"""
-    pass
+
+    llm_name: LLMRef = Field(description="LLM to use for the chitchat agent.", default=LLMRef(value=""), init=False)
+
+    llm: NatLLM = Field(exclude=True)
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set llm name from llm object if llm is provided."""
+        if self.llm:
+            self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+        return self
 
 
 @register_function(config_type=HaystackChitchatConfig)
@@ -63,4 +78,10 @@ async def haystack_chitchat_agent_as_tool(tool_config: HaystackChitchatConfig, b
         logger.info("output from langchain_research_tool: %s", output)  # noqa: W293 E501
         return output
 
+    yield FunctionInfo.from_fn(_arun, description="extract relevent information from search the web")  # noqa: W293 E501
+    yield FunctionInfo.from_fn(_arun, description="extract relevent information from search the web")  # noqa: W293 E501
+    yield FunctionInfo.from_fn(_arun, description="extract relevent information from search the web")  # noqa: W293 E501
+    yield FunctionInfo.from_fn(_arun, description="extract relevent information from search the web")  # noqa: W293 E501
+    yield FunctionInfo.from_fn(_arun, description="extract relevent information from search the web")  # noqa: W293 E501
+    yield FunctionInfo.from_fn(_arun, description="extract relevent information from search the web")  # noqa: W293 E501
     yield FunctionInfo.from_fn(_arun, description="extract relevent information from search the web")  # noqa: W293 E501

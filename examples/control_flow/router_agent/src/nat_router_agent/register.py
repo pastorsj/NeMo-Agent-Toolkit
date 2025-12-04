@@ -20,11 +20,16 @@ from nat.builder.framework_enum import LLMFrameworkEnum
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
 
 class MockFruitAdvisorFunctionConfig(FunctionBaseConfig, name="mock_fruit_advisor"):
+    pass
+
+
+class MockFruitAdvisorTool(MockFruitAdvisorFunctionConfig, NatFunction):
     pass
 
 
@@ -59,6 +64,10 @@ async def mock_fruit_advisor_function(config: MockFruitAdvisorFunctionConfig, bu
 
 
 class MockCityAdvisorFunctionConfig(FunctionBaseConfig, name="mock_city_advisor"):
+    pass
+
+
+class MockCityAdvisorTool(MockCityAdvisorFunctionConfig, NatFunction):
     pass
 
 
@@ -97,6 +106,10 @@ async def mock_city_advisor_function(config: MockCityAdvisorFunctionConfig, buil
 
 
 class MockLiteratureAdvisorFunctionConfig(FunctionBaseConfig, name="mock_literature_advisor"):
+    pass
+
+
+class MockLiteratureAdvisorTool(MockLiteratureAdvisorFunctionConfig, NatFunction):
     pass
 
 

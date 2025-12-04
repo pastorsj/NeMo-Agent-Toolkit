@@ -19,7 +19,10 @@ from pydantic import Field
 from pydantic import model_validator
 
 from nat.data_models.component_ref import LLMRef
+from nat.data_models.llm import LLMBaseConfig
 from nat.data_models.ttc_strategy import TTCStrategyBaseConfig
+from nat.utils.sdk.nat_llm import NatLLM
+from nat.utils.sdk.nat_ttc_strategy import NatTTCStrategy
 
 
 class SingleShotMultiPlanConfig(TTCStrategyBaseConfig, name="single_shot_multi_plan"):
@@ -61,6 +64,25 @@ class SingleShotMultiPlanConfig(TTCStrategyBaseConfig, name="single_shot_multi_p
         return values
 
 
+class SingleShotMultiPlan(SingleShotMultiPlanConfig, NatTTCStrategy):
+    """Single Shot Multi Plan Strategy"""
+
+    planning_llm: LLMRef | typing.Any | None = Field(
+        default=None,
+        description="The LLM to use for planning. This can be a callable or an "
+        "instance of an LLM client.",
+        init=False)
+
+    nat_planning_llm: NatLLM = Field(exclude=True)
+
+    @model_validator(mode="after")
+    def set_references(self):
+        """Set llm name from llm object if llm is provided."""
+        if self.nat_planning_llm is not None:
+            self.planning_llm = LLMRef(value=self.nat_planning_llm.compute_name(LLMBaseConfig))
+        return self
+
+
 class MultiLLMPlanConfig(TTCStrategyBaseConfig, name="multi_llm_plan"):
     """Configuration for a 'multi LLM plan generation' strategy."""
     llms: list[LLMRef] = Field(
@@ -93,6 +115,24 @@ class MultiLLMPlanConfig(TTCStrategyBaseConfig, name="multi_llm_plan"):
         return values
 
 
+class MultiLLMPlan(MultiLLMPlanConfig, NatTTCStrategy):
+    """Multi LLM Plan Strategy"""
+
+    llms: list[LLMRef] = Field(
+        default_factory=list,
+        description="list of LLMs to use for plan generation. Each LLM can generate one or more plans.",
+        init=False)
+
+    nat_llms: list[NatLLM] = Field(exclude=True)
+
+    @model_validator(mode="after")
+    def set_llm_names_from_llms(self):
+        """Set llm names from llm objects if llms are provided."""
+        if self.nat_llms and len(self.nat_llms) > 0:
+            self.llms = [LLMRef(value=nat_llm.compute_name(LLMBaseConfig)) for nat_llm in self.nat_llms]
+        return self
+
+
 class MultiQueryRetrievalSearchConfig(TTCStrategyBaseConfig, name="multi_query_retrieval_search"):
     """
     Configuration for the MultiQueryRetrievalSearch strategy.
@@ -118,3 +158,20 @@ class MultiQueryRetrievalSearchConfig(TTCStrategyBaseConfig, name="multi_query_r
         if not values.get('llms'):
             raise ValueError("At least one LLMRef must be provided for multi_query_retrieval_search.")
         return values
+
+
+class MultiQueryRetrievalSearch(MultiQueryRetrievalSearchConfig, NatTTCStrategy):
+    """Multi Query Retrieval Search Strategy"""
+
+    llms: list[LLMRef] = Field(default_factory=list,
+                               description="list of LLM references to use for generating diverse queries.",
+                               init=False)
+
+    nat_llms: list[NatLLM] = Field(exclude=True)
+
+    @model_validator(mode="after")
+    def set_llm_names_from_llms(self):
+        """Set llm names from llm objects if llms are provided."""
+        if self.nat_llms and len(self.nat_llms) > 0:
+            self.llms = [LLMRef(value=nat_llm.compute_name(LLMBaseConfig)) for nat_llm in self.nat_llms]
+        return self

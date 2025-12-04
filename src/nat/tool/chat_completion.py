@@ -20,13 +20,16 @@ natural language queries and perform basic text completion tasks.
 """
 
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.data_models.llm import LLMBaseConfig
 from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_llm import NatLLM
 
 
 class ChatCompletionConfig(FunctionBaseConfig, name="chat_completion"):
@@ -42,6 +45,16 @@ class ChatCompletionConfig(FunctionBaseConfig, name="chat_completion"):
 
 class ChatCompletion(ChatCompletionConfig, NatFunction):
     """Chat Completion Tool"""
+
+    llm: NatLLM = Field(exclude=True)
+    llm_name: LLMRef = Field(description="", default=LLMRef(value=""), init=False)
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set llm name from llm object if llm is provided."""
+        if self.llm:
+            self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+        return self
 
 
 @register_function(config_type=ChatCompletionConfig)

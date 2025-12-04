@@ -17,12 +17,15 @@ import socket
 import subprocess
 
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.data_models.llm import LLMBaseConfig
+from nat.utils.sdk.nat_llm import NatLLM
 
 from . import utils
 from .prompts import NetworkConnectivityCheckPrompts
@@ -31,10 +34,27 @@ from .prompts import NetworkConnectivityCheckPrompts
 class NetworkConnectivityCheckToolConfig(FunctionBaseConfig, name="network_connectivity_check"):
     description: str = Field(default=NetworkConnectivityCheckPrompts.TOOL_DESCRIPTION,
                              description="Description of the tool.")
-    llm_name: LLMRef
+    llm_name: LLMRef = Field(description="LLM to use for the network connectivity check task.")
     prompt: str = Field(default=NetworkConnectivityCheckPrompts.PROMPT,
                         description="Main prompt for the network connectivity check task.")
     offline_mode: bool = Field(default=True, description="Whether to run in offline model")
+
+
+class NetworkConnectivityCheckTool(NetworkConnectivityCheckToolConfig):
+    """Network Connectivity Check Tool"""
+
+    llm_name: LLMRef = Field(description="LLM to use for the network connectivity check task.",
+                             default=LLMRef(value=""),
+                             init=False)
+
+    llm: NatLLM = Field(exclude=True)
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set llm_name from llm object if llm is provided."""
+        if self.llm:
+            self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+        return self
 
 
 def _check_service_banner(host: str, port: int = 80, connect_timeout: float = 10, read_timeout: float = 10) -> str:

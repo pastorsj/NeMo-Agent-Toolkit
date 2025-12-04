@@ -59,13 +59,14 @@ class MilvusRetrieverConfig(RetrieverBaseConfig, name="milvus_retriever"):
 class MilvusRetriever(MilvusRetrieverConfig, NatRetriever):
     """Milvus Retriever Provider"""
 
-    embedder: NatEmbedder
-    embedding_model: str = Field(description="", default="", init=False, exclude=True)
+    embedder: NatEmbedder = Field(exclude=True)
+    embedding_model: str = Field(description="", default="", init=False)
 
     @model_validator(mode='after')
     def set_embedder_name(self):
         """Set embedder name from embedder object if embedder is provided."""
-        self.embedding_model = self.embedder.compute_name(RetrieverBaseConfig)
+        if self.embedder is not None:
+            self.embedding_model = self.embedder.compute_name(RetrieverBaseConfig)
         return self
 
 
@@ -100,36 +101,6 @@ async def milvus_retriever_client(config: MilvusRetrieverConfig, builder: Builde
     # Using parameters in the config to set default values which can be overridden during the function call.
     optional_fields = ["collection_name", "top_k", "output_fields", "search_params", "vector_field"]
     model_dict = config.model_dump()
-    optional_args = {field: model_dict[field] for field in optional_fields if model_dict[field] is not None}
-
-    retriever.bind(**optional_args)
-
-    yield retriever
-    yield retriever
-    yield retriever
-    yield retriever
-    yield retriever
-    yield retriever
-    optional_args = {field: model_dict[field] for field in optional_fields if model_dict[field] is not None}
-
-    retriever.bind(**optional_args)
-
-    yield retriever
-    yield retriever
-    yield retriever
-    yield retriever
-    yield retriever
-    yield retriever
-    optional_args = {field: model_dict[field] for field in optional_fields if model_dict[field] is not None}
-
-    retriever.bind(**optional_args)
-
-    yield retriever
-    yield retriever
-    yield retriever
-    yield retriever
-    yield retriever
-    yield retriever
     optional_args = {field: model_dict[field] for field in optional_fields if model_dict[field] is not None}
 
     retriever.bind(**optional_args)

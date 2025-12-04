@@ -25,6 +25,7 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
 from nat.data_models.interactive import HumanPromptText
 from nat.data_models.interactive import InteractionResponse
+from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,10 @@ class HITLApprovalFnConfig(FunctionBaseConfig, name="hitl_approval_tool"):
     @classmethod
     def validate_prompt(cls, prompt: str) -> str:
         return prompt.strip()
+
+
+class HITLApprovalTool(HITLApprovalFnConfig, NatFunction):
+    pass
 
 
 @register_function(config_type=HITLApprovalFnConfig)

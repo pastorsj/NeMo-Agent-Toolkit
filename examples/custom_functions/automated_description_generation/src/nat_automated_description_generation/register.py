@@ -16,6 +16,7 @@
 import logging
 
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
@@ -26,12 +27,17 @@ from nat.data_models.component_ref import FunctionRef
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.component_ref import RetrieverRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.data_models.llm import LLMBaseConfig
+from nat.data_models.retriever import RetrieverBaseConfig
 from nat.retriever.models import RetrieverOutput
+from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_llm import NatLLM
+from nat.utils.sdk.nat_retriever import NatRetriever
 
 logger = logging.getLogger(__name__)
 
 
-class AutomatedDescriptionMilvusWorkflow(FunctionBaseConfig, name="automated_description_milvus"):
+class AutomatedDescriptionMilvusWorkflowConfig(FunctionBaseConfig, name="automated_description_milvus"):
     """
     Workflow which generates a description for a Milvus Collection by analyzing a subset of its contents.
     """
@@ -46,12 +52,43 @@ class AutomatedDescriptionMilvusWorkflow(FunctionBaseConfig, name="automated_des
     vector_field: str = Field(default="vector", description="Field holding the embeddings in the collection.")
 
 
+class AutomatedDescriptionMilvusWorkflow(AutomatedDescriptionMilvusWorkflowConfig, NatFunction):
+    """Automated Description Generation Workflow for Milvus Collections"""
+
+    llm_name: LLMRef = Field(description="LLM to use for summarizing documents and generating a description.",
+                             default=LLMRef(value=""),
+                             init=False)
+    retriever_name: RetrieverRef = Field(description="Name of the retriever to use for fetching documents.",
+                                         default=RetrieverRef(value=""),
+                                         init=False)
+    retrieval_tool_name: FunctionRef = Field(description="Name of the retrieval tool to use for fetching documents.",
+                                             default=FunctionRef(value=""),
+                                             init=False)
+
+    llm: NatLLM = Field(exclude=True)
+    retriever: NatRetriever = Field(exclude=True)
+    retrieval_tool: NatFunction = Field(exclude=True)
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set component names from objects if they are provided."""
+        if self.llm:
+            self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+        if self.retriever:
+            self.retriever_name = RetrieverRef(value=self.retriever.compute_name(RetrieverBaseConfig))
+        if self.retrieval_tool:
+            self.retrieval_tool_name = FunctionRef(value=self.retrieval_tool.compute_name(FunctionBaseConfig))
+        return self
+
+
 # We want this to load a retriever, then generate a description for a Milvus collection.
 # Then on invoke, return the result of the retriever invocation with the description set.
 
 
-@register_function(config_type=AutomatedDescriptionMilvusWorkflow, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])
-async def automated_description_milvus_workflow(workflow_config: AutomatedDescriptionMilvusWorkflow, builder: Builder):
+@register_function(config_type=AutomatedDescriptionMilvusWorkflowConfig,
+                   framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])
+async def automated_description_milvus_workflow(workflow_config: AutomatedDescriptionMilvusWorkflowConfig,
+                                                builder: Builder):
     from nat_automated_description_generation.utils.description_generation import generate_description
     from nat_automated_description_generation.utils.prompts import direct_summary_prompt
     from nat_automated_description_generation.utils.prompts import map_prompt

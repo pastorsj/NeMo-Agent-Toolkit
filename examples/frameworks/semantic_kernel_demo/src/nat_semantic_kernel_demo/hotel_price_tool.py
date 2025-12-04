@@ -19,11 +19,16 @@ from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
 
 
 class HotelPriceToolConfig(FunctionBaseConfig, name="hotel_price"):
     data_path: str = "examples/frameworks/semantic_kernel_demo/data/hotel_prices.json"
     date_format: str = "%Y-%m-%d"
+
+
+class HotelPriceTool(HotelPriceToolConfig, NatFunction):
+    pass
 
 
 class HotelOffer(BaseModel):

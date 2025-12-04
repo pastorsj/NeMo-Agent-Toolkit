@@ -19,7 +19,10 @@ from pydantic import Field
 from pydantic import model_validator
 
 from nat.data_models.component_ref import LLMRef
+from nat.data_models.llm import LLMBaseConfig
 from nat.data_models.ttc_strategy import TTCStrategyBaseConfig
+from nat.utils.sdk.nat_llm import NatLLM
+from nat.utils.sdk.nat_ttc_strategy import NatTTCStrategy
 
 
 class LLMBasedPlanSelectionConfig(TTCStrategyBaseConfig, name="llm_based_plan_selection"):
@@ -58,6 +61,24 @@ class LLMBasedPlanSelectionConfig(TTCStrategyBaseConfig, name="llm_based_plan_se
                              ' selection_strategy is set to LLM_BASED_PLAN_SELECTION.')
 
         return values
+
+
+class LLMBasedPlanSelection(LLMBasedPlanSelectionConfig, NatTTCStrategy):
+    """LLM Based Plan Selection Strategy"""
+
+    selection_llm: LLMRef | typing.Any | None = Field(
+        default=None,
+        description="The LLM to use for selecting the best plan. This can be an instance of an LLM client.",
+        init=False)
+
+    llm: NatLLM | None = Field(default=None, exclude=True)
+
+    @model_validator(mode='after')
+    def set_selection_llm_name_from_llm(self):
+        """Set selection llm name from llm object if llm is provided."""
+        if self.llm is not None:
+            self.selection_llm = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+        return self
 
 
 class LLMBasedAgentOutputSelectionConfig(TTCStrategyBaseConfig, name="llm_based_agent_output_selection"):
@@ -102,6 +123,24 @@ class LLMBasedAgentOutputSelectionConfig(TTCStrategyBaseConfig, name="llm_based_
         return values
 
 
+class LLMBasedAgentOutputSelection(LLMBasedAgentOutputSelectionConfig, NatTTCStrategy):
+    """LLM Based Agent Output Selection Strategy"""
+
+    selection_llm: LLMRef | typing.Any | None = Field(
+        default=None,
+        description="The LLM to use for selecting the best plan. This can be an instance of an LLM client.",
+        init=False)
+
+    llm: NatLLM | None = Field(default=None, exclude=True)
+
+    @model_validator(mode='after')
+    def set_selection_llm_name_from_llm(self):
+        """Set selection llm name from llm object if llm is provided."""
+        if self.llm is not None:
+            self.selection_llm = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+        return self
+
+
 class LLMBasedOutputMergingConfig(TTCStrategyBaseConfig, name="llm_based_agent_output_merging"):
     """
     Configuration for LLMBasedSelection.
@@ -139,6 +178,24 @@ class LLMBasedOutputMergingConfig(TTCStrategyBaseConfig, name="llm_based_agent_o
         return values
 
 
+class LLMBasedOutputMerging(LLMBasedOutputMergingConfig, NatTTCStrategy):
+    """LLM Based Agent Output Merging Strategy"""
+
+    selection_llm: LLMRef | typing.Any | None = Field(
+        default=None,
+        description="The LLM to use for selecting the best plan. This can be an instance of an LLM client.",
+        init=False)
+
+    llm: NatLLM | None = Field(default=None, exclude=True)
+
+    @model_validator(mode='after')
+    def set_selection_llm_name_from_llm(self):
+        """Set selection llm name from llm object if llm is provided."""
+        if self.llm is not None:
+            self.selection_llm = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+        return self
+
+
 class ThresholdSelectionConfig(TTCStrategyBaseConfig, name="threshold_selection"):
     """
     Configuration for a selection strategy that keeps only the items
@@ -147,8 +204,17 @@ class ThresholdSelectionConfig(TTCStrategyBaseConfig, name="threshold_selection"
     threshold: float = Field(default=5.0, description="Only keep TTCItems with score >= this value.")
 
 
+class ThresholdSelection(ThresholdSelectionConfig, NatTTCStrategy):
+    """Threshold Selection Strategy"""
+    pass
+
+
 class BestOfNSelectionConfig(TTCStrategyBaseConfig, name="best_of_n_selection"):
     """
     Configuration for Best of N Selection
     """
     pass
+
+
+class BestOfNSelection(BestOfNSelectionConfig, NatTTCStrategy):
+    """Best of N Selection Strategy"""

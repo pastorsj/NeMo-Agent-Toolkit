@@ -19,7 +19,10 @@ from pydantic import Field
 from pydantic import model_validator
 
 from nat.data_models.component_ref import LLMRef
+from nat.data_models.llm import LLMBaseConfig
 from nat.data_models.ttc_strategy import TTCStrategyBaseConfig
+from nat.utils.sdk.nat_llm import NatLLM
+from nat.utils.sdk.nat_ttc_strategy import NatTTCStrategy
 
 
 class LLMAsAJudgeEditorConfig(TTCStrategyBaseConfig, name="llm_as_a_judge_editor"):
@@ -87,6 +90,33 @@ class LLMAsAJudgeEditorConfig(TTCStrategyBaseConfig, name="llm_as_a_judge_editor
         return values
 
 
+class LLMAsAJudgeEditor(LLMAsAJudgeEditorConfig, NatTTCStrategy):
+    """LLM As A Judge Editor Strategy"""
+
+    editing_llm: LLMRef | typing.Any | None = Field(
+        default=None,
+        description="The LLM to use for editing the plans. This can be a callable or an instance of an LLM client.",
+        init=False)
+
+    # If strategy is LLM_AS_A_JUDGE, ensure that the feedback_llm is provided.
+    feedback_llm: LLMRef | typing.Any | None = Field(default=None,
+                                                     description="The LLM to use for generating feedback on the plans."
+                                                     " This can be a callable or an instance of an LLM client.",
+                                                     init=False)
+
+    nat_editing_llm: NatLLM = Field(exclude=True)
+    nat_feedback_llm: NatLLM = Field(exclude=True)
+
+    @model_validator(mode="after")
+    def set_llm_names_from_llms(self):
+        """Set llm names from llm objects if llms are provided."""
+        if self.editing_llm is not None:
+            self.editing_llm = LLMRef(value=self.nat_editing_llm.compute_name(LLMBaseConfig))
+        if self.feedback_llm is not None:
+            self.feedback_llm = LLMRef(value=self.nat_feedback_llm.compute_name(LLMBaseConfig))
+        return self
+
+
 class IterativePlanRefinementConfig(TTCStrategyBaseConfig, name="iterative_plan_refinement"):
     """Configuration for an 'iterative plan refinement' strategy."""
     editor_llm: LLMRef | typing.Any | None = Field(
@@ -107,6 +137,24 @@ class IterativePlanRefinementConfig(TTCStrategyBaseConfig, name="iterative_plan_
         if values.get('num_iterations', 0) < 1:
             raise ValueError('num_iterations must be >= 1 for iterative plan refinement.')
         return values
+
+
+class IterativePlanRefinement(IterativePlanRefinementConfig, NatTTCStrategy):
+    """Iterative Plan Refinement Strategy"""
+
+    editor_llm: LLMRef | typing.Any | None = Field(
+        default=None,
+        description="The LLM to use for generating and refining the plan across multiple iterations.",
+        init=False)
+
+    nat_editor_llm: NatLLM = Field(exclude=True)
+
+    @model_validator(mode="after")
+    def set_references(self):
+        """Set llm name from llm object if llm is provided."""
+        if self.editor_llm is not None:
+            self.editor_llm = LLMRef(value=self.nat_editor_llm.compute_name(LLMBaseConfig))
+        return self
 
 
 class MotivationAwareSummarizationConfig(TTCStrategyBaseConfig, name="motivation_aware_editing"):
@@ -130,3 +178,21 @@ class MotivationAwareSummarizationConfig(TTCStrategyBaseConfig, name="motivation
                  "Please respond with a concise summary that addresses the task and motivation, in at most one"
                  "or two sentences. Do not include any other output except the summary. "),
         description="The template to use for summarizing documents.")
+
+
+class MotivationAwareSummarization(MotivationAwareSummarizationConfig, NatTTCStrategy):
+    """Motivation Aware Summarization Strategy"""
+
+    editor_llm: LLMRef | typing.Any | None = Field(
+        default=None,
+        description="The LLM to use for editing the plans. This can be a callable or an instance of an LLM client.",
+        init=False)
+
+    nat_editor_llm: NatLLM = Field(exclude=True)
+
+    @model_validator(mode="after")
+    def set_references(self):
+        """Set llm name from llm object if llm is provided."""
+        if self.editor_llm is not None:
+            self.editor_llm = LLMRef(value=self.nat_editor_llm.compute_name(LLMBaseConfig))
+        return self

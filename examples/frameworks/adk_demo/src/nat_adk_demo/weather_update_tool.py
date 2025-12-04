@@ -21,9 +21,14 @@ from nat.builder.framework_enum import LLMFrameworkEnum
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
 
 
 class WeatherToolConfig(FunctionBaseConfig, name="weather_update"):
+    pass
+
+
+class WeatherUpdateTool(WeatherToolConfig, NatFunction):
     pass
 
 

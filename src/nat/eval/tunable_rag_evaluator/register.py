@@ -43,13 +43,14 @@ class TunableRagEvaluatorConfig(EvaluatorBaseConfig, name="tunable_rag_evaluator
 class TunableRagEvaluator(TunableRagEvaluatorConfig, NatEvaluator):
     """Tunable RAG Evaluator"""
 
-    llm: NatLLM
-    llm_name: LLMRef = Field(description="", default=LLMRef(value=""), init=False, exclude=True)
+    llm: NatLLM = Field(exclude=True)
+    llm_name: LLMRef = Field(description="", default=LLMRef(value=""), init=False)
 
     @model_validator(mode='after')
-    def set_llm_name_from_llm(self):
+    def set_references(self):
         """Set llm_name from llm object if llm is provided."""
-        self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+        if self.llm:
+            self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
         return self
 
 

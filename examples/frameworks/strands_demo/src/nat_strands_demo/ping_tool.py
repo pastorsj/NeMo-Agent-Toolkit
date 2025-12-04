@@ -19,11 +19,16 @@ from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
 
 class PingConfig(FunctionBaseConfig, name="simple_agentcore_ping"):
+    pass
+
+
+class PingTool(PingConfig, NatFunction):
     pass
 
 

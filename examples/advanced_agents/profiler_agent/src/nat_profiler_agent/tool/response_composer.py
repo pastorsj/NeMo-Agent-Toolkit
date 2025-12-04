@@ -22,6 +22,7 @@ from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
 from nat_profiler_agent.data_models import TraceInfo
 
 logger = logging.getLogger(__name__)
@@ -31,6 +32,10 @@ class ResponseComposerConfig(FunctionBaseConfig, name="response_composer"):
     """Configuration for the ResponseComposer tool."""
 
     pass
+
+
+class ResponseComposerTool(ResponseComposerConfig, NatFunction):
+    """Response Composer Tool"""
 
 
 class ResponseComposerInput(BaseModel):

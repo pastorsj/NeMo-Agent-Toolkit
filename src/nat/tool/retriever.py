@@ -24,6 +24,7 @@ from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import RetrieverRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.data_models.retriever import RetrieverBaseConfig
 from nat.retriever.interface import Retriever
 from nat.retriever.models import RetrieverError
 from nat.retriever.models import RetrieverOutput
@@ -50,13 +51,14 @@ class RetrieverToolConfig(FunctionBaseConfig, name="nat_retriever"):
 class NatRetrieverTool(RetrieverToolConfig, NatFunction):
     """NAT Retriever Tool"""
 
-    nat_retriever: NatRetriever
-    retriever: RetrieverRef = Field(description="", default=RetrieverRef(value=""), init=False, exclude=True)
+    retriever: RetrieverRef = Field(description="", default=RetrieverRef(value=""), init=False)
+    nat_retriever: NatRetriever = Field(exclude=True)
 
     @model_validator(mode='after')
     def set_retriever_name_from_retriever(self):
         """Set retriever name from retriever object if retriever is provided."""
-        self.retriever = RetrieverRef(value=self.nat_retriever.compute_name(FunctionBaseConfig))
+        if self.nat_retriever:
+            self.retriever = RetrieverRef(value=self.nat_retriever.compute_name(RetrieverBaseConfig))
         return self
 
 

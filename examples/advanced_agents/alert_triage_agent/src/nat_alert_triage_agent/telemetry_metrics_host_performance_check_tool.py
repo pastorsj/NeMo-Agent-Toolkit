@@ -21,12 +21,16 @@ from datetime import timedelta
 
 import requests
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.data_models.llm import LLMBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_llm import NatLLM
 
 from . import utils
 from .prompts import TelemetryMetricsHostPerformanceCheckPrompts
@@ -36,13 +40,27 @@ class TelemetryMetricsHostPerformanceCheckToolConfig(FunctionBaseConfig,
                                                      name="telemetry_metrics_host_performance_check"):
     description: str = Field(default=TelemetryMetricsHostPerformanceCheckPrompts.TOOL_DESCRIPTION,
                              description="Description of the tool.")
-    llm_name: LLMRef
+    llm_name: LLMRef = Field(description="LLM to use for the telemetry metrics host performance check task.")
     prompt: str = Field(
         default=TelemetryMetricsHostPerformanceCheckPrompts.PROMPT,
         description="Main prompt for the telemetry metrics host performance check task.",
     )
     offline_mode: bool = Field(default=True, description="Whether to run in offline model")
     metrics_url: str = Field(default="", description="URL of the monitoring system")
+
+
+class TelemetryMetricsHostPerformanceCheckTool(TelemetryMetricsHostPerformanceCheckToolConfig, NatFunction):
+    """Telemetry Metrics Host Performance Check Tool"""
+    llm_name: LLMRef = Field(description="", default=LLMRef(value=""), init=False)
+
+    llm: NatLLM = Field(exclude=True)
+
+    @model_validator(mode="after")
+    def set_references(self):
+        """Set llm name from llm object if llm is provided."""
+        if self.llm:
+            self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+        return self
 
 
 def _timeseries_stats(ts):

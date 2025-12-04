@@ -1,6 +1,6 @@
-from nat.data_models.authentication import AuthProviderBaseConfig
+from nat.data_models.common import TypedBaseModel
 from nat.utils.sdk.nat_base import NatBase
 
 
-class NatAuthProvider(AuthProviderBaseConfig, NatBase):
+class NatAuthProvider(TypedBaseModel, NatBase):
     pass

@@ -15,12 +15,16 @@
 
 import requests
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.data_models.llm import LLMBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_llm import NatLLM
 
 from . import utils
 from .prompts import TelemetryMetricsHostHeartbeatCheckPrompts
@@ -29,11 +33,27 @@ from .prompts import TelemetryMetricsHostHeartbeatCheckPrompts
 class TelemetryMetricsHostHeartbeatCheckToolConfig(FunctionBaseConfig, name="telemetry_metrics_host_heartbeat_check"):
     description: str = Field(default=TelemetryMetricsHostHeartbeatCheckPrompts.TOOL_DESCRIPTION,
                              description="Description of the tool.")
-    llm_name: LLMRef
+    llm_name: LLMRef = Field(description="LLM to use for the telemetry metrics host heartbeat check task.")
     prompt: str = Field(default=TelemetryMetricsHostHeartbeatCheckPrompts.PROMPT,
                         description="Main prompt for the telemetry metrics host heartbeat check task.")
     offline_mode: bool = Field(default=True, description="Whether to run in offline model")
     metrics_url: str = Field(default="", description="URL of the monitoring system")
+
+
+class TelemetryMetricsHostHeartbeatCheckTool(TelemetryMetricsHostHeartbeatCheckToolConfig, NatFunction):
+    """Telemetry Metrics Host Heartbeat Check Tool"""
+    llm_name: LLMRef = Field(description="LLM to use for the telemetry metrics host heartbeat check task.",
+                             default=LLMRef(value=""),
+                             init=False)
+
+    llm: NatLLM = Field(exclude=True)
+
+    @model_validator(mode="after")
+    def set_references(self):
+        """Set llm name from llm object if llm is provided."""
+        if self.llm:
+            self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+        return self
 
 
 @register_function(config_type=TelemetryMetricsHostHeartbeatCheckToolConfig)

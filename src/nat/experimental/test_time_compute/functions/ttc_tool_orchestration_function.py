@@ -17,6 +17,7 @@ import asyncio
 import logging
 
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
@@ -25,11 +26,14 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import FunctionRef
 from nat.data_models.component_ref import TTCStrategyRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.data_models.ttc_strategy import TTCStrategyBaseConfig
 from nat.experimental.test_time_compute.models.stage_enums import PipelineTypeEnum
 from nat.experimental.test_time_compute.models.stage_enums import StageTypeEnum
 from nat.experimental.test_time_compute.models.tool_use_config import ToolUseInputSchema
 from nat.experimental.test_time_compute.models.tool_use_config import ToolUselist
 from nat.experimental.test_time_compute.models.ttc_item import TTCItem
+from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_ttc_strategy import NatTTCStrategy
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +66,64 @@ class TTCToolOrchestrationFunctionConfig(FunctionBaseConfig, name="ttc_tool_orch
 
     selection_strategy: TTCStrategyRef = Field(
         description="The TTC selection strategy to use for orchestrating invocation of the functions.")
+
+
+class TTCToolOrchestrationFunction(TTCToolOrchestrationFunctionConfig, NatFunction):
+    """TTCTool Wrapper Tool"""
+
+    augmented_fns: list[FunctionRef] = Field(
+        description="list of FunctionRefs for the functions to be orchestrated. Must be wrapped in `ttc_tool_wrapper`.",
+        init=False)
+
+    search_strategy: TTCStrategyRef | None = Field(
+        description="The TTC search strategy to use for orchestrating invocation of the functions."
+        " If None, no search will be performed.",
+        default=None,
+        init=False,
+    )
+
+    editing_strategy: TTCStrategyRef | None = Field(
+        default=None,
+        description="The TTC editing strategy to use for orchestrating invocation of the functions. "
+        "If None, no editing will be performed.",
+        init=False,
+    )
+
+    scoring_strategy: TTCStrategyRef | None = Field(
+        default=None,
+        description="The TTC scoring strategy to use for orchestrating invocation of the functions. "
+        "If None, no scoring will be performed.",
+        init=False,
+    )
+
+    selection_strategy: TTCStrategyRef = Field(
+        description="The TTC selection strategy to use for orchestrating invocation of the functions.", init=False)
+
+    augmented_functions: list[NatFunction] = Field(exclude=True)
+    nat_search_strategy: NatTTCStrategy | None = Field(exclude=True)
+    nat_editing_strategy: NatTTCStrategy | None = Field(exclude=True)
+    nat_scoring_strategy: NatTTCStrategy | None = Field(exclude=True)
+    nat_selection_strategy: NatTTCStrategy = Field(exclude=True)
+
+    @model_validator(mode='after')
+    def set_augmented_fns_name_from_functions(self):
+        """Set augmented function names from augmented function objects if augmented functions are provided."""
+        if self.augmented_functions and len(self.augmented_functions) > 0:
+            self.augmented_fns = [
+                FunctionRef(value=fn.compute_name(FunctionBaseConfig)) for fn in self.augmented_functions
+            ]
+
+        if self.nat_search_strategy:
+            self.search_strategy = TTCStrategyRef(value=self.nat_search_strategy.compute_name(TTCStrategyBaseConfig))
+        if self.nat_editing_strategy:
+            self.editing_strategy = TTCStrategyRef(value=self.nat_editing_strategy.compute_name(TTCStrategyBaseConfig))
+        if self.nat_scoring_strategy:
+            self.scoring_strategy = TTCStrategyRef(value=self.nat_scoring_strategy.compute_name(TTCStrategyBaseConfig))
+        if self.nat_selection_strategy:
+            self.selection_strategy = TTCStrategyRef(
+                value=self.nat_selection_strategy.compute_name(TTCStrategyBaseConfig))
+
+        return self
 
 
 @register_function(config_type=TTCToolOrchestrationFunctionConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])

@@ -17,6 +17,7 @@ import logging
 import typing
 
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.agent.base import AGENT_LOG_PREFIX
 from nat.builder.builder import Builder
@@ -26,7 +27,10 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import FunctionRef
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.data_models.llm import LLMBaseConfig
 from nat.data_models.openai_mcp import OpenAIMCPSchemaTool
+from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_llm import NatLLM
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +59,27 @@ class ResponsesAPIAgentWorkflowConfig(FunctionBaseConfig, name="responses_api_ag
     handle_tool_errors: bool = Field(
         default=True,
         description="Specify ability to handle tool calling errors. If False, tool errors will raise an exception.")
+
+
+class ResponsesAPIAgentWorkflow(FunctionBaseConfig, NatFunction):
+    """Responses API Agent Workflow"""
+
+    llm_name: LLMRef = Field(description="The LLM model to use with the agent.", default=LLMRef(value=""), init=False)
+    nat_tools: list[FunctionRef] = Field(default_factory=list,
+                                         description="The list of tools to provide to the agent.",
+                                         init=False)
+
+    llm: NatLLM = Field(exclude=True)
+    tools: list[NatFunction] = Field(exclude=True)
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set component names from objects if they are provided."""
+        if self.llm:
+            self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+        if self.tools and len(self.tools) > 0:
+            self.nat_tools = [FunctionRef(value=tool.compute_name(FunctionBaseConfig)) for tool in self.tools]
+        return self
 
 
 @register_function(config_type=ResponsesAPIAgentWorkflowConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])

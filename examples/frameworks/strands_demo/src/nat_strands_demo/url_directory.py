@@ -24,6 +24,7 @@ from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,10 @@ class URLDirectoryConfig(FunctionBaseConfig, name="url_directory"):
             if parsed.scheme not in ("http", "https"):
                 raise ValueError(f"Unsupported scheme for '{name}': {parsed.scheme} (only http/https allowed)")
         return v
+
+
+class URLDirectoryTool(URLDirectoryConfig, NatFunction):
+    pass
 
 
 @register_function(config_type=URLDirectoryConfig)
