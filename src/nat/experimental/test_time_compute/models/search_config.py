@@ -52,6 +52,7 @@ class SingleShotMultiPlanConfig(TTCStrategyBaseConfig, name="single_shot_multi_p
         description="The template to use for generating plans.")
 
     @model_validator(mode="before")
+    @classmethod
     def validate_strategies(cls, values: dict[str, typing.Any]) -> dict[str, typing.Any]:
         """
         Ensure that the required LLMs are provided based on the selected strategies.
@@ -108,9 +109,10 @@ class MultiLLMPlanConfig(TTCStrategyBaseConfig, name="multi_llm_plan"):
         description="The template to use for generating plans.")
 
     @model_validator(mode="before")
+    @classmethod
     def validate_multi_llm_strategies(cls, values: dict) -> dict:
         if not values.get('llms'):
-            raise ValueError('Must provide at least one LLMRef in `llms` for multi-LLM strategy.')
+            raise ValueError('Must provide at least one LLMRef in `llms` for multi_llm_plan strategy.')
         return values
 
 
@@ -125,7 +127,7 @@ class MultiLLMPlan(MultiLLMPlanConfig, NatTTCStrategy):
     nat_llms: list[NatLLM] | None = Field(default=None, exclude=True)
 
     @model_validator(mode="after")
-    def set_llm_names_from_llms(self):
+    def set_references(self):
         """Set llm names from llm objects if llms are provided."""
         if self.nat_llms and len(self.nat_llms) > 0:
             self.llms = [LLMRef(value=nat_llm.computed_name) for nat_llm in self.nat_llms]
@@ -153,6 +155,7 @@ class MultiQueryRetrievalSearchConfig(TTCStrategyBaseConfig, name="multi_query_r
         description="Prompt template for rewriting the task from a different perspective.")
 
     @model_validator(mode="before")
+    @classmethod
     def validate_llms(cls, values):
         if not values.get('llms'):
             raise ValueError("At least one LLMRef must be provided for multi_query_retrieval_search.")
@@ -169,7 +172,38 @@ class MultiQueryRetrievalSearch(MultiQueryRetrievalSearchConfig, NatTTCStrategy)
     nat_llms: list[NatLLM] | None = Field(default=None, exclude=True)
 
     @model_validator(mode="after")
-    def set_llm_names_from_llms(self):
+    def set_references(self):
+        """Set llm names from llm objects if llms are provided."""
+        if self.nat_llms and len(self.nat_llms) > 0:
+            self.llms = [LLMRef(value=nat_llm.computed_name) for nat_llm in self.nat_llms]
+        return self
+
+
+class MultiLLMGenerationConfig(TTCStrategyBaseConfig, name="multi_llm_generation"):
+    """Configuration for a 'multi LLM generation' strategy."""
+    llms: list[LLMRef] = Field(default_factory=list, description="List of LLMs to use for response generation.")
+    generation_template: str = Field(default=("You are a helpful AI assistant. Answer the following user "
+                                              "query:\n\nQuery: {prompt}\n\nAnswer:"),
+                                     description="The template to use for generating responses.")
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_config(cls, values: dict) -> dict:
+        if not values.get('llms') or not isinstance(values.get('llms'), list) or len(values['llms']) == 0:
+            raise ValueError("At least one LLMRef must be provided for multi_llm_generation strategy.")
+        return values
+
+
+class MultiLLMGeneration(MultiLLMGenerationConfig, NatTTCStrategy):
+    """Multi LLM Generation Strategy"""
+
+    llms: list[LLMRef] = Field(default_factory=list,
+                               description="List of LLMs to use for response generation.",
+                               init=False)
+    nat_llms: list[NatLLM] | None = Field(default=None, exclude=True)
+
+    @model_validator(mode="after")
+    def set_references(self):
         """Set llm names from llm objects if llms are provided."""
         if self.nat_llms and len(self.nat_llms) > 0:
             self.llms = [LLMRef(value=nat_llm.computed_name) for nat_llm in self.nat_llms]
