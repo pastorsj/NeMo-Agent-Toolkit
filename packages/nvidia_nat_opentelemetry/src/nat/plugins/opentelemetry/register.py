@@ -26,6 +26,7 @@ from nat.data_models.common import get_secret_value
 from nat.data_models.telemetry_exporter import TelemetryExporterBaseConfig
 from nat.observability.mixin.batch_config_mixin import BatchConfigMixin
 from nat.observability.mixin.collector_config_mixin import CollectorConfigMixin
+from nat.utils.sdk.nat_telemetry_exporter import NatTelemetryExporter
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,10 @@ class LangfuseTelemetryExporter(BatchConfigMixin, TelemetryExporterBaseConfig, n
     secret_key: SerializableSecretStr = Field(description="The Langfuse secret key", default="")
     resource_attributes: dict[str, str] = Field(default_factory=dict,
                                                 description="The resource attributes to add to the span")
+
+
+class LangfuseTelemetry(LangfuseTelemetryExporter, NatTelemetryExporter):
+    """Langfuse Telemetry Exporter"""
 
 
 @register_telemetry_exporter(config_type=LangfuseTelemetryExporter)
@@ -77,6 +82,10 @@ class LangsmithTelemetryExporter(BatchConfigMixin, CollectorConfigMixin, Telemet
                                                 description="The resource attributes to add to the span")
 
 
+class LangsmithTelemetry(LangsmithTelemetryExporter, NatTelemetryExporter):
+    """Langsmith Telemetry Exporter"""
+
+
 @register_telemetry_exporter(config_type=LangsmithTelemetryExporter)
 async def langsmith_telemetry_exporter(config: LangsmithTelemetryExporter, builder: Builder):
     """Create a Langsmith telemetry exporter."""
@@ -105,6 +114,10 @@ class OtelCollectorTelemetryExporter(BatchConfigMixin,
 
     resource_attributes: dict[str, str] = Field(default_factory=dict,
                                                 description="The resource attributes to add to the span")
+
+
+class OtelCollectorTelemetry(OtelCollectorTelemetryExporter, NatTelemetryExporter):
+    """Otel Collector Telemetry Exporter"""
 
 
 @register_telemetry_exporter(config_type=OtelCollectorTelemetryExporter)
@@ -142,6 +155,10 @@ class PatronusTelemetryExporter(BatchConfigMixin, CollectorConfigMixin, Telemetr
                                                 description="The resource attributes to add to the span")
 
 
+class PatronusTelemetry(PatronusTelemetryExporter, NatTelemetryExporter):
+    """Patronus Telemetry Exporter"""
+
+
 @register_telemetry_exporter(config_type=PatronusTelemetryExporter)
 async def patronus_telemetry_exporter(config: PatronusTelemetryExporter, builder: Builder):
     """Create a Patronus telemetry exporter."""
@@ -175,6 +192,10 @@ class GalileoTelemetryExporter(BatchConfigMixin, CollectorConfigMixin, Telemetry
     api_key: SerializableSecretStr = Field(description="The api key to authenticate with the galileo service.")
 
 
+class GalileoTelemetry(GalileoTelemetryExporter, NatTelemetryExporter):
+    """Galileo Telemetry Exporter"""
+
+
 @register_telemetry_exporter(config_type=GalileoTelemetryExporter)
 async def galileo_telemetry_exporter(config: GalileoTelemetryExporter, builder: Builder):
     """Create a Galileo telemetry exporter."""
@@ -204,6 +225,10 @@ class DBNLTelemetryExporter(BatchConfigMixin, TelemetryExporterBaseConfig, name=
     api_url: str | None = Field(description="The DBNL API URL.", default=None)
     api_token: OptionalSecretStr = Field(description="The DBNL API token.", default=None)
     project_id: str | None = Field(description="The DBNL project id.", default=None)
+
+
+class DBNLTelemetry(DBNLTelemetryExporter, NatTelemetryExporter):
+    """DBNL Telemetry Exporter"""
 
 
 @register_telemetry_exporter(config_type=DBNLTelemetryExporter)

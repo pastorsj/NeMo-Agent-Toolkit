@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.cli.register_workflow import register_memory
@@ -21,6 +22,7 @@ from nat.data_models.common import OptionalSecretStr
 from nat.data_models.common import get_secret_value
 from nat.data_models.component_ref import EmbedderRef
 from nat.data_models.memory import MemoryBaseConfig
+from nat.utils.sdk.nat_embedder import NatEmbedder
 from nat.utils.sdk.nat_memory import NatMemory
 
 
@@ -36,6 +38,20 @@ class RedisMemoryClientConfig(MemoryBaseConfig, name="redis_memory"):
 
 class RedisMemory(RedisMemoryClientConfig, NatMemory):
     """Redis Memory Provider"""
+
+    embedder: EmbedderRef = Field(default=EmbedderRef(value=""),
+                                  description=("Instance name of the memory client instance from the workflow "
+                                               "configuration object."),
+                                  init=False)
+
+    embedder_obj: NatEmbedder = Field(exclude=True)
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set embedder reference from embedder object if provided."""
+        if self.embedder_obj:
+            self.embedder = EmbedderRef(value=self.embedder_obj.computed_name)
+        return self
 
 
 @register_memory(config_type=RedisMemoryClientConfig)

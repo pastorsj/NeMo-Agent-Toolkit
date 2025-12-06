@@ -19,6 +19,9 @@ from pydantic import model_validator
 
 from nat.authentication.interfaces import AuthProviderBaseConfig
 from nat.data_models.common import OptionalSecretStr
+from nat.data_models.component_ref import ObjectStoreRef
+from nat.data_models.object_store import ObjectStoreBaseConfig
+from nat.utils.sdk.nat_auth_provider import NatAuthProvider
 
 
 class MCPOAuth2ProviderConfig(AuthProviderBaseConfig, name="mcp_oauth2"):
@@ -83,4 +86,22 @@ class MCPOAuth2ProviderConfig(AuthProviderBaseConfig, name="mcp_oauth2"):
                              "1) enable_dynamic_registration=True (dynamic), or "
                              "2) client_id + client_secret (hybrid)")
 
+        return self
+
+
+class MCPOAuth2Provider(MCPOAuth2ProviderConfig, NatAuthProvider):
+    """MCP OAuth2 Authentication Provider"""
+
+    token_storage_object_store: str | None = Field(
+        default=None,
+        description="Reference to object store for secure token storage. If None, uses in-memory storage.",
+        init=False)
+
+    token_storage_object_store_obj: ObjectStoreBaseConfig | None = Field(default=None, exclude=True)
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set object store reference from object store object if provided."""
+        if self.token_storage_object_store_obj:
+            self.token_storage_object_store = ObjectStoreRef(value=self.token_storage_object_store_obj.computed_name)
         return self

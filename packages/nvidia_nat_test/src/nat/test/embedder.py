@@ -21,6 +21,7 @@ from nat.builder.framework_enum import LLMFrameworkEnum
 from nat.cli.register_workflow import register_embedder_client
 from nat.cli.register_workflow import register_embedder_provider
 from nat.data_models.embedder import EmbedderBaseConfig
+from nat.utils.sdk.nat_embedder import NatEmbedder
 
 
 class EmbedderTestConfig(EmbedderBaseConfig, name="test_embedder"):
@@ -28,6 +29,10 @@ class EmbedderTestConfig(EmbedderBaseConfig, name="test_embedder"):
 
     model_name: str = "nvidia/nv-embedqa-e5-v5"
     embedding_size: int = 768
+
+
+class EmbedderTest(EmbedderTestConfig, NatEmbedder):
+    """Embedder Test Provider"""
 
 
 @register_embedder_provider(config_type=EmbedderTestConfig)

@@ -19,7 +19,6 @@ from pydantic import Field
 from pydantic import model_validator
 
 from nat.data_models.component_ref import LLMRef
-from nat.data_models.llm import LLMBaseConfig
 from nat.data_models.ttc_strategy import TTCStrategyBaseConfig
 from nat.utils.sdk.nat_llm import NatLLM
 from nat.utils.sdk.nat_ttc_strategy import NatTTCStrategy
@@ -77,7 +76,7 @@ class LLMBasedPlanSelection(LLMBasedPlanSelectionConfig, NatTTCStrategy):
     def set_selection_llm_name_from_llm(self):
         """Set selection llm name from llm object if llm is provided."""
         if self.llm is not None:
-            self.selection_llm = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+            self.selection_llm = LLMRef(value=self.llm.computed_name)
         return self
 
 
@@ -137,7 +136,7 @@ class LLMBasedAgentOutputSelection(LLMBasedAgentOutputSelectionConfig, NatTTCStr
     def set_selection_llm_name_from_llm(self):
         """Set selection llm name from llm object if llm is provided."""
         if self.llm is not None:
-            self.selection_llm = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+            self.selection_llm = LLMRef(value=self.llm.computed_name)
         return self
 
 
@@ -192,7 +191,7 @@ class LLMBasedOutputMerging(LLMBasedOutputMergingConfig, NatTTCStrategy):
     def set_selection_llm_name_from_llm(self):
         """Set selection llm name from llm object if llm is provided."""
         if self.llm is not None:
-            self.selection_llm = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+            self.selection_llm = LLMRef(value=self.llm.computed_name)
         return self
 
 

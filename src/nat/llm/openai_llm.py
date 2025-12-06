@@ -16,6 +16,8 @@
 from pydantic import AliasChoices
 from pydantic import ConfigDict
 from pydantic import Field
+from pydantic import PrivateAttr
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.llm import LLMProviderInfo
@@ -27,6 +29,7 @@ from nat.data_models.optimizable import OptimizableMixin
 from nat.data_models.optimizable import SearchSpace
 from nat.data_models.retry_mixin import RetryMixin
 from nat.data_models.thinking_mixin import ThinkingMixin
+from nat.utils.sdk.nat_env_var import NatEnvironmentVariable
 from nat.utils.sdk.nat_llm import NatLLM
 
 
@@ -55,7 +58,46 @@ class OpenAIModelConfig(LLMBaseConfig, RetryMixin, OptimizableMixin, ThinkingMix
 
 
 class OpenAILLM(OpenAIModelConfig, NatLLM):
-    """OpenAI Model LLM Provider"""
+    """OpenAI Model LLM Provider.
+
+    Supports environment variable references for API keys:
+
+    Example:
+        ```python
+        # Using env var reference (recommended for portability):
+        llm = OpenAILLM(
+            api_key_env=NatEnvironmentVariable("OPENAI_API_KEY"),
+            model_name="gpt-4o",
+        )
+        ```
+    """
+
+    # Override api_key from parent with init=False to signal users should use api_key_env
+    api_key: OptionalSecretStr = Field(
+        default=None,
+        init=False,
+        description="OpenAI API key - use api_key_env instead for SDK usage.",
+    )
+
+    # Environment variable reference for api_key
+    api_key_env: NatEnvironmentVariable | None = Field(
+        default=None,
+        exclude=True,
+        description="Environment variable name for the API key (e.g., 'OPENAI_API_KEY').",
+    )
+
+    # Private attribute to track env var references for serialization
+    _env_var_refs: dict[str, str] = PrivateAttr(default_factory=dict)
+
+    @model_validator(mode='after')
+    def resolve_env_vars(self):
+        """Resolve environment variable references to their actual values."""
+        if self.api_key_env is not None:
+            # Store the env var name for later serialization
+            self._env_var_refs["api_key"] = self.api_key_env.name
+            # Resolve the env var to set the api_key field
+            self.api_key = self.api_key_env.to_secret_str()
+        return self
 
 
 @register_llm_provider(config_type=OpenAIModelConfig)

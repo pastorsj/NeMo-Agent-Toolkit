@@ -27,7 +27,6 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import FunctionRef
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.data_models.llm import LLMBaseConfig
 from nat.utils.sdk.nat_function import NatFunction
 from nat.utils.sdk.nat_llm import NatLLM
 from nat.utils.string_utils import convert_to_str
@@ -71,8 +70,12 @@ class TTCToolWrapperFunctionConfig(FunctionBaseConfig, name="ttc_tool_wrapper"):
 class TTCToolWrapperFunction(TTCToolWrapperFunctionConfig, NatFunction):
     """TTCTool Wrapper Tool"""
 
-    augmented_fn: FunctionRef = Field(description="The name of the function to reason on.", init=False)
-    input_llm: LLMRef = Field(description="The LLM that will generate input to the function.", init=False)
+    augmented_fn: FunctionRef = Field(description="The name of the function to reason on.",
+                                      default=FunctionRef(value=""),
+                                      init=False)
+    input_llm: LLMRef = Field(description="The LLM that will generate input to the function.",
+                              default=LLMRef(value=""),
+                              init=False)
 
     augmented_function: NatFunction = Field(exclude=True)
     llm: NatLLM = Field(exclude=True)
@@ -81,9 +84,9 @@ class TTCToolWrapperFunction(TTCToolWrapperFunctionConfig, NatFunction):
     def set_references(self):
         """Set augmented function name from augmented function object if augmented function is provided."""
         if self.augmented_function:
-            self.augmented_fn = FunctionRef(value=self.augmented_function.compute_name(FunctionBaseConfig))
+            self.augmented_fn = FunctionRef(value=self.augmented_function.computed_name)
         if self.llm:
-            self.input_llm = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+            self.input_llm = LLMRef(value=self.llm.computed_name)
         return self
 
 

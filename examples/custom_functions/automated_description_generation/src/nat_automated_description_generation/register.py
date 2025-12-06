@@ -27,8 +27,6 @@ from nat.data_models.component_ref import FunctionRef
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.component_ref import RetrieverRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.data_models.llm import LLMBaseConfig
-from nat.data_models.retriever import RetrieverBaseConfig
 from nat.retriever.models import RetrieverOutput
 from nat.utils.sdk.nat_function import NatFunction
 from nat.utils.sdk.nat_llm import NatLLM
@@ -73,11 +71,11 @@ class AutomatedDescriptionMilvusWorkflow(AutomatedDescriptionMilvusWorkflowConfi
     def set_references(self):
         """Set component names from objects if they are provided."""
         if self.llm:
-            self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+            self.llm_name = LLMRef(value=self.llm.computed_name)
         if self.retriever:
-            self.retriever_name = RetrieverRef(value=self.retriever.compute_name(RetrieverBaseConfig))
+            self.retriever_name = RetrieverRef(value=self.retriever.computed_name)
         if self.retrieval_tool:
-            self.retrieval_tool_name = FunctionRef(value=self.retrieval_tool.compute_name(FunctionBaseConfig))
+            self.retrieval_tool_name = FunctionRef(value=self.retrieval_tool.computed_name)
         return self
 
 

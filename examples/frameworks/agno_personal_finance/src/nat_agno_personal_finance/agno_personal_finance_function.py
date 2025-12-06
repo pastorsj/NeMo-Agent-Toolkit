@@ -26,7 +26,6 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import FunctionRef
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.data_models.llm import LLMBaseConfig
 from nat.utils.sdk.nat_function import NatFunction
 from nat.utils.sdk.nat_llm import NatLLM
 
@@ -45,14 +44,20 @@ class AgnoPersonalFinanceFunction(AgnoPersonalFinanceFunctionConfig, NatFunction
     llm_name: LLMRef = Field(description="The name of the LLM to use for the financial research and planner agents.",
                              default=LLMRef(value=""),
                              init=False)
+    tools: list[FunctionRef] = Field(default_factory=list,
+                                     description="The tools to use for the financial research and planner agents.",
+                                     init=False)
 
     llm: NatLLM = Field(exclude=True)
+    tool_objects: list[NatFunction] = Field(default_factory=list, exclude=True)
 
     @model_validator(mode='after')
     def set_references(self):
         """Set component names from objects if they are provided."""
         if self.llm:
-            self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+            self.llm_name = LLMRef(value=self.llm.computed_name)
+        if self.tool_objects and len(self.tool_objects) > 0:
+            self.tools = [FunctionRef(value=tool.computed_name) for tool in self.tool_objects]
         return self
 
 

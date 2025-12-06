@@ -19,7 +19,6 @@ from pydantic import Field
 from pydantic import model_validator
 
 from nat.data_models.component_ref import LLMRef
-from nat.data_models.llm import LLMBaseConfig
 from nat.data_models.ttc_strategy import TTCStrategyBaseConfig
 from nat.utils.sdk.nat_llm import NatLLM
 from nat.utils.sdk.nat_ttc_strategy import NatTTCStrategy
@@ -73,13 +72,13 @@ class SingleShotMultiPlan(SingleShotMultiPlanConfig, NatTTCStrategy):
         "instance of an LLM client.",
         init=False)
 
-    nat_planning_llm: NatLLM = Field(exclude=True)
+    nat_planning_llm: NatLLM | None = Field(default=None, exclude=True)
 
     @model_validator(mode="after")
     def set_references(self):
         """Set llm name from llm object if llm is provided."""
         if self.nat_planning_llm is not None:
-            self.planning_llm = LLMRef(value=self.nat_planning_llm.compute_name(LLMBaseConfig))
+            self.planning_llm = LLMRef(value=self.nat_planning_llm.computed_name)
         return self
 
 
@@ -123,13 +122,13 @@ class MultiLLMPlan(MultiLLMPlanConfig, NatTTCStrategy):
         description="list of LLMs to use for plan generation. Each LLM can generate one or more plans.",
         init=False)
 
-    nat_llms: list[NatLLM] = Field(exclude=True)
+    nat_llms: list[NatLLM] | None = Field(default=None, exclude=True)
 
     @model_validator(mode="after")
     def set_llm_names_from_llms(self):
         """Set llm names from llm objects if llms are provided."""
         if self.nat_llms and len(self.nat_llms) > 0:
-            self.llms = [LLMRef(value=nat_llm.compute_name(LLMBaseConfig)) for nat_llm in self.nat_llms]
+            self.llms = [LLMRef(value=nat_llm.computed_name) for nat_llm in self.nat_llms]
         return self
 
 
@@ -167,11 +166,11 @@ class MultiQueryRetrievalSearch(MultiQueryRetrievalSearchConfig, NatTTCStrategy)
                                description="list of LLM references to use for generating diverse queries.",
                                init=False)
 
-    nat_llms: list[NatLLM] = Field(exclude=True)
+    nat_llms: list[NatLLM] | None = Field(default=None, exclude=True)
 
     @model_validator(mode="after")
     def set_llm_names_from_llms(self):
         """Set llm names from llm objects if llms are provided."""
         if self.nat_llms and len(self.nat_llms) > 0:
-            self.llms = [LLMRef(value=nat_llm.compute_name(LLMBaseConfig)) for nat_llm in self.nat_llms]
+            self.llms = [LLMRef(value=nat_llm.computed_name) for nat_llm in self.nat_llms]
         return self

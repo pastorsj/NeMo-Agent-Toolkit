@@ -16,6 +16,7 @@
 import logging
 
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
@@ -23,6 +24,10 @@ from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.agent import AgentBaseConfig
 from nat.data_models.component_ref import FunctionRef
+from nat.data_models.component_ref import LLMRef
+from nat.utils.sdk.nat_agent import NatAgent
+from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_llm import NatLLM
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +44,27 @@ class RouterAgentWorkflowConfig(AgentBaseConfig, name="router_agent"):
     user_prompt: str | None = Field(default=None, description="Provides the prompt to use with the agent.")
     max_router_retries: int = Field(
         default=3, description="Maximum number of retries if the router agent fails to choose a branch.")
+
+
+class RouterAgentWorkflow(RouterAgentWorkflowConfig, NatAgent):
+    """Router Agent Workflow"""
+
+    llm_name: LLMRef = Field(description="The LLM model to use with the agent.", default=LLMRef(value=""), init=False)
+    branches: list[FunctionRef] = Field(default_factory=list,
+                                        description="The list of branches to provide to the router agent.",
+                                        init=False)
+
+    llm: NatLLM = Field(exclude=True)
+    branch_functions: list[NatFunction] | None = Field(default=None, exclude=True)
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set component names from objects if they are provided."""
+        if self.llm:
+            self.llm_name = LLMRef(value=self.llm.computed_name)
+        if self.branch_functions and len(self.branch_functions) > 0:
+            self.branches = [FunctionRef(value=fn.computed_name) for fn in self.branch_functions]
+        return self
 
 
 @register_function(config_type=RouterAgentWorkflowConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])

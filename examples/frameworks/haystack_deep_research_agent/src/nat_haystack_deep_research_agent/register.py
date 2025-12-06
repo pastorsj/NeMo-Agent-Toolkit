@@ -21,7 +21,6 @@ from pydantic import model_validator
 from nat.builder.builder import Builder
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import EmbedderRef
-from nat.data_models.embedder import EmbedderBaseConfig
 from nat.data_models.function import FunctionBaseConfig
 from nat.llm.nim_llm import NIMModelConfig
 from nat.utils.sdk.nat_embedder import NatEmbedder
@@ -66,7 +65,7 @@ class HaystackDeepResearchAgentWorkflow(HaystackDeepResearchWorkflowConfig, NatF
     def set_references(self):
         """Set component names from objects if they are provided."""
         if self.embedder:
-            self.embedder_name = EmbedderRef(value=self.embedder.compute_name(EmbedderBaseConfig))
+            self.embedder_name = EmbedderRef(value=self.embedder.computed_name)
         return self
 
 

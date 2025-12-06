@@ -16,6 +16,7 @@
 import logging
 
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.function import FunctionGroup
@@ -23,6 +24,7 @@ from nat.cli.register_workflow import register_function_group
 from nat.data_models.component_ref import ObjectStoreRef
 from nat.data_models.function import FunctionGroupBaseConfig
 from nat.data_models.object_store import KeyAlreadyExistsError
+from nat.data_models.object_store import ObjectStoreBaseConfig
 from nat.object_store.models import ObjectStoreItem
 from nat.utils.sdk.nat_function_group import NatFunctionGroup
 
@@ -46,6 +48,19 @@ class UserReportConfig(FunctionGroupBaseConfig, name="user_report"):
 
 class UserReportToolGroup(UserReportConfig, NatFunctionGroup):
     """User Report Function Group"""
+
+    object_store: ObjectStoreRef = Field(default=ObjectStoreRef(value=""),
+                                         description="The object store to use for storing user reports",
+                                         init=False)
+
+    object_store_obj: ObjectStoreBaseConfig | None = Field(default=None, exclude=True)
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set object store reference from object store object if provided."""
+        if self.object_store_obj:
+            self.object_store = ObjectStoreRef(value=self.object_store_obj.computed_name)
+        return self
 
 
 @register_function_group(config_type=UserReportConfig)

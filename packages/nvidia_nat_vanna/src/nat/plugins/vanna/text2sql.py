@@ -29,10 +29,7 @@ from nat.data_models.api_server import ResponseIntermediateStep
 from nat.data_models.component_ref import EmbedderRef
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.component_ref import RetrieverRef
-from nat.data_models.embedder import EmbedderBaseConfig
 from nat.data_models.function import FunctionBaseConfig
-from nat.data_models.llm import LLMBaseConfig
-from nat.data_models.retriever import RetrieverBaseConfig
 from nat.plugins.vanna.db_utils import RequiredSecretStr
 from nat.utils.sdk.nat_embedder import NatEmbedder
 from nat.utils.sdk.nat_function import NatFunction
@@ -124,11 +121,11 @@ class Text2SQLTool(Text2SQLConfig, NatFunction):
     def set_references(self):
         """Set component names from objects if they are provided."""
         if self.llm:
-            self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+            self.llm_name = LLMRef(value=self.llm.computed_name)
         if self.embedder:
-            self.embedder_name = EmbedderRef(value=self.embedder.compute_name(EmbedderBaseConfig))
+            self.embedder_name = EmbedderRef(value=self.embedder.computed_name)
         if self.retriever:
-            self.milvus_retriever = RetrieverRef(value=self.retriever.compute_name(RetrieverBaseConfig))
+            self.milvus_retriever = RetrieverRef(value=self.retriever.computed_name)
         return self
 
 

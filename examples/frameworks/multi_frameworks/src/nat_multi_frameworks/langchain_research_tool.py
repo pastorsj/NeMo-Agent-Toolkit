@@ -26,7 +26,6 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import FunctionRef
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.data_models.llm import LLMBaseConfig
 from nat.utils.sdk.nat_function import NatFunction
 from nat.utils.sdk.nat_llm import NatLLM
 
@@ -54,9 +53,9 @@ class LangChainResearchTool(LangChainResearchConfig, NatFunction):
     def set_references(self):
         """Set component names from objects if they are provided."""
         if self.llm:
-            self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+            self.llm_name = LLMRef(value=self.llm.computed_name)
         if self.web_tool_fn:
-            self.web_tool = FunctionRef(value=self.web_tool_fn.compute_name(FunctionBaseConfig))
+            self.web_tool = FunctionRef(value=self.web_tool_fn.computed_name)
         return self
 
 

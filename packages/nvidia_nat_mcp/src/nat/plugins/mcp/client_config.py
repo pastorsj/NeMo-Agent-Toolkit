@@ -21,6 +21,7 @@ from pydantic import Field
 from pydantic import HttpUrl
 from pydantic import model_validator
 
+from nat.authentication.interfaces import AuthProviderBaseConfig
 from nat.data_models.component_ref import AuthenticationRef
 from nat.data_models.function import FunctionGroupBaseConfig
 from nat.utils.sdk.nat_function_group import NatFunctionGroup
@@ -126,9 +127,19 @@ class MCPClient(MCPClientConfig, NatFunctionGroup):
         default=timedelta(hours=1),
         description="Time after which inactive sessions are cleaned up. Defaults to 1 hour.")
 
+    auth_provider_obj: AuthProviderBaseConfig | None = Field(default=None, exclude=True)
+
     @model_validator(mode="after")
     def _validate_reconnect_backoff(self) -> "MCPClientConfig":
         """Validate reconnect backoff values."""
         if self.reconnect_max_backoff < self.reconnect_initial_backoff:
             raise ValueError("reconnect_max_backoff must be greater than or equal to reconnect_initial_backoff")
+        return self
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set auth provider reference from object if provided."""
+        if self.auth_provider_obj:
+            # We need to modify the nested server config
+            self.server.auth_provider = AuthenticationRef(value=self.auth_provider_obj.computed_name)
         return self

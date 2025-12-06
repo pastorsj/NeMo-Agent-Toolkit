@@ -54,18 +54,20 @@ class SKTravelPlanningWorkflow(SKTravelPlanningWorkflowConfig, NatFunction):
     tool_names: list[FunctionRef] = Field(default_factory=list,
                                           description="The list of tools to provide to the semantic kernel.",
                                           init=False)
-    llm_name: LLMRef = Field(description="The LLM model to use with the semantic kernel.", init=False)
+    llm_name: LLMRef = Field(description="The LLM model to use with the semantic kernel.",
+                             default=LLMRef(value=""),
+                             init=False)
 
-    tools: list[NatFunction] = Field(exclude=True)
+    tools: list[NatFunction] | None = Field(default=None, exclude=True)
     llm: NatFunction = Field(exclude=True)
 
     @model_validator(mode='after')
     def set_references(self):
         """Set component names from objects if they are provided."""
         if self.tools and len(self.tools) > 0:
-            self.tool_names = [FunctionRef(value=tool.compute_name(FunctionBaseConfig)) for tool in self.tools]
+            self.tool_names = [FunctionRef(value=tool.computed_name) for tool in self.tools]
         if self.llm:
-            self.llm_name = LLMRef(value=self.llm.compute_name(LLMFrameworkEnum.SEMANTIC_KERNEL))
+            self.llm_name = LLMRef(value=self.llm.computed_name)
         return self
 
 

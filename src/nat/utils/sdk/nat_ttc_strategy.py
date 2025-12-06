@@ -13,10 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import ClassVar
+
 from nat.data_models.common import TypedBaseModel
+from nat.data_models.ttc_strategy import TTCStrategyBaseConfig
 from nat.utils.sdk.nat_base import NatBase
 
 
 class NatTTCStrategy(TypedBaseModel, NatBase):
-    """Wrapper for test time compute strategy configurations."""
-    pass
+    """Base class for TTC strategy configurations that inherit from both TTCStrategyBaseConfig and NatBase."""
+
+    _marker_class: ClassVar[type] = TTCStrategyBaseConfig

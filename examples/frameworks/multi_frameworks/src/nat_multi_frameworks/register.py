@@ -24,7 +24,6 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import FunctionRef
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.data_models.llm import LLMBaseConfig
 from nat.utils.sdk.nat_function import NatFunction
 from nat.utils.sdk.nat_llm import NatLLM
 
@@ -69,13 +68,13 @@ class MultiFrameworksWorkflowTool(MultiFrameworksWorkflowConfig, NatFunction):
     def set_references(self):
         """Set component names from objects if they are provided."""
         if self.nat_llm:
-            self.llm = LLMRef(value=self.nat_llm.compute_name(LLMBaseConfig))
+            self.llm = LLMRef(value=self.nat_llm.computed_name)
         if self.nat_research_tool:
-            self.research_tool = FunctionRef(value=self.nat_research_tool.compute_name(FunctionBaseConfig))
+            self.research_tool = FunctionRef(value=self.nat_research_tool.computed_name)
         if self.nat_rag_tool:
-            self.rag_tool = FunctionRef(value=self.nat_rag_tool.compute_name(FunctionBaseConfig))
+            self.rag_tool = FunctionRef(value=self.nat_rag_tool.computed_name)
         if self.nat_chitchat_agent:
-            self.chitchat_agent = FunctionRef(value=self.nat_chitchat_agent.compute_name(FunctionBaseConfig))
+            self.chitchat_agent = FunctionRef(value=self.nat_chitchat_agent.computed_name)
         return self
 
 

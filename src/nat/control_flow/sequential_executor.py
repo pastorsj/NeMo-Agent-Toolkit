@@ -19,6 +19,7 @@ import typing
 from langchain_core.tools.base import BaseTool
 from pydantic import BaseModel
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
@@ -27,6 +28,7 @@ from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import FunctionRef
 from nat.data_models.function import FunctionBaseConfig
+from nat.utils.sdk.nat_function import NatFunction
 from nat.utils.type_utils import DecomposedType
 
 logger = logging.getLogger(__name__)
@@ -54,6 +56,23 @@ class SequentialExecutorConfig(FunctionBaseConfig, name="sequential_executor"):
         "which means the output type of the previous function is compatible with the input type of the next function."
         "If set to True, any incompatibility will raise an exception. If set to false, the incompatibility will only"
         "generate a warning message and the sequential execution will continue.")
+
+
+class SequentialExecutor(SequentialExecutorConfig, NatFunction):
+    """Sequential Executor"""
+
+    tool_list: list[FunctionRef] = Field(default_factory=list,
+                                         description="A list of functions to execute sequentially.",
+                                         init=False)
+
+    tools: list[NatFunction] | None = Field(default=None, exclude=True)
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set tool names from tool objects if tools are provided."""
+        if self.tools and len(self.tools) > 0:
+            self.tool_list = [FunctionRef(value=tool.computed_name) for tool in self.tools]
+        return self
 
 
 def _get_function_output_type(function: Function, tool_execution_config: dict[str, ToolExecutionConfig]) -> type:

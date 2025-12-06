@@ -22,7 +22,6 @@ from nat.builder.framework_enum import LLMFrameworkEnum
 from nat.cli.register_workflow import register_evaluator
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.evaluator import EvaluatorBaseConfig
-from nat.data_models.llm import LLMBaseConfig
 from nat.utils.sdk.nat_evaluator import NatEvaluator
 from nat.utils.sdk.nat_llm import NatLLM
 
@@ -50,7 +49,7 @@ class TunableRagEvaluator(TunableRagEvaluatorConfig, NatEvaluator):
     def set_references(self):
         """Set llm_name from llm object if llm is provided."""
         if self.llm:
-            self.llm_name = LLMRef(value=self.llm.compute_name(LLMBaseConfig))
+            self.llm_name = LLMRef(value=self.llm.computed_name)
         return self
 
 

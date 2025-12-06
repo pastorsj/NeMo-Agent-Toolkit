@@ -23,7 +23,6 @@ from nat.builder.framework_enum import LLMFrameworkEnum
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import EmbedderRef
-from nat.data_models.embedder import EmbedderBaseConfig
 from nat.data_models.function import FunctionBaseConfig
 from nat.utils.sdk.nat_embedder import NatEmbedder
 from nat.utils.sdk.nat_function import NatFunction
@@ -43,13 +42,13 @@ class WebQueryTool(WebQueryToolConfig, NatFunction):
 
     embedder_name: EmbedderRef = Field(description="", default=EmbedderRef(value="nvidia/nv-embedqa-e5-v5"), init=False)
 
-    embedder: NatEmbedder = Field(exclude=True)
+    embedder: NatEmbedder | None = Field(default=None, exclude=True)
 
     @model_validator(mode='after')
     def set_references(self):
         """Set embedder name from embedder object if embedder is provided."""
         if self.embedder:
-            self.embedder_name = EmbedderRef(value=self.embedder.compute_name(EmbedderBaseConfig))
+            self.embedder_name = EmbedderRef(value=self.embedder.computed_name)
         return self
 
 

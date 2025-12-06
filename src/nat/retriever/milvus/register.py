@@ -66,7 +66,7 @@ class MilvusRetriever(MilvusRetrieverConfig, NatRetriever):
     def set_embedder_name(self):
         """Set embedder name from embedder object if embedder is provided."""
         if self.embedder is not None:
-            self.embedding_model = self.embedder.compute_name(RetrieverBaseConfig)
+            self.embedding_model = self.embedder.computed_name
         return self
 
 

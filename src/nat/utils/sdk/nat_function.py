@@ -13,13 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import ClassVar
+
 from nat.data_models.common import TypedBaseModel
+from nat.data_models.function import FunctionBaseConfig
 from nat.utils.sdk.nat_base import NatBase
 
 
 class NatFunction(TypedBaseModel, NatBase):
     """Base class for function configurations that inherit from both FunctionBaseConfig and NatBase."""
-    pass
+
+    _marker_class: ClassVar[type] = FunctionBaseConfig
 
 
 # class NatFunction(BaseModel):

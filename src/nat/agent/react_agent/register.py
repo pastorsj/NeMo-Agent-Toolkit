@@ -17,6 +17,7 @@ import logging
 
 from pydantic import AliasChoices
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
@@ -29,9 +30,14 @@ from nat.data_models.api_server import ChatResponse
 from nat.data_models.api_server import Usage
 from nat.data_models.component_ref import FunctionGroupRef
 from nat.data_models.component_ref import FunctionRef
+from nat.data_models.component_ref import LLMRef
 from nat.data_models.optimizable import OptimizableField
 from nat.data_models.optimizable import OptimizableMixin
 from nat.data_models.optimizable import SearchSpace
+from nat.utils.sdk.nat_agent import NatAgent
+from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_function_group import NatFunctionGroup
+from nat.utils.sdk.nat_llm import NatLLM
 from nat.utils.type_converter import GlobalTypeConverter
 
 logger = logging.getLogger(__name__)
@@ -79,6 +85,31 @@ class ReActAgentWorkflowConfig(AgentBaseConfig, OptimizableMixin, name="react_ag
             prompt="No additional instructions.",
             prompt_purpose="Additional instructions to provide to the agent in addition to the base prompt.",
         ))
+
+
+class NatReActAgent(ReActAgentWorkflowConfig, NatAgent):
+    """ReAct Agent Workflow"""
+
+    llm_name: LLMRef = Field(description="The LLM model to use with the agent.", default=LLMRef(value=""), init=False)
+    tool_names: list[FunctionRef | FunctionGroupRef] = Field(
+        default_factory=list, description="The list of tools to provide to the react agent.", init=False)
+
+    llm: NatLLM = Field(exclude=True)
+    tools: list[NatFunction | NatFunctionGroup | NatAgent] = Field(exclude=True, default=[])
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set component names from objects if they are provided."""
+        self.llm_name = LLMRef(value=self.llm.computed_name)
+        refs = []
+        for tool in self.tools:
+            if isinstance(tool, NatFunctionGroup):
+                refs.append(FunctionGroupRef(value=tool.computed_name))
+            else:
+                # NatFunction and NatAgent both use FunctionRef
+                refs.append(FunctionRef(value=tool.computed_name))
+        self.tool_names = refs
+        return self
 
 
 @register_function(config_type=ReActAgentWorkflowConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])

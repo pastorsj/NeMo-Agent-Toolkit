@@ -13,10 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import ClassVar
+
 from nat.data_models.common import TypedBaseModel
+from nat.data_models.evaluator import EvaluatorBaseConfig
 from nat.utils.sdk.nat_base import NatBase
 
 
 class NatEvaluator(TypedBaseModel, NatBase):
-    """Wrapper for targeted evaluator configurations."""
-    pass
+    """Base class for evaluator configurations that inherit from both EvaluatorBaseConfig and NatBase."""
+
+    _marker_class: ClassVar[type] = EvaluatorBaseConfig

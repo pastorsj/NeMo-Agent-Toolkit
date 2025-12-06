@@ -12,9 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Middleware implementations for NeMo Agent Toolkit."""
+"""Middleware implementations for NeMo Agent Toolkit.
 
-from nat.middleware.cache_middleware import CacheMiddleware
+To avoid circular imports, CacheMiddleware should be imported directly:
+    from nat.middleware.cache_middleware import CacheMiddleware
+"""
+
 from nat.middleware.function_middleware import FunctionMiddleware
 from nat.middleware.function_middleware import FunctionMiddlewareChain
 from nat.middleware.function_middleware import validate_middleware
@@ -24,7 +27,6 @@ from nat.middleware.middleware import FunctionMiddlewareContext
 from nat.middleware.middleware import Middleware
 
 __all__ = [
-    "CacheMiddleware",
     "CallNext",
     "CallNextStream",
     "FunctionMiddlewareContext",

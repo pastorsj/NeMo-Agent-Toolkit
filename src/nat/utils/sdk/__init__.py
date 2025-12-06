@@ -12,3 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+NeMo Agent Toolkit SDK utilities.
+
+To avoid circular imports, import directly from submodules:
+
+    from nat.utils.sdk.nat_workflow import NatWorkflow
+    from nat.utils.sdk.nat_llm import NatLLM
+    from nat.utils.sdk.nat_function import NatFunction
+    from nat.utils.sdk.nat_agent import NatAgent
+    # etc.
+"""

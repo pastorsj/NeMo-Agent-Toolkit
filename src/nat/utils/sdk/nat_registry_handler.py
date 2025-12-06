@@ -13,9 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from nat.data_models.dataset_handler import EvalDatasetBaseConfig
+from typing import ClassVar
+
+from nat.data_models.common import TypedBaseModel
+from nat.data_models.registry_handler import RegistryHandlerBaseConfig
+from nat.utils.sdk.nat_base import NatBase
 
 
-class NatEvaluationDataset(EvalDatasetBaseConfig):
+class NatRegistryHandler(TypedBaseModel, NatBase):
+    """Base class for registry handler configurations that inherit from RegistryHandlerBaseConfig and NatBase."""
 
-    pass
+    _marker_class: ClassVar[type] = RegistryHandlerBaseConfig

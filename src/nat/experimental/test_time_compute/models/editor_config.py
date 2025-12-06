@@ -19,7 +19,6 @@ from pydantic import Field
 from pydantic import model_validator
 
 from nat.data_models.component_ref import LLMRef
-from nat.data_models.llm import LLMBaseConfig
 from nat.data_models.ttc_strategy import TTCStrategyBaseConfig
 from nat.utils.sdk.nat_llm import NatLLM
 from nat.utils.sdk.nat_ttc_strategy import NatTTCStrategy
@@ -104,16 +103,16 @@ class LLMAsAJudgeEditor(LLMAsAJudgeEditorConfig, NatTTCStrategy):
                                                      " This can be a callable or an instance of an LLM client.",
                                                      init=False)
 
-    nat_editing_llm: NatLLM = Field(exclude=True)
-    nat_feedback_llm: NatLLM = Field(exclude=True)
+    nat_editing_llm: NatLLM | None = Field(default=None, exclude=True)
+    nat_feedback_llm: NatLLM | None = Field(default=None, exclude=True)
 
     @model_validator(mode="after")
     def set_llm_names_from_llms(self):
         """Set llm names from llm objects if llms are provided."""
-        if self.editing_llm is not None:
-            self.editing_llm = LLMRef(value=self.nat_editing_llm.compute_name(LLMBaseConfig))
-        if self.feedback_llm is not None:
-            self.feedback_llm = LLMRef(value=self.nat_feedback_llm.compute_name(LLMBaseConfig))
+        if self.nat_editing_llm is not None:
+            self.editing_llm = LLMRef(value=self.nat_editing_llm.computed_name)
+        if self.nat_feedback_llm is not None:
+            self.feedback_llm = LLMRef(value=self.nat_feedback_llm.computed_name)
         return self
 
 
@@ -147,13 +146,13 @@ class IterativePlanRefinement(IterativePlanRefinementConfig, NatTTCStrategy):
         description="The LLM to use for generating and refining the plan across multiple iterations.",
         init=False)
 
-    nat_editor_llm: NatLLM = Field(exclude=True)
+    nat_editor_llm: NatLLM | None = Field(default=None, exclude=True)
 
     @model_validator(mode="after")
     def set_references(self):
         """Set llm name from llm object if llm is provided."""
-        if self.editor_llm is not None:
-            self.editor_llm = LLMRef(value=self.nat_editor_llm.compute_name(LLMBaseConfig))
+        if self.nat_editor_llm is not None:
+            self.editor_llm = LLMRef(value=self.nat_editor_llm.computed_name)
         return self
 
 
@@ -188,11 +187,11 @@ class MotivationAwareSummarization(MotivationAwareSummarizationConfig, NatTTCStr
         description="The LLM to use for editing the plans. This can be a callable or an instance of an LLM client.",
         init=False)
 
-    nat_editor_llm: NatLLM = Field(exclude=True)
+    nat_editor_llm: NatLLM | None = Field(default=None, exclude=True)
 
     @model_validator(mode="after")
     def set_references(self):
         """Set llm name from llm object if llm is provided."""
-        if self.editor_llm is not None:
-            self.editor_llm = LLMRef(value=self.nat_editor_llm.compute_name(LLMBaseConfig))
+        if self.nat_editor_llm is not None:
+            self.editor_llm = LLMRef(value=self.nat_editor_llm.computed_name)
         return self

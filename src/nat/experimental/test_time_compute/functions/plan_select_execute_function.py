@@ -27,7 +27,6 @@ from nat.data_models.api_server import ChatRequest
 from nat.data_models.component_ref import FunctionRef
 from nat.data_models.component_ref import TTCStrategyRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.data_models.ttc_strategy import TTCStrategyBaseConfig
 from nat.experimental.test_time_compute.models.stage_enums import PipelineTypeEnum
 from nat.experimental.test_time_compute.models.stage_enums import StageTypeEnum
 from nat.experimental.test_time_compute.models.ttc_item import TTCItem
@@ -73,33 +72,39 @@ class PlanSelectExecuteFunctionConfig(FunctionBaseConfig, name="plan_select_exec
 class PlanSelectExecuteFunction(PlanSelectExecuteFunctionConfig, NatFunction):
     """Execution Planning Function"""
 
-    augmented_fn: FunctionRef = Field(description="The name of the function to reason on.", init=False)
+    augmented_fn: FunctionRef = Field(description="The name of the function to reason on.",
+                                      default=FunctionRef(value=""),
+                                      init=False)
 
-    planner: TTCStrategyRef = Field(description="The configuration for the planner.", init=False)
+    planner: TTCStrategyRef = Field(description="The configuration for the planner.",
+                                    default=TTCStrategyRef(value=""),
+                                    init=False)
     editor: TTCStrategyRef | None = Field(description="The configuration for the editor.", default=None, init=False)
     scorer: TTCStrategyRef | None = Field(description="The configuration for the scorer.", default=None, init=False)
-    selector: TTCStrategyRef = Field(description="The configuration for the selector.", init=False)
+    selector: TTCStrategyRef = Field(description="The configuration for the selector.",
+                                     default=TTCStrategyRef(value=""),
+                                     init=False)
 
     augmented_function: NatFunction = Field(exclude=True)
 
     nat_planner: NatTTCStrategy = Field(exclude=True)
-    nat_editor: NatTTCStrategy | None = Field(exclude=True, default=None)
-    nat_scorer: NatTTCStrategy | None = Field(exclude=True, default=None)
+    nat_editor: NatTTCStrategy | None = Field(default=None, exclude=True)
+    nat_scorer: NatTTCStrategy | None = Field(default=None, exclude=True)
     nat_selector: NatTTCStrategy = Field(exclude=True)
 
     @model_validator(mode='after')
     def set_references(self):
         """Set component names from objects if they are provided."""
         if self.augmented_function:
-            self.augmented_fn = FunctionRef(value=self.augmented_function.compute_name(FunctionBaseConfig))
+            self.augmented_fn = FunctionRef(value=self.augmented_function.computed_name)
         if self.nat_planner:
-            self.planner = TTCStrategyRef(value=self.nat_planner.compute_name(TTCStrategyBaseConfig))  # noqa: F821
+            self.planner = TTCStrategyRef(value=self.nat_planner.computed_name)  # noqa: F821
         if self.nat_editor:
-            self.editor = TTCStrategyRef(value=self.nat_editor.compute_name(TTCStrategyBaseConfig))
+            self.editor = TTCStrategyRef(value=self.nat_editor.computed_name)
         if self.nat_scorer:
-            self.scorer = TTCStrategyRef(value=self.nat_scorer.compute_name(TTCStrategyBaseConfig))
+            self.scorer = TTCStrategyRef(value=self.nat_scorer.computed_name)
         if self.nat_selector:
-            self.selector = TTCStrategyRef(value=self.nat_selector.compute_name(TTCStrategyBaseConfig))
+            self.selector = TTCStrategyRef(value=self.nat_selector.computed_name)
 
         return self
 

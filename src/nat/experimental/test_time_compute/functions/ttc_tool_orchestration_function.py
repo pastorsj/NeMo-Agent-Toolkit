@@ -26,7 +26,6 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import FunctionRef
 from nat.data_models.component_ref import TTCStrategyRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.data_models.ttc_strategy import TTCStrategyBaseConfig
 from nat.experimental.test_time_compute.models.stage_enums import PipelineTypeEnum
 from nat.experimental.test_time_compute.models.stage_enums import StageTypeEnum
 from nat.experimental.test_time_compute.models.tool_use_config import ToolUseInputSchema
@@ -109,19 +108,16 @@ class TTCToolOrchestrationFunction(TTCToolOrchestrationFunctionConfig, NatFuncti
     def set_augmented_fns_name_from_functions(self):
         """Set augmented function names from augmented function objects if augmented functions are provided."""
         if self.augmented_functions and len(self.augmented_functions) > 0:
-            self.augmented_fns = [
-                FunctionRef(value=fn.compute_name(FunctionBaseConfig)) for fn in self.augmented_functions
-            ]
+            self.augmented_fns = [FunctionRef(value=fn.computed_name) for fn in self.augmented_functions]
 
         if self.nat_search_strategy:
-            self.search_strategy = TTCStrategyRef(value=self.nat_search_strategy.compute_name(TTCStrategyBaseConfig))
+            self.search_strategy = TTCStrategyRef(value=self.nat_search_strategy.computed_name)
         if self.nat_editing_strategy:
-            self.editing_strategy = TTCStrategyRef(value=self.nat_editing_strategy.compute_name(TTCStrategyBaseConfig))
+            self.editing_strategy = TTCStrategyRef(value=self.nat_editing_strategy.computed_name)
         if self.nat_scoring_strategy:
-            self.scoring_strategy = TTCStrategyRef(value=self.nat_scoring_strategy.compute_name(TTCStrategyBaseConfig))
+            self.scoring_strategy = TTCStrategyRef(value=self.nat_scoring_strategy.computed_name)
         if self.nat_selection_strategy:
-            self.selection_strategy = TTCStrategyRef(
-                value=self.nat_selection_strategy.compute_name(TTCStrategyBaseConfig))
+            self.selection_strategy = TTCStrategyRef(value=self.nat_selection_strategy.computed_name)
 
         return self
 

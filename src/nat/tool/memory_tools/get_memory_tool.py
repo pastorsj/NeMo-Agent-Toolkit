@@ -23,7 +23,6 @@ from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import MemoryRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.data_models.memory import MemoryBaseConfig
 from nat.memory.models import SearchMemoryInput
 from nat.utils.sdk.nat_function import NatFunction
 from nat.utils.sdk.nat_memory import NatMemory
@@ -52,7 +51,7 @@ class GetMemoryTool(GetToolConfig, NatFunction):
     def set_memory_name_from_memory(self):
         """Set memory name from memory object if memory is provided."""
         if self.nat_memory:
-            self.memory = MemoryRef(value=self.nat_memory.compute_name(MemoryBaseConfig))
+            self.memory = MemoryRef(value=self.nat_memory.computed_name)
         return self
 
 

@@ -18,6 +18,7 @@ import re
 from collections.abc import AsyncGenerator
 
 from pydantic import Field
+from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
@@ -26,6 +27,10 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.agent import AgentBaseConfig
 from nat.data_models.api_server import ChatRequest
 from nat.data_models.component_ref import FunctionRef
+from nat.data_models.component_ref import LLMRef
+from nat.utils.sdk.nat_agent import NatAgent
+from nat.utils.sdk.nat_function import NatFunction
+from nat.utils.sdk.nat_llm import NatLLM
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +70,27 @@ class ReasoningFunctionConfig(AgentBaseConfig, name="reasoning_agent"):
                  "\n\nNOTE: Remember to follow your guidance on how to format output, etc."
                  "\n\n You must respond with the answer to the original question directly to the user."),
         description="The instruction prompt template.")
+
+
+class ReasoningFunction(ReasoningFunctionConfig, NatAgent):
+    """Reasoning Function"""
+
+    llm_name: LLMRef = Field(description="The LLM model to use with the agent.", default=LLMRef(value=""), init=False)
+    augmented_fn: FunctionRef = Field(default=FunctionRef(value=""),
+                                      description="The name of the function to reason on.",
+                                      init=False)
+
+    llm: NatLLM = Field(exclude=True)
+    augmented_function: NatFunction = Field(exclude=True)
+
+    @model_validator(mode='after')
+    def set_references(self):
+        """Set component names from objects if they are provided."""
+        if self.llm:
+            self.llm_name = LLMRef(value=self.llm.computed_name)
+        if self.augmented_function:
+            self.augmented_fn = FunctionRef(value=self.augmented_function.computed_name)
+        return self
 
 
 @register_function(config_type=ReasoningFunctionConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])

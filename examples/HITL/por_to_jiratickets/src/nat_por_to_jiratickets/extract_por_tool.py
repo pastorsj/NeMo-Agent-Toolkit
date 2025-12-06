@@ -27,7 +27,6 @@ from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.data_models.llm import LLMBaseConfig
 from nat.utils.sdk.nat_function import NatFunction
 from nat.utils.sdk.nat_llm import NatLLM
 
@@ -139,7 +138,7 @@ class ExtractPORTool(ExtractPORToolConfig, NatFunction):
     def set_references(self):
         """Set llm name from llm object if llm is provided."""
         if self.nat_llm:
-            self.llm = LLMRef(value=self.nat_llm.compute_name(LLMBaseConfig))
+            self.llm = LLMRef(value=self.nat_llm.computed_name)
         return self
 
 

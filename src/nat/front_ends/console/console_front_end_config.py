@@ -18,6 +18,7 @@ from pathlib import Path
 from pydantic import Field
 
 from nat.data_models.front_end import FrontEndBaseConfig
+from nat.utils.sdk.nat_front_end import NatFrontEnd
 
 
 class ConsoleFrontEndConfig(FrontEndBaseConfig, name="console"):
@@ -30,3 +31,7 @@ class ConsoleFrontEndConfig(FrontEndBaseConfig, name="console"):
                                           description="A single input to submit the the workflow.")
     input_file: Path | None = Field(default=None,
                                     description="Path to a json file of inputs to submit to the workflow.")
+
+
+class ConsoleFrontEnd(ConsoleFrontEndConfig, NatFrontEnd):
+    """Console Front End"""

@@ -25,7 +25,6 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import FunctionRef
 from nat.data_models.component_ref import TTCStrategyRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.data_models.ttc_strategy import TTCStrategyBaseConfig
 from nat.experimental.test_time_compute.models.stage_enums import PipelineTypeEnum
 from nat.experimental.test_time_compute.models.stage_enums import StageTypeEnum
 from nat.experimental.test_time_compute.models.ttc_item import TTCItem
@@ -48,10 +47,14 @@ class ExecuteScoreSelectFunction(ExecuteScoreSelectFunctionConfig, NatFunction):
     scorer: TTCStrategyRef | None = Field(description="Strategy to score the output of the function",
                                           default=None,
                                           init=False)
-    selector: TTCStrategyRef = Field(description="Strategy to select the best output of the function", init=False)
-    augmented_fn: FunctionRef = Field(description="Function that will be executed", init=False)
+    selector: TTCStrategyRef = Field(description="Strategy to select the best output of the function",
+                                     default=TTCStrategyRef(value=""),
+                                     init=False)
+    augmented_fn: FunctionRef = Field(description="Function that will be executed",
+                                      default=FunctionRef(value=""),
+                                      init=False)
 
-    nat_scorer: NatTTCStrategy | None = Field(exclude=True)
+    nat_scorer: NatTTCStrategy | None = Field(default=None, exclude=True)
     nat_selector: NatTTCStrategy = Field(exclude=True)
     augmented_function: NatFunction = Field(exclude=True)
 
@@ -59,11 +62,11 @@ class ExecuteScoreSelectFunction(ExecuteScoreSelectFunctionConfig, NatFunction):
     def set_references(self):
         """Set component names from objects if they are provided."""
         if self.augmented_function:
-            self.augmented_fn = FunctionRef(value=self.augmented_function.compute_name(FunctionBaseConfig))
+            self.augmented_fn = FunctionRef(value=self.augmented_function.computed_name)
         if self.nat_scorer:
-            self.scorer = TTCStrategyRef(value=self.nat_scorer.compute_name(TTCStrategyBaseConfig))
+            self.scorer = TTCStrategyRef(value=self.nat_scorer.computed_name)
         if self.nat_selector:
-            self.selector = TTCStrategyRef(value=self.nat_selector.compute_name(TTCStrategyBaseConfig))
+            self.selector = TTCStrategyRef(value=self.nat_selector.computed_name)
 
         return self
 

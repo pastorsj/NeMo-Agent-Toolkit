@@ -19,7 +19,6 @@ from pydantic import Field
 from pydantic import model_validator
 
 from nat.data_models.component_ref import LLMRef
-from nat.data_models.llm import LLMBaseConfig
 from nat.data_models.ttc_strategy import TTCStrategyBaseConfig
 from nat.utils.sdk.nat_llm import NatLLM
 from nat.utils.sdk.nat_ttc_strategy import NatTTCStrategy
@@ -60,15 +59,16 @@ class LLMBasedPlanScoring(LLMBasedPlanScoringConfig, NatTTCStrategy):
 
     scoring_llm: LLMRef | typing.Any | None = Field(
         default=None,
-        description="The LLM to use for scoring the plans. This can be a callable or an instance of an LLM client.")
+        description="The LLM to use for scoring the plans. This can be a callable or an instance of an LLM client.",
+        init=False)
 
-    nat_scoring_llm: NatLLM = Field(exclude=True)
+    nat_scoring_llm: NatLLM | None = Field(default=None, exclude=True)
 
     @model_validator(mode="after")
     def set_references(self):
         """Set llm name from llm object if llm is provided."""
-        if self.scoring_llm is not None:
-            self.scoring_llm = LLMRef(value=self.nat_scoring_llm.compute_name(LLMBaseConfig))
+        if self.nat_scoring_llm is not None:
+            self.scoring_llm = LLMRef(value=self.nat_scoring_llm.computed_name)
         return self
 
 
@@ -109,15 +109,16 @@ class LLMBasedAgentScoring(LLMBasedAgentScoringConfig, NatTTCStrategy):
 
     scoring_llm: LLMRef | typing.Any | None = Field(
         default=None,
-        description="The LLM to use for scoring the plans. This can be a callable or an instance of an LLM client.")
+        description="The LLM to use for scoring the plans. This can be a callable or an instance of an LLM client.",
+        init=False)
 
-    nat_scoring_llm: NatLLM = Field(exclude=True)
+    nat_scoring_llm: NatLLM | None = Field(default=None, exclude=True)
 
     @model_validator(mode="after")
     def set_references(self):
         """Set llm name from llm object if llm is provided."""
-        if self.scoring_llm is not None:
-            self.scoring_llm = LLMRef(value=self.nat_scoring_llm.compute_name(LLMBaseConfig))
+        if self.nat_scoring_llm is not None:
+            self.scoring_llm = LLMRef(value=self.nat_scoring_llm.computed_name)
         return self
 
 
@@ -157,11 +158,11 @@ class MotivationAwareScoring(MotivationAwareScoringConfig, NatTTCStrategy):
         description="The LLM used to evaluate how well the output addresses the task plus motivation.",
         init=False)
 
-    nat_scoring_llm: NatLLM = Field(exclude=True)
+    nat_scoring_llm: NatLLM | None = Field(default=None, exclude=True)
 
     @model_validator(mode="after")
     def set_references(self):
         """Set llm name from llm object if llm is provided."""
-        if self.scoring_llm is not None:
-            self.scoring_llm = LLMRef(value=self.nat_scoring_llm.compute_name(LLMBaseConfig))
+        if self.nat_scoring_llm is not None:
+            self.scoring_llm = LLMRef(value=self.nat_scoring_llm.computed_name)
         return self

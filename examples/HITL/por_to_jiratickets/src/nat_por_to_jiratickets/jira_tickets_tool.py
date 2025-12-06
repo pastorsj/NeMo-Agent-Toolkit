@@ -273,7 +273,7 @@ class CreateJiraTicketsTool(CreateJiraToolConfig, NatFunction):
     @model_validator(mode="after")
     def set_references(self):
         if self.hitl_approval_tool:
-            self.hitl_approval_fn = FunctionRef(value=self.hitl_approval_tool.compute_name(FunctionBaseConfig))
+            self.hitl_approval_fn = FunctionRef(value=self.hitl_approval_tool.computed_name)
         return self
 
 

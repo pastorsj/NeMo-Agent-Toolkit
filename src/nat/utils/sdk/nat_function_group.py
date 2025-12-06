@@ -13,10 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import ClassVar
+
 from nat.data_models.common import TypedBaseModel
+from nat.data_models.function import FunctionGroupBaseConfig
 from nat.utils.sdk.nat_base import NatBase
 
 
 class NatFunctionGroup(TypedBaseModel, NatBase):
     """Base class for function group configurations that inherit from both FunctionGroupBaseConfig and NatBase."""
-    pass
+
+    _marker_class: ClassVar[type] = FunctionGroupBaseConfig
