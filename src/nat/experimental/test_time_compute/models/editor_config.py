@@ -107,7 +107,7 @@ class LLMAsAJudgeEditor(LLMAsAJudgeEditorConfig, NatTTCStrategy):
     nat_feedback_llm: NatLLM | None = Field(default=None, exclude=True)
 
     @model_validator(mode="after")
-    def set_llm_names_from_llms(self):
+    def set_references(self):
         """Set llm names from llm objects if llms are provided."""
         if self.nat_editing_llm is not None:
             self.editing_llm = LLMRef(value=self.nat_editing_llm.computed_name)

@@ -12,3 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from nat.plugins.a2a.client.a2a_client import A2AClient
+from nat.plugins.a2a.client.client_config import A2AClientConfig
+
+__all__ = ["A2AClient", "A2AClientConfig"]
