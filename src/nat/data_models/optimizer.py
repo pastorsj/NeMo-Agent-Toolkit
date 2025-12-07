@@ -13,11 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import typing
 from enum import Enum
 from pathlib import Path
 
 from pydantic import BaseModel
 from pydantic import Field
+from pydantic import PlainSerializer
 
 
 class OptimizerMetric(BaseModel):
@@ -116,7 +118,7 @@ class OptimizerConfig(BaseModel):
     """
     Parameters used by the workflow optimizer.
     """
-    output_path: Path | None = Field(
+    output_path: typing.Annotated[Path | None, PlainSerializer(str)] = Field(
         default=None,
         description="Path to the output directory where the results will be saved.",
     )

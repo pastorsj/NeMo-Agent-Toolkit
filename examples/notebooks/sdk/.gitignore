@@ -1,1 +1,5 @@
 configs/
+eval_results/
+profiling_results/
+opt_results/
+data/

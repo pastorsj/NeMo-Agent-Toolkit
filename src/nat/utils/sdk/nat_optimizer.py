@@ -20,12 +20,25 @@ re-exports of the underlying configuration classes for convenience.
 
 Example:
     ```python
+    from nat.llm.nim_llm import NimLLM
     from nat.utils.sdk.nat_optimizer import (
         NatOptimizer,
         OptimizerMetric,
         NumericOptimizationConfig,
+        SearchSpace,
     )
 
+    # Configure LLM with optimizable parameters
+    llm = NimLLM(
+        model_name="meta/llama-3.3-70b-instruct",
+        temperature=0.5,
+        optimizable_params=["temperature", "top_p"],
+        search_space={
+            "temperature": SearchSpace(low=0.1, high=0.8, step=0.1),
+        },
+    )
+
+    # Configure optimizer
     optimizer = NatOptimizer(
         output_path=Path("./optimizer_results"),
         eval_metrics={
@@ -43,6 +56,7 @@ Example:
 """
 
 # Re-export underlying config classes for convenience
+from nat.data_models.optimizable import SearchSpace
 from nat.data_models.optimizer import NumericOptimizationConfig
 from nat.data_models.optimizer import OptimizerConfig
 from nat.data_models.optimizer import OptimizerMetric
@@ -58,6 +72,7 @@ __all__ = [
     "NumericOptimizationConfig",
     "PromptGAOptimizationConfig",
     "SamplerType",
+    "SearchSpace",
 ]
 
 

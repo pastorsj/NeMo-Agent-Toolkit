@@ -197,12 +197,21 @@ def OptimizableField(
 
 
 class OptimizableMixin(BaseModel):
-    optimizable_params: list[str] = Field(default_factory=list,
-                                          description="List of parameters that can be optimized.",
-                                          exclude=True)
+    """Mixin that adds optimization support to config classes.
+
+    Add this mixin to any config class that should support parameter optimization.
+    Use `optimizable_params` to specify which fields to optimize, and `search_space`
+    to define/override the search ranges.
+    """
+
+    optimizable_params: list[str] = Field(
+        default_factory=list,
+        description="List of parameter names to optimize. Only fields listed here will be tuned.",
+    )
 
     search_space: dict[str, SearchSpace] = Field(
         default_factory=dict,
-        description="Optional search space overrides for optimizable parameters.",
+        description="Optional search space overrides for optimizable parameters. "
+        "Keys are field names, values are SearchSpace objects defining the range.",
         exclude=True,
     )
