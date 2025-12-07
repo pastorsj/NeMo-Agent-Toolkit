@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nat-math-tools"
+version = "0.1.0"
+description = "Math tools for the NAT SDK tutorial"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "nvidia-nemo-agent-toolkit",
+    "numpy>=1.24.0",
+]
+
+[project.entry-points."nat.plugins"]
+math_tools = "math_tools"
+
