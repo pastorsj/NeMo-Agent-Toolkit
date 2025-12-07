@@ -1,18 +1,25 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+build-backend = "setuptools.build_meta"
+requires = ["setuptools >= 64", "setuptools-scm>=8"]
+
+[tool.setuptools_scm]
+git_describe_command = "git describe --long --first-parent"
+root = "../../../.."
 
 [project]
-name = "nat-math-tools"
-version = "0.1.0"
-description = "Math tools for the NAT SDK tutorial"
-readme = "README.md"
-requires-python = ">=3.10"
+name = "nat_math_tools"
+dynamic = ["version"]
 dependencies = [
-    "nvidia-nemo-agent-toolkit",
-    "numpy>=1.24.0",
+  "nvidia-nat~=1.4",
+  "numpy>=1.24.0",
 ]
+requires-python = ">=3.11,<3.14"
+description = "Math tools for the NAT SDK tutorial"
+keywords = ["ai", "agents", "math"]
+classifiers = ["Programming Language :: Python"]
 
-[project.entry-points."nat.plugins"]
-math_tools = "math_tools"
+[tool.uv.sources]
+nvidia-nat = { path = "../../../..", editable = true }
 
+[project.entry-points.'nat.components']
+math_tools = "math_tools.register"

@@ -50,7 +50,7 @@ From the [documentation](../../../docs/source/index.md):
 
 1. **Install NAT SDK**:
    ```bash
-   pip install nvidia-nemo-agent-toolkit
+   uv pip install nvidia-nemo-agent-toolkit
    ```
 
 2. **Set API Key**:
