@@ -14,8 +14,10 @@
 # limitations under the License.
 
 import asyncio
+import copy
 import logging
 from collections.abc import Mapping as Dict
+from typing import Any
 
 import optuna
 import yaml
@@ -32,6 +34,68 @@ from nat.profiler.parameter_optimization.parameter_selection import pick_trial
 from nat.profiler.parameter_optimization.update_helpers import apply_suggestions
 
 logger = logging.getLogger(__name__)
+
+
+def _apply_to_dict(cfg_dict: dict[str, Any], flat: dict[str, Any]) -> dict[str, Any]:
+    """Apply dotted-path updates to a dictionary, returning a new dict."""
+    result = copy.deepcopy(cfg_dict)
+    for dotted, value in flat.items():
+        keys = dotted.split(".")
+        cursor = result
+        for key in keys[:-1]:
+            cursor = cursor.setdefault(key, {})
+        cursor[keys[-1]] = value
+    return result
+
+
+def _clear_optimization_fields_from_dict(cfg_dict: dict[str, Any]) -> dict[str, Any]:
+    """Recursively remove optimization-related fields from a config dict.
+
+    After optimization is complete, these fields are no longer needed:
+    - optimizable_params: list of parameter names that were optimized
+    - search_space: dict defining search ranges for optimization
+    - optimizer: the top-level optimizer configuration section
+
+    This function searches the entire dict tree, removing these fields
+    wherever they appear.
+    """
+    # Fields to remove from nested objects (from OptimizableMixin)
+    optimization_fields = {"optimizable_params", "search_space"}
+    # Top-level sections to remove entirely
+    top_level_sections_to_remove = {"optimizer"}
+
+    def _recursive_clean(obj: Any) -> Any:
+        if isinstance(obj, dict):
+            # Remove optimization fields and recursively clean remaining values
+            return {k: _recursive_clean(v) for k, v in obj.items() if k not in optimization_fields}
+        elif isinstance(obj, list):
+            return [_recursive_clean(item) for item in obj]
+        else:
+            return obj
+
+    # First remove top-level sections, then recursively clean the rest
+    result = {k: v for k, v in cfg_dict.items() if k not in top_level_sections_to_remove}
+    return _recursive_clean(result)
+
+
+def _get_minimal_dict_with_types(cfg: Config) -> dict[str, Any]:
+    """Get minimal dict representation with _type fields added.
+
+    Uses the same logic as Config.save_to_file() to get a proper
+    serializable dict with only set fields and correct _type discriminators.
+    """
+    # Get minimal dict with correct aliases and JSON-serializable values
+    # mode='json' ensures LLMRef, FunctionRef etc. are converted to plain strings
+    serialized = cfg.model_dump(mode='json', exclude_unset=True, by_alias=True)
+    # Add _type fields by walking the model - we use Config's private method
+    cfg._Config__add_type_field_for_model(serialized, cfg)  # type: ignore[attr-defined]
+    return serialized
+
+
+def _save_dict_as_yaml(data: dict[str, Any], filepath) -> None:
+    """Save a dict as YAML file."""
+    with open(filepath, "w", encoding="utf-8") as fh:
+        yaml.dump(data, fh, sort_keys=False)
 
 
 @experimental(feature_name="Optimizer")
@@ -80,6 +144,11 @@ def optimize_parameters(
     out_dir = optimizer_config.output_path
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # Get minimal dict representation from the original base_cfg.
+    # This preserves the original structure (only set fields + _type discriminators)
+    # for proper YAML serialization.
+    base_minimal_dict = _get_minimal_dict_with_types(base_cfg)
+
     async def _run_eval(runner: EvaluationRun):
         return await runner.run_and_evaluate()
 
@@ -114,8 +183,9 @@ def optimize_parameters(
         # Calculate padding width based on total number of trials
         trial_id_width = len(str(max(0, optimizer_config.numeric.n_trials - 1)))
         trial_id_padded = f"{trial.number:0{trial_id_width}d}"
-        with (out_dir / f"config_numeric_trial_{trial_id_padded}.yml").open("w") as fh:
-            yaml.dump(cfg_trial.model_dump(), fh)
+        # Save using the minimal dict with suggestions applied
+        trial_dict = _apply_to_dict(base_minimal_dict, suggestions)
+        _save_dict_as_yaml(trial_dict, out_dir / f"config_numeric_trial_{trial_id_padded}.yml")
 
         all_scores = asyncio.run(_run_all_evals())
         # Persist raw per‑repetition scores so they appear in `trials_dataframe`.
@@ -133,9 +203,11 @@ def optimize_parameters(
     ).params
     tuned_cfg = apply_suggestions(base_cfg, best_params)
 
-    # Save final results (out_dir already created and defined above)
-    with (out_dir / "optimized_config.yml").open("w") as fh:
-        yaml.dump(tuned_cfg.model_dump(mode='json'), fh)
+    # Save final results using minimal dict with optimized params applied
+    # and optimization fields removed (no longer needed after optimization)
+    tuned_dict = _apply_to_dict(base_minimal_dict, best_params)
+    tuned_dict = _clear_optimization_fields_from_dict(tuned_dict)
+    _save_dict_as_yaml(tuned_dict, out_dir / "optimized_config.yml")
     with (out_dir / "trials_dataframe_params.csv").open("w") as fh:
         # Export full trials DataFrame (values, params, timings, etc.).
         df = study.trials_dataframe()

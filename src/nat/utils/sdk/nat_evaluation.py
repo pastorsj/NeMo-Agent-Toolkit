@@ -111,12 +111,15 @@ class NatEvaluation(EvalGeneralConfig):
     )
 
     def to_eval_general_config(self) -> EvalGeneralConfig:
-        """Convert to EvalGeneralConfig for serialization."""
-        return EvalGeneralConfig(
-            max_concurrency=self.max_concurrency,
-            workflow_alias=self.workflow_alias,
-            output_dir=self.output_dir,
-            output=self.output,
-            dataset=self.dataset,
-            profiler=self.profiler,
-        )
+        """Convert to EvalGeneralConfig for serialization.
+
+        Only includes fields that were explicitly set by the user,
+        preserving proper exclude_unset behavior in serialization.
+        """
+        # Only include fields that were explicitly set (not defaults)
+        # This ensures exclude_unset=True works correctly during serialization
+        data = {}
+        for field_name in list[str](EvalGeneralConfig.model_fields.keys()):
+            if field_name in self.model_fields_set:
+                data[field_name] = getattr(self, field_name)
+        return EvalGeneralConfig(**data)

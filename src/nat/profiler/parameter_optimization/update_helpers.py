@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 from collections import defaultdict
 from typing import Any
 
@@ -55,6 +56,10 @@ def apply_suggestions(cfg: BaseModel, flat: dict[str, Any]) -> BaseModel:
     """
     Return a **new** config where only the dotted-path keys in *flat*
     have been modified. Preserves all unrelated siblings.
+
+    Note: This uses full model_dump (not exclude_unset) because the `type`
+    discriminator field is needed for model_validate() to work. Serialization
+    to minimal YAML is handled separately by Config.save_to_file().
     """
     cfg_dict = cfg.model_dump(mode="python")
     for dotted, value in flat.items():
@@ -64,3 +69,27 @@ def apply_suggestions(cfg: BaseModel, flat: dict[str, Any]) -> BaseModel:
             cursor = cursor.setdefault(key, {})
         cursor[keys[-1]] = value
     return cfg.__class__.model_validate(cfg_dict)
+
+
+def apply_suggestions_to_dict(cfg_dict: dict[str, Any], flat: dict[str, Any]) -> dict[str, Any]:
+    """
+    Apply dotted-path parameter updates to a dictionary.
+
+    This is used to apply optimized parameters to the original YAML config dict,
+    preserving the original structure and only modifying the optimized values.
+
+    Args:
+        cfg_dict: The original config dictionary (will NOT be modified)
+        flat: Dictionary of dotted-path keys to values, e.g. {'llms.nim_llm.temperature': 0.5}
+
+    Returns:
+        A new dictionary with the updates applied
+    """
+    result = copy.deepcopy(cfg_dict)
+    for dotted, value in flat.items():
+        keys = dotted.split(".")
+        cursor = result
+        for key in keys[:-1]:
+            cursor = cursor.setdefault(key, {})
+        cursor[keys[-1]] = value
+    return result
