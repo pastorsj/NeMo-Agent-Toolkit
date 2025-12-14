@@ -41,6 +41,8 @@ limitations under the License.
 
 ## 🔥 New Features
 
+- [**Python SDK:**](./docs/source/sdk/index.md) Build agents entirely in Python without YAML configuration files. The SDK provides a fluent, Pythonic interface for creating workflows, adding tools, configuring LLMs, and running evaluations and optimizations programmatically.
+
 - [**Automatic Hyperparameter Tuning:**](docs/source/reference/optimizer.md) Automatically tune the hyperparameters of your agents, tools, and workflows to maximize performance, minimize cost, and increase accuracy.
 
 - [**Google ADK Support:**](./docs/source/reference/frameworks-overview.md#adk-google-agent-development-kit) Users of Google's Agent Development Kit (ADK) framework are now supported in NeMo Agent Toolkit.
@@ -150,10 +152,68 @@ Before getting started, it's possible to run this simple workflow and many other
    ['Here are five subspecies of Aardvarks:\n\n1. Orycteropus afer afer (Southern aardvark)\n2. O. a. adametzi  Grote, 1921 (Western aardvark)\n3. O. a. aethiopicus  Sundevall, 1843\n4. O. a. angolensis  Zukowsky & Haltenorth, 1957\n5. O. a. erikssoni  Lönnberg, 1906']
    ```
 
+## 🐍 Hello World with the Python SDK
+
+You can also build workflows entirely in Python using the SDK, without any YAML configuration files:
+
+```python
+import asyncio
+from nat.llm.nim_llm import NimLLM
+from nat.agent.react_agent.register import NatReActAgent
+from nat.utils.sdk.nat_workflow import NatWorkflow
+
+# Import a tool - install with: pip install "nvidia-nat[langchain]"
+from nat.plugins.langchain.tools.wikipedia_search import WikipediaSearchTool
+
+# Create the LLM
+llm = NimLLM(
+    model_name="meta/llama-3.1-70b-instruct",
+    temperature=0.0,
+)
+
+# Create a tool
+wiki_tool = WikipediaSearchTool(max_results=2)
+
+# Create the agent
+agent = NatReActAgent(
+    tools=[wiki_tool],
+    llm=llm,
+    verbose=True,
+)
+
+# Create the workflow
+workflow = NatWorkflow(entrypoint=agent)
+
+# Run the workflow
+async def main():
+    response = await workflow.prompt("List five subspecies of Aardvarks")
+    print(response)
+
+asyncio.run(main())
+```
+
+> **Note**: The `name` parameter is optional for SDK components. It's only required when exporting workflows to YAML configuration files for production deployment.
+
+The SDK also supports evaluation, optimization, and exporting to YAML for deployment:
+
+```python
+# Save as YAML for CLI usage or deployment
+workflow.save_to_config_file("workflow.yml")
+
+# Run evaluation (requires adding evaluators)
+# await workflow.evaluate()
+
+# Run optimization (requires adding optimizer and evaluators)
+# await workflow.optimize()
+```
+
+For more information, see the [Python SDK documentation](./docs/source/sdk/index.md) or explore the [SDK tutorial notebooks](./examples/notebooks/sdk/).
+
 ## 📚 Additional Resources
 
 * 📖 [Documentation](https://docs.nvidia.com/nemo/agent-toolkit/latest): Explore the full documentation for NeMo Agent Toolkit.
 * 🧭 [Get Started Guide](./docs/source/quick-start/installing.md): Set up your environment and start building with NeMo Agent Toolkit.
+* 🐍 [Python SDK Documentation](./docs/source/sdk/index.md): Build agents entirely in Python with the SDK.
 * 🤝 [Contributing](./docs/source/resources/contributing.md): Learn how to contribute to NeMo Agent Toolkit and set up your development environment.
 * 🧪 [Examples](./examples/README.md): Explore examples of NeMo Agent Toolkit workflows located in the [`examples`](./examples) directory of the source repository.
 * 🛠️ [Create and Customize NeMo Agent Toolkit Workflows](docs/source/tutorials/customize-a-workflow.md): Learn how to create and customize NeMo Agent Toolkit workflows.

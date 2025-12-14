@@ -36,6 +36,8 @@ NeMo Agent toolkit was previously known as <!-- vale off -->AgentIQ<!-- vale on 
 
 ## Key Features
 
+- [**Python SDK:**](./sdk/index.md) Build agents entirely in Python without YAML configuration files. The SDK provides a fluent, Pythonic interface with full IDE support for creating workflows, adding tools, configuring LLMs, and running evaluations and optimizations programmatically.
+
 - [**Framework Agnostic:**](./reference/frameworks-overview.md) NeMo Agent toolkit works side-by-side and around existing agentic frameworks, such as [LangChain](https://www.langchain.com/), [LlamaIndex](https://www.llamaindex.ai/), [CrewAI](https://www.crewai.com/), [Microsoft Semantic Kernel](https://learn.microsoft.com/en-us/semantic-kernel/), [Google ADK](https://github.com/google/adk-python), as well as customer enterprise frameworks and simple Python agents. This allows you to use your current technology stack without replatforming. NeMo Agent toolkit complements any existing agentic framework or memory tool you're using and isn't tied to any specific agentic framework, long-term memory, or data source.
 
 - [**Reusability:**](./extend/sharing-components.md) Every agent, tool, and agentic workflow in this library exists as a function call that works together in complex software applications. The composability between these agents, tools, and workflows allows you to build once and reuse in different scenarios.
@@ -73,6 +75,7 @@ Release Notes <./release-notes.md>
 :caption: Get Started
 
 Quick Start Guide <./quick-start/index.md>
+Python SDK <./sdk/index.md>
 Tutorials <./tutorials/index.md>
 ```
 
