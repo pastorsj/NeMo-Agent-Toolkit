@@ -35,3 +35,4 @@ class ConsoleFrontEndConfig(FrontEndBaseConfig, name="console"):
 
 class ConsoleFrontEnd(ConsoleFrontEndConfig, NatFrontEnd):
     """Console Front End"""
+    user_id: str | None = Field(default=None, description="User ID to use for the workflow session.")
