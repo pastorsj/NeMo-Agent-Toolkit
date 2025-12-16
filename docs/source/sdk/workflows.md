@@ -40,6 +40,28 @@ response = await workflow.prompt("What is 2 + 2?")
 print(response)
 ```
 
+### Multi-Turn Conversations with Memory
+
+For chatbots and assistants with long-term memory, pass a `conversation_id` to maintain context across sessions:
+
+```python
+# Use the same conversation_id across multiple prompts
+THREAD_ID = "user_session_123"
+
+response = await workflow.prompt(
+    "Hi! My name is Alex and I'm a software engineer.",
+    conversation_id=THREAD_ID,
+)
+
+# Later in the same session or a different session
+response = await workflow.prompt(
+    "What do you remember about me?",
+    conversation_id=THREAD_ID,
+)
+```
+
+The `conversation_id` is passed to memory backends (such as Zep or Mem0) to store and retrieve conversation history and user context. See the [Multi-Turn Chatbot notebook](../../../examples/notebooks/sdk/15_multiturn_chatbot.ipynb) for a complete example.
+
 ### Accessing the Configuration
 
 The workflow automatically discovers all components (LLMs, tools, agents) and builds a configuration:

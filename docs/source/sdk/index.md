@@ -86,11 +86,10 @@ For hands-on learning, explore the [SDK tutorial notebooks](../../../examples/no
 | Notebook | Description |
 |----------|-------------|
 | `01_installation_getting_started.ipynb` | Environment setup and first workflow |
-| `02_your_first_agent.ipynb` | Building a complete agent |
 | `03_agents.ipynb` | Different agent types |
 | `04_tools.ipynb` | Working with tools |
 | `05_llms.ipynb` | Configuring LLMs |
 | `09_evaluation.ipynb` | Evaluating workflows |
-| `11_optimization.ipynb` | Hyperparameter optimization |
 | `14_finetuning.ipynb` | Finetuning with reinforcement learning |
+| `15_multiturn_chatbot.ipynb` | Multi-turn chatbot with long-term memory |
 

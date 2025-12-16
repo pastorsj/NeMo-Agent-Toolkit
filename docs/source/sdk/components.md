@@ -78,12 +78,53 @@ from nat.tool.datetime_tools import CurrentTimeTool
 time_tool = CurrentTimeTool()
 ```
 
-**WikipediaSearchTool**: Search Wikipedia (requires `langchain` extra):
+**WikiSearchTool**: Search Wikipedia (requires `nvidia-nat-langchain` plugin):
 
 ```python
-from nat.plugins.langchain.tools.wikipedia_search import WikipediaSearchTool
+from nat.plugins.langchain.tools.wikipedia_search import WikiSearchTool
 
-wiki_tool = WikipediaSearchTool(max_results=3)
+wiki_tool = WikiSearchTool(max_results=3)
+```
+
+**TavilyInternetSearchTool**: Search the web using Tavily (requires `nvidia-nat-langchain` plugin and Tavily API key):
+
+```python
+from pydantic import SecretStr
+from nat.plugins.langchain.tools.tavily_internet_search import TavilyInternetSearchTool
+
+tavily_tool = TavilyInternetSearchTool(
+    name="web_search",
+    max_results=3,
+    api_key=SecretStr("your-tavily-api-key"),
+)
+```
+
+### Memory Tools
+
+Memory tools allow agents to store and retrieve information about users:
+
+**AddMemoryTool**: Store information in the memory backend:
+
+```python
+from nat.tool.memory_tools.add_memory_tool import AddMemoryTool
+
+add_memory = AddMemoryTool(
+    nat_memory=memory_backend,
+    name="add_memory",
+    description="Store important information about the user.",
+)
+```
+
+**GetMemoryTool**: Retrieve stored information:
+
+```python
+from nat.tool.memory_tools.get_memory_tool import GetMemoryTool
+
+get_memory = GetMemoryTool(
+    nat_memory=memory_backend,
+    name="get_memory",
+    description="Retrieve previously stored information about the user.",
+)
 ```
 
 ### Function Groups
@@ -118,7 +159,7 @@ def my_custom_tool(query: str) -> str:
     return f"Results for: {query}"
 ```
 
-For more details on creating custom tools, see [Writing Custom Functions](../extend/functions.md).
+For more details on creating custom tools, see [Writing Custom Functions](../extend/custom-components/custom-functions/functions.md).
 
 ## Agents
 
@@ -185,10 +226,10 @@ router = NatRouterAgent(
 ```
 
 For more details on agent types, see:
-- [ReAct Agent](../workflows/react-agent/index.md)
-- [Reasoning Agent](../workflows/reasoning-agent/index.md)
-- [Tool Calling Agent](../workflows/tool-calling-agent/index.md)
-- [Router Agent](../workflows/router-agent/index.md)
+- [ReAct Agent](../components/agents/react-agent/index.md)
+- [Reasoning Agent](../components/agents/reasoning-agent/index.md)
+- [Tool Calling Agent](../components/agents/tool-calling-agent/index.md)
+- [Router Agent](../components/agents/router-agent/index.md)
 
 ## Embedders
 
@@ -199,6 +240,55 @@ from nat.embedder.nim_embedder import NimEmbedder
 
 embedder = NimEmbedder(model_name="nvidia/nv-embedqa-e5-v5")
 ```
+
+## Memory Backends
+
+Memory backends provide long-term storage for conversation history and user context. They integrate with memory tools to enable persistent memory across sessions.
+
+### Zep Cloud Memory
+
+Zep Cloud provides automatic conversation summarization, semantic search, and user preference extraction:
+
+```python
+from nat.plugins.zep_cloud.memory import ZepMemory
+
+memory_backend = ZepMemory(name="zep_memory")
+```
+
+Requires the `nvidia-nat-zep-cloud` plugin and a `ZEP_API_KEY` environment variable.
+
+### Mem0 Memory
+
+Mem0 provides memory management with semantic search:
+
+```python
+from nat.plugins.mem0ai.memory import Mem0Memory
+
+memory_backend = Mem0Memory(name="mem0_memory")
+```
+
+Requires the `nvidia-nat-mem0ai` plugin and a `MEM0_API_KEY` environment variable.
+
+### Using Memory with Agents
+
+Combine a memory backend with memory tools to create agents that remember users:
+
+```python
+from nat.tool.memory_tools.add_memory_tool import AddMemoryTool
+from nat.tool.memory_tools.get_memory_tool import GetMemoryTool
+
+# Create memory tools
+add_memory = AddMemoryTool(nat_memory=memory_backend, name="add_memory")
+get_memory = GetMemoryTool(nat_memory=memory_backend, name="get_memory")
+
+# Add to agent's tools
+agent = NatReActAgent(
+    tools=[add_memory, get_memory, time_tool],
+    llm=llm,
+)
+```
+
+See the [Multi-Turn Chatbot notebook](../../../examples/notebooks/sdk/15_multiturn_chatbot.ipynb) for a complete example with Zep Cloud.
 
 ## Putting It Together
 
@@ -257,5 +347,7 @@ asyncio.run(main())
 - [Creating Workflows](./workflows.md): Manage workflows with the SDK
 - [Evaluation](./evaluation.md): Evaluate your agents
 - [Optimization](./optimization.md): Tune hyperparameters
-- [Writing Custom Functions](../extend/functions.md): Create your own tools
+- [Finetuning](./finetuning.md): Train agents with reinforcement learning
+- [Writing Custom Functions](../extend/custom-components/custom-functions/functions.md): Create your own tools
+- [Memory Documentation](../build-workflows/memory.md): Advanced memory configuration
 
