@@ -21,5 +21,7 @@ To avoid circular imports, import directly from submodules:
     from nat.utils.sdk.nat_llm import NatLLM
     from nat.utils.sdk.nat_function import NatFunction
     from nat.utils.sdk.nat_agent import NatAgent
+    from nat.utils.sdk.nat_finetuner import NatFinetuner, CurriculumLearning
+    from nat.utils.sdk.nat_trainer import NatTrainer, NatTrajectoryBuilder, NatTrainerAdapter
     # etc.
 """

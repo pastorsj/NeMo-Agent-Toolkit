@@ -435,6 +435,12 @@ class SessionManager:
         if isinstance(http_connection, Request):
             self.set_metadata_from_http_request(http_connection)
 
+        # Set conversation_id for programmatic SDK usage (non-HTTP/WebSocket)
+        # This enables memory tools to use the correct thread ID
+        token_conversation_id = None
+        if http_connection is None and conversation_id is not None:
+            token_conversation_id = self._context_state.conversation_id.set(conversation_id)
+
         builder_info: PerUserBuilderInfo | None = None
 
         if self._is_workflow_per_user:
@@ -481,6 +487,8 @@ class SessionManager:
                 self._context_state.user_input_callback.reset(token_user_input)
             if token_user_authentication is not None:
                 self._context_state.user_auth_callback.reset(token_user_authentication)
+            if token_conversation_id is not None:
+                self._context_state.conversation_id.reset(token_conversation_id)
 
     @asynccontextmanager
     async def run(self, message, runtime_type: RuntimeTypeEnum = RuntimeTypeEnum.RUN_OR_SERVE):

@@ -19,6 +19,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from pydantic import AliasChoices
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import model_validator
@@ -220,17 +221,27 @@ class FinetuneConfig(BaseModel):
     """
 
     enabled: bool = Field(description="Whether fine-tuning is enabled.", default=False)
-    trainer: str | None = Field(description="The trainer to use for fine-tuning.", default=None)
-    trajectory_builder: str | None = Field(description="The trajectory builder to use for fine-tuning.", default=None)
-
-    trainer_adapter: str | None = Field(description="The trainer adapter to use for fine-tuning.", default=None)
-    reward_function: RewardFunctionConfig | None = Field(description="Configuration for the reward function.",
-                                                         default=None)
-    target_functions: list[str] = ["<workflow>"]
-    target_model: str | None = Field(
+    trainer_name: str | None = Field(description="The trainer to use for fine-tuning.",
+                                     default=None,
+                                     validation_alias=AliasChoices("trainer_name", "trainer"))
+    trajectory_builder_name: str | None = Field(description="The trajectory builder to use for fine-tuning.",
+                                                default=None,
+                                                validation_alias=AliasChoices("trajectory_builder_name",
+                                                                              "trajectory_builder"))
+    trainer_adapter_name: str | None = Field(description="The trainer adapter to use for fine-tuning.",
+                                             default=None,
+                                             validation_alias=AliasChoices("trainer_adapter_name", "trainer_adapter"))
+    reward_function_name: str | None = Field(description="Name of the reward function (evaluator) to use.",
+                                             default=None,
+                                             validation_alias=AliasChoices("reward_function_name", "reward_function"))
+    target_function_names: list[str] = Field(default=["<workflow>"],
+                                             description="Functions to extract trajectories from",
+                                             validation_alias=AliasChoices("target_function_names", "target_functions"))
+    target_model_name: str | None = Field(
         description="Target model name to fine-tune. If None, all intermediate steps will be used without "
         "filtering. This can lead to issues if multiple models are used in the workflow.",
-        default=None)
+        default=None,
+        validation_alias=AliasChoices("target_model_name", "target_model"))
     curriculum_learning: CurriculumLearningConfig = Field(
         default=CurriculumLearningConfig(), description="Configuration for curriculum learning during fine-tuning")
 
@@ -242,13 +253,34 @@ class FinetuneConfig(BaseModel):
     run_configuration: FinetuneRunConfig | None = Field(
         description="Run-time configuration for fine-tuning (overrides CLI arguments).", default=None)
 
-    # Before validator: if enabled, config file, trainer, trajectory builder, trainer adapter and reward
-    # function must be set
+    # Before validator: handle backward compatibility and validate required fields
     @model_validator(mode="before")
     def validate_finetuning_enabled(cls, values: dict[str, Any]) -> dict[str, Any]:
+        # Handle backward compatibility: reward_function was previously a nested object
+        # Convert {"name": "..."} to just the name string
+        reward_fn = values.get("reward_function") or values.get("reward_function_name")
+        if reward_fn is not None:
+            if isinstance(reward_fn, dict) and "name" in reward_fn:
+                values["reward_function_name"] = reward_fn["name"]
+            elif isinstance(reward_fn, str):
+                values["reward_function_name"] = reward_fn
+            # Clean up old key if present
+            values.pop("reward_function", None)
+
         if values.get("enabled", False):
-            required_fields = ["trainer", "trajectory_builder", "trainer_adapter"]
-            missing_fields = [field for field in required_fields if values.get(field) is None]
+            # Check for new names first, fall back to old names for validation
+            trainer = values.get("trainer_name") or values.get("trainer")
+            trajectory_builder = values.get("trajectory_builder_name") or values.get("trajectory_builder")
+            trainer_adapter = values.get("trainer_adapter_name") or values.get("trainer_adapter")
+
+            missing_fields = []
+            if not trainer:
+                missing_fields.append("trainer_name")
+            if not trajectory_builder:
+                missing_fields.append("trajectory_builder_name")
+            if not trainer_adapter:
+                missing_fields.append("trainer_adapter_name")
+
             if missing_fields:
                 raise ValueError(f"When fine-tuning is enabled, the following fields must be set: "
                                  f"{', '.join(missing_fields)}")

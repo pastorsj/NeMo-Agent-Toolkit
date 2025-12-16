@@ -39,7 +39,10 @@ class TrajectoryBuilder(ABC):
         Asynchronously initialize any resources needed for the trajectory builder.
         """
         self.run_config = run_config
-        self.trajectory_builder_config.reward = self.run_config.reward_function
+        # Create RewardFunctionConfig from the name if provided
+        if self.run_config.reward_function_name:
+            from nat.data_models.finetuning import RewardFunctionConfig
+            self.trajectory_builder_config.reward = RewardFunctionConfig(name=self.run_config.reward_function_name)
 
     async def run_eval(self) -> EvaluationRunOutput:
         """

@@ -212,17 +212,17 @@ class ARTTrajectoryBuilder(TrajectoryBuilder):
 
                 filtered_trajectory = []
                 for item in input_item.trajectory:
-                    if item.function_ancestry.function_name in self.run_config.target_functions:
+                    if item.function_ancestry.function_name in self.run_config.target_function_names:
                         # If target model is specified, filter by model name
-                        if (self.run_config.target_model and item.event_category == IntermediateStepCategory.LLM
-                                and item.payload.name != self.run_config.target_model):
+                        if (self.run_config.target_model_name and item.event_category == IntermediateStepCategory.LLM
+                                and item.payload.name != self.run_config.target_model_name):
                             continue
                         filtered_trajectory.append(item)
 
                 if not filtered_trajectory:
                     logger.warning(
                         "No trajectory steps found for target function '%s' in item id: %s",
-                        self.run_config.target_functions,
+                        self.run_config.target_function_names,
                         reward_item.id,
                     )
                     continue

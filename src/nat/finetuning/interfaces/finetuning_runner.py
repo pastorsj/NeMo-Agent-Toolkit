@@ -89,7 +89,10 @@ class Trainer(ABC):
             "total_groups": 0,
             "included_groups": set()
         }
-        self.trainer_config.reward = self.run_config.reward_function
+        # Create RewardFunctionConfig from the name if provided
+        if self.run_config.reward_function_name:
+            from nat.data_models.finetuning import RewardFunctionConfig
+            self.trainer_config.reward = RewardFunctionConfig(name=self.run_config.reward_function_name)
 
         await self.trajectory_builder.initialize(run_config)
         await self.trainer_adapter.initialize(run_config)

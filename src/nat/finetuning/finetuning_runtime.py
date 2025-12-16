@@ -90,14 +90,14 @@ async def finetuning_main(run_config: FinetuneRunConfig) -> None:
     async with WorkflowBuilder.from_config(config=config) as builder:
         # Get trajectory builder and trainer adapter from builder
         logger.info("Initializing finetuning components...")
-        trajectory_builder_name = finetuning_config.trajectory_builder
-        trainer_adapter_name = finetuning_config.trainer_adapter
+        trajectory_builder_name = finetuning_config.trajectory_builder_name
+        trainer_adapter_name = finetuning_config.trainer_adapter_name
         trajectory_builder = await builder.get_trajectory_builder(trajectory_builder_name)
         trainer_adapter = await builder.get_trainer_adapter(trainer_adapter_name)
         logger.info("Finetuning components initialized.")
 
         # Initialize trainer
-        trainer_name = finetuning_config.trainer
+        trainer_name = finetuning_config.trainer_name
         trainer = await builder.get_trainer(trainer_name,
                                             trajectory_builder=trajectory_builder,
                                             trainer_adapter=trainer_adapter)

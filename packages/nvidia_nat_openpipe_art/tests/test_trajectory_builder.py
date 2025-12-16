@@ -61,7 +61,7 @@ class TestARTTrajectoryBuilder:
                                          reward_function=RewardFunctionConfig(name="test_reward"))
 
         # Add target_functions directly to the config for testing
-        finetune_config.target_functions = ["test_function"]
+        finetune_config.target_function_names = ["test_function"]
 
         return finetune_config
 

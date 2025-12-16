@@ -32,6 +32,10 @@ from nat.data_models.config import GeneralConfig
 from nat.data_models.embedder import EmbedderBaseConfig
 from nat.data_models.evaluate import EvalConfig
 from nat.data_models.evaluator import EvaluatorBaseConfig
+from nat.data_models.finetuning import FinetuneRunConfig
+from nat.data_models.finetuning import TrainerAdapterConfig
+from nat.data_models.finetuning import TrainerConfig
+from nat.data_models.finetuning import TrajectoryBuilderConfig
 from nat.data_models.front_end import FrontEndBaseConfig
 from nat.data_models.function import FunctionBaseConfig
 from nat.data_models.function import FunctionGroupBaseConfig
@@ -45,6 +49,7 @@ from nat.data_models.retriever import RetrieverBaseConfig
 from nat.data_models.telemetry_exporter import TelemetryExporterBaseConfig
 from nat.data_models.ttc_strategy import TTCStrategyBaseConfig
 from nat.eval.config import EvaluationRunConfig
+from nat.finetuning.finetuning_runtime import finetuning_main
 from nat.runtime.loader import PluginTypes
 from nat.runtime.loader import discover_and_register_plugins
 from nat.utils import run_workflow
@@ -54,6 +59,7 @@ from nat.utils.sdk.nat_base import NatBase
 from nat.utils.sdk.nat_embedder import NatEmbedder
 from nat.utils.sdk.nat_evaluation import NatEvaluation
 from nat.utils.sdk.nat_evaluator import NatEvaluator
+from nat.utils.sdk.nat_finetuner import NatFinetuner
 from nat.utils.sdk.nat_function import NatFunction
 from nat.utils.sdk.nat_function_group import NatFunctionGroup
 from nat.utils.sdk.nat_general_configuraton import NatGeneralConfiguration
@@ -63,6 +69,9 @@ from nat.utils.sdk.nat_middleware import NatMiddleware
 from nat.utils.sdk.nat_object_store import NatObjectStore
 from nat.utils.sdk.nat_optimizer import NatOptimizer
 from nat.utils.sdk.nat_retriever import NatRetriever
+from nat.utils.sdk.nat_trainer import NatTrainer
+from nat.utils.sdk.nat_trainer import NatTrainerAdapter
+from nat.utils.sdk.nat_trainer import NatTrajectoryBuilder
 from nat.utils.sdk.nat_ttc_strategy import NatTTCStrategy
 
 logger = logging.getLogger(__name__)
@@ -83,6 +92,10 @@ class DiscoveredComponents:
         self.ttc_strategies: dict[str, TTCStrategyBaseConfig] = {}
         self.auth_providers: dict[str, AuthProviderBaseConfig] = {}
         self.evaluators: dict[str, EvaluatorBaseConfig] = {}
+        # Finetuning components
+        self.trainers: dict[str, TrainerConfig] = {}
+        self.trajectory_builders: dict[str, TrajectoryBuilderConfig] = {}
+        self.trainer_adapters: dict[str, TrainerAdapterConfig] = {}
         # Track visited objects to avoid infinite recursion
         self._visited: set[int] = set()
         # Track environment variable references for serialization
@@ -141,6 +154,18 @@ class DiscoveredComponents:
         name, config = evaluator.compute_name_and_config(EvaluatorBaseConfig)
         self.evaluators[name] = config
 
+    def add_trainer(self, trainer: NatTrainer) -> None:
+        name, config = trainer.compute_name_and_config(TrainerConfig)
+        self.trainers[name] = config
+
+    def add_trajectory_builder(self, trajectory_builder: NatTrajectoryBuilder) -> None:
+        name, config = trajectory_builder.compute_name_and_config(TrajectoryBuilderConfig)
+        self.trajectory_builders[name] = config
+
+    def add_trainer_adapter(self, trainer_adapter: NatTrainerAdapter) -> None:
+        name, config = trainer_adapter.compute_name_and_config(TrainerAdapterConfig)
+        self.trainer_adapters[name] = config
+
     def was_visited(self, obj: object) -> bool:
         """Check if an object was already visited."""
         return id(obj) in self._visited
@@ -185,6 +210,9 @@ class NatWorkflow(BaseModel):
     optimizer: NatOptimizer | None = Field(description="The optimizer configuration for this workflow",
                                            default=None,
                                            init=False)
+    finetuning: NatFinetuner | None = Field(description="The finetuning configuration for this workflow",
+                                            default=None,
+                                            init=False)
 
     # Private attributes for caching discovered components
     _discovered: DiscoveredComponents | None = PrivateAttr(default=None)
@@ -194,16 +222,21 @@ class NatWorkflow(BaseModel):
         discover_and_register_plugins(PluginTypes.ALL)
         return self._build_config_object()
 
-    async def prompt(self, prompt: str):
+    async def prompt(self, prompt: str, *, conversation_id: str | None = None):
         """Run the workflow with a prompt.
 
         Args:
             prompt: The input prompt to process.
+            conversation_id: Optional conversation ID for memory persistence.
+                If provided, memory operations will use this ID to store/retrieve context.
 
         Returns:
             The response from the workflow.
         """
-        return await run_workflow(config=self._config, prompt=prompt)
+        session_kwargs = {}
+        if conversation_id is not None:
+            session_kwargs["conversation_id"] = conversation_id
+        return await run_workflow(config=self._config, prompt=prompt, session_kwargs=session_kwargs or None)
 
     async def evaluate(
             self,
@@ -319,6 +352,72 @@ class NatWorkflow(BaseModel):
         # Reset discovered components
         self._discovered = None
 
+    def add_finetuning(self, finetuning: NatFinetuner):
+        """Add finetuning configuration to the workflow.
+
+        Args:
+            finetuning: The NatFinetuner configuration to add.
+        """
+        self.finetuning = finetuning
+        # Reset the cached config
+        if "_config" in self.__dict__:
+            del self.__dict__["_config"]
+        # Reset discovered components
+        self._discovered = None
+
+    async def finetune(
+        self,
+        *,
+        dataset: str | None = None,
+        result_json_path: str = "$",
+        endpoint: str | None = None,
+        endpoint_timeout: int = 300,
+        override: tuple[tuple[str, str], ...] = (),
+        validation_dataset: str | None = None,
+        validation_interval: int = 5,
+        validation_config_file: str | None = None,
+    ):
+        """Run finetuning on the workflow.
+
+        This runs the finetuning harness to collect trajectories and train
+        the model using the configured trainer, trajectory builder, and
+        trainer adapter.
+
+        Args:
+            dataset: Path to override the dataset in config.
+            result_json_path: JSON path to extract results from workflow output.
+            endpoint: Remote endpoint URL for running the workflow.
+            endpoint_timeout: HTTP response timeout in seconds.
+            override: Config overrides as key-value tuples.
+            validation_dataset: Path to validation dataset for periodic validation.
+            validation_interval: Run validation every N epochs.
+            validation_config_file: Optional separate config file for validation runs.
+
+        Raises:
+            ValueError: If no finetuning configuration or evaluator has been set.
+
+        Returns:
+            The finetuning results.
+        """
+        if self.finetuning is None:
+            raise ValueError("No finetuning configuration has been set. "
+                             "Please call add_finetuning() before running finetune().")
+        if self.evaluator is None:
+            raise ValueError("No evaluator has been set. Finetuning requires evaluation metrics.")
+
+        config = FinetuneRunConfig(
+            config_file=self._config,
+            dataset=dataset,
+            result_json_path=result_json_path,
+            endpoint=endpoint,
+            endpoint_timeout=endpoint_timeout,
+            override=override,
+            validation_dataset=validation_dataset,
+            validation_interval=validation_interval,
+            validation_config_file=validation_config_file,
+        )
+        return await finetuning_main(config)
+
     def save_to_config_file(self, file_path: str | Path) -> None:
         """Save the workflow configuration to a YAML file.
 
@@ -399,6 +498,18 @@ class NatWorkflow(BaseModel):
         if self.evaluator is not None and self.evaluator.evaluators:
             for ev in self.evaluator.evaluators:
                 self._traverse_nat_object(ev, self._discovered)
+
+        # Discover finetuning components if present
+        if self.finetuning is not None:
+            finetuning_components = self.finetuning.get_components()
+            if "trainer" in finetuning_components:
+                self._discovered.add_trainer(finetuning_components["trainer"])
+            if "trajectory_builder" in finetuning_components:
+                self._discovered.add_trajectory_builder(finetuning_components["trajectory_builder"])
+            if "trainer_adapter" in finetuning_components:
+                self._discovered.add_trainer_adapter(finetuning_components["trainer_adapter"])
+            if "reward_function" in finetuning_components:
+                self._discovered.add_evaluator(finetuning_components["reward_function"])
 
         return self._discovered
 
@@ -545,6 +656,23 @@ class NatWorkflow(BaseModel):
         if optimizer_config is not None:
             config_args["optimizer"] = optimizer_config
 
+        # Build trainers
+        if discovered.trainers:
+            config_args["trainers"] = discovered.trainers
+
+        # Build trajectory builders
+        if discovered.trajectory_builders:
+            config_args["trajectory_builders"] = discovered.trajectory_builders
+
+        # Build trainer adapters
+        if discovered.trainer_adapters:
+            config_args["trainer_adapters"] = discovered.trainer_adapters
+
+        # Build finetuning configuration
+        finetuning_config = self._build_finetuning()
+        if finetuning_config is not None:
+            config_args["finetuning"] = finetuning_config
+
         try:
             config = Config(**config_args)
         except ValidationError as e:
@@ -634,3 +762,16 @@ class NatWorkflow(BaseModel):
             return None
 
         return self.optimizer.to_optimizer_config()
+
+    def _build_finetuning(self):
+        """Build the finetuning configuration.
+
+        Returns:
+            A FinetuneConfig object or None if no finetuning is set.
+        """
+        if self.finetuning is None:
+            return None
+
+        # NatFinetuner inherits from FinetuneConfig, so we can use it directly
+        # But to_finetune_config() gives us a clean base config without SDK fields
+        return self.finetuning.to_finetune_config()

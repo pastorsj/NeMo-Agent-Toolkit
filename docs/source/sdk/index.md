@@ -67,6 +67,7 @@ Creating Workflows <./workflows.md>
 Components (LLMs, Tools, Agents) <./components.md>
 Evaluation <./evaluation.md>
 Optimization <./optimization.md>
+Finetuning <./finetuning.md>
 Exporting Configuration <./configuration.md>
 ```
 
@@ -75,6 +76,7 @@ Exporting Configuration <./configuration.md>
 - [Components](./components.md): Work with LLMs, tools, and agents
 - [Evaluation](./evaluation.md): Evaluate workflow performance with the SDK
 - [Optimization](./optimization.md): Optimize hyperparameters and prompts
+- [Finetuning](./finetuning.md): Train agents with reinforcement learning
 - [Exporting Configuration](./configuration.md): Save workflows as YAML for deployment
 
 ## Interactive Tutorials
@@ -90,4 +92,5 @@ For hands-on learning, explore the [SDK tutorial notebooks](../../../examples/no
 | `05_llms.ipynb` | Configuring LLMs |
 | `09_evaluation.ipynb` | Evaluating workflows |
 | `11_optimization.ipynb` | Hyperparameter optimization |
+| `14_finetuning.ipynb` | Finetuning with reinforcement learning |
 
