@@ -342,6 +342,6 @@ nat optimize --config_file opt_workflow.yaml
 ## Next Steps
 
 - [Evaluation](./evaluation.md): Set up evaluation for optimization
-- [Optimizer Reference](../reference/optimizer.md): Detailed optimizer documentation
+- [Optimizer Reference](../improve-workflows/optimizer.md): Detailed optimizer documentation
 - [Components](./components.md): Configure optimizable LLMs
 

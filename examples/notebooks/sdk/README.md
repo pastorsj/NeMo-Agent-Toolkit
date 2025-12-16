@@ -18,15 +18,15 @@ From the [documentation](../../../docs/source/index.md):
 
 | Component | Documentation | Description |
 |-----------|--------------|-------------|
-| **Functions** | [Functions](../../../docs/source/workflows/functions/index.md) | Main building blocks with input/output schemas |
-| **Function Groups** | [Function Groups](../../../docs/source/workflows/function-groups.md) | Package related functions to share config |
-| **Agents** | [About Workflows](../../../docs/source/workflows/about.md) | ReAct, Tool Calling, ReWOO, Router, and more |
-| **LLMs** | [LLMs](../../../docs/source/workflows/llms/index.md) | NIM, OpenAI, AWS Bedrock, Azure, LiteLLM |
-| **Embedders** | [Embedders](../../../docs/source/workflows/embedders.md) | NIM, OpenAI, Azure OpenAI |
-| **Retrievers** | [Retrievers](../../../docs/source/workflows/retrievers.md) | NeMo Retriever, Milvus |
-| **Memory** | [Memory](../../../docs/source/store-and-retrieve/memory.md) | Mem0, Redis, Zep |
-| **MCP** | [MCP](../../../docs/source/workflows/mcp/index.md) | Model Context Protocol integration |
-| **A2A** | [A2A](../../../docs/source/workflows/a2a/index.md) | Agent-to-Agent Protocol |
+| **Functions** | [Functions](../../../docs/source/build-workflows/functions-and-function-groups/functions.md) | Main building blocks with input/output schemas |
+| **Function Groups** | [Function Groups](../../../docs/source/build-workflows/functions-and-function-groups/function-groups.md) | Package related functions to share config |
+| **Agents** | [About Workflows](../../../docs/source/build-workflows/about-building-workflows.md) | ReAct, Tool Calling, ReWOO, Router, and more |
+| **LLMs** | [LLMs](../../../docs/source/build-workflows/llms/index.md) | NIM, OpenAI, AWS Bedrock, Azure, LiteLLM |
+| **Embedders** | [Embedders](../../../docs/source/build-workflows/embedders.md) | NIM, OpenAI, Azure OpenAI |
+| **Retrievers** | [Retrievers](../../../docs/source/build-workflows/retrievers.md) | NeMo Retriever, Milvus |
+| **Memory** | [Memory](../../../docs/source/build-workflows/memory.md) | Mem0, Redis, Zep |
+| **MCP** | [MCP](../../../docs/source/build-workflows/mcp-client.md) | Model Context Protocol integration |
+| **A2A** | [A2A](../../../docs/source/components/integrations/a2a.md) | Agent-to-Agent Protocol |
 
 ## Tutorial Overview
 
@@ -45,6 +45,8 @@ From the [documentation](../../../docs/source/index.md):
 | 11 | [Optimization](./11_optimization.ipynb) | Improve prompts and parameters |
 | 12 | [Observability](./12_observability.ipynb) | Phoenix tracing and debugging |
 | 13 | [Custom Functions Inline](./13_custom_functions_inline.ipynb) | Create and register functions inline for prototyping |
+| 14 | [Finetuning](./14_finetuning.ipynb) | Configure RL finetuning with curriculum learning |
+| 15 | [Multi-Turn Chatbot](./15_multiturn_chatbot.ipynb) | Build a chatbot with long-term memory and web search |
 
 ## Quick Start
 

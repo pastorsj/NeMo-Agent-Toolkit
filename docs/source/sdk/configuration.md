@@ -270,6 +270,6 @@ with open("workflow.yaml") as f:
 ## Next Steps
 
 - [CLI Reference](../reference/cli.md): Command-line interface documentation
-- [Workflow Configuration](../workflows/workflow-configuration.md): YAML configuration reference
-- [Run Workflows](../workflows/run-workflows.md): Running workflows with the CLI
+- [Workflow Configuration](../build-workflows/workflow-configuration.md): YAML configuration reference
+- [Run Workflows](../run-workflows/about-running-workflows.md): Running workflows with the CLI
 

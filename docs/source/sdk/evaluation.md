@@ -272,6 +272,6 @@ nat eval --config_file eval_workflow.yaml
 ## Next Steps
 
 - [Optimization](./optimization.md): Use evaluation results to optimize parameters
-- [Evaluate Workflows](../workflows/evaluate.md): CLI-based evaluation reference
-- [Custom Evaluators](../extend/custom-evaluator.md): Create your own metrics
+- [Evaluate Workflows](../improve-workflows/evaluate.md): CLI-based evaluation reference
+- [Custom Evaluators](../extend/custom-components/custom-evaluator.md): Create your own metrics
 
