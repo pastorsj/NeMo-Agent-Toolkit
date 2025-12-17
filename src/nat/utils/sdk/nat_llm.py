@@ -15,12 +15,28 @@
 
 from typing import ClassVar
 
-from nat.data_models.common import TypedBaseModel
 from nat.data_models.llm import LLMBaseConfig
 from nat.utils.sdk.nat_base import NatBase
 
 
-class NatLLM(TypedBaseModel, NatBase):
-    """Base class for LLM configurations that inherit from both LLMBaseConfig and NatBase."""
+class NatLLM(NatBase[LLMBaseConfig]):
+    """Base class for LLM configurations.
+
+    Can be used in two ways:
+
+    1. **Subclass pattern**: Use specific LLM classes like NimLLM
+       ```python
+       llm = NimLLM(model_name="meta/llama-3.1-70b-instruct")
+       ```
+
+    2. **Factory pattern**: Pass a config object directly
+       ```python
+       config = NIMModelConfig(model="meta/llama-3.1-70b-instruct")
+       llm = NatLLM(config=config, name="my_llm")
+       ```
+
+    The factory pattern is useful when you want to use an existing config
+    without creating a custom class.
+    """
 
     _marker_class: ClassVar[type] = LLMBaseConfig

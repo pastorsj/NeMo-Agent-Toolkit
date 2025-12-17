@@ -15,12 +15,28 @@
 
 from typing import ClassVar
 
-from nat.data_models.common import TypedBaseModel
 from nat.data_models.middleware import MiddlewareBaseConfig
 from nat.utils.sdk.nat_base import NatBase
 
 
-class NatMiddleware(TypedBaseModel, NatBase):
-    """Base class for middleware configurations that inherit from both MiddlewareBaseConfig and NatBase."""
+class NatMiddleware(NatBase[MiddlewareBaseConfig]):
+    """Base class for middleware configurations.
+
+    Can be used in two ways:
+
+    1. **Subclass pattern**: Use specific middleware classes
+       ```python
+       middleware = MyMiddleware(...)
+       ```
+
+    2. **Factory pattern**: Pass a config object directly
+       ```python
+       config = MyMiddlewareConfig(...)
+       middleware = NatMiddleware(config=config, name="my_middleware")
+       ```
+
+    The factory pattern is useful when you want to use an existing config
+    without creating a custom class.
+    """
 
     _marker_class: ClassVar[type] = MiddlewareBaseConfig

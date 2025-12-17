@@ -15,12 +15,28 @@
 
 from typing import ClassVar
 
-from nat.data_models.common import TypedBaseModel
 from nat.data_models.telemetry_exporter import TelemetryExporterBaseConfig
 from nat.utils.sdk.nat_base import NatBase
 
 
-class NatTelemetryExporter(TypedBaseModel, NatBase):
-    """Base class for telemetry exporter configurations that inherit from TelemetryExporterBaseConfig and NatBase."""
+class NatTelemetryExporter(NatBase[TelemetryExporterBaseConfig]):
+    """Base class for telemetry exporter configurations.
+
+    Can be used in two ways:
+
+    1. **Subclass pattern**: Use specific telemetry exporter classes
+       ```python
+       exporter = PhoenixExporter(...)
+       ```
+
+    2. **Factory pattern**: Pass a config object directly
+       ```python
+       config = PhoenixExporterConfig(...)
+       exporter = NatTelemetryExporter(config=config, name="my_exporter")
+       ```
+
+    The factory pattern is useful when you want to use an existing config
+    without creating a custom class.
+    """
 
     _marker_class: ClassVar[type] = TelemetryExporterBaseConfig

@@ -15,12 +15,28 @@
 
 from typing import ClassVar
 
-from nat.data_models.common import TypedBaseModel
 from nat.data_models.function import FunctionBaseConfig
 from nat.utils.sdk.nat_base import NatBase
 
 
-class NatFunction(TypedBaseModel, NatBase):
-    """Base class for function configurations that inherit from both FunctionBaseConfig and NatBase."""
+class NatFunction(NatBase[FunctionBaseConfig]):
+    """Base class for function configurations.
+
+    Can be used in two ways:
+
+    1. **Subclass pattern**: Use specific function classes like CurrentTimeTool
+       ```python
+       tool = CurrentTimeTool()
+       ```
+
+    2. **Factory pattern**: Pass a config object directly
+       ```python
+       config = CurrentTimeToolConfig()
+       func = NatFunction(config=config, name="my_func")
+       ```
+
+    The factory pattern is useful when you want to use an existing config
+    without creating a custom class.
+    """
 
     _marker_class: ClassVar[type] = FunctionBaseConfig

@@ -15,12 +15,28 @@
 
 from typing import ClassVar
 
-from nat.data_models.common import TypedBaseModel
 from nat.data_models.retriever import RetrieverBaseConfig
 from nat.utils.sdk.nat_base import NatBase
 
 
-class NatRetriever(TypedBaseModel, NatBase):
-    """Base class for retriever configurations that inherit from both RetrieverBaseConfig and NatBase."""
+class NatRetriever(NatBase[RetrieverBaseConfig]):
+    """Base class for retriever configurations.
+
+    Can be used in two ways:
+
+    1. **Subclass pattern**: Use specific retriever classes like MilvusRetriever
+       ```python
+       retriever = MilvusRetriever(...)
+       ```
+
+    2. **Factory pattern**: Pass a config object directly
+       ```python
+       config = MilvusRetrieverConfig(...)
+       retriever = NatRetriever(config=config, name="my_retriever")
+       ```
+
+    The factory pattern is useful when you want to use an existing config
+    without creating a custom class.
+    """
 
     _marker_class: ClassVar[type] = RetrieverBaseConfig

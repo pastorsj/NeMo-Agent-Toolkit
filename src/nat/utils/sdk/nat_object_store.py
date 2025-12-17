@@ -15,12 +15,28 @@
 
 from typing import ClassVar
 
-from nat.data_models.common import TypedBaseModel
 from nat.data_models.object_store import ObjectStoreBaseConfig
 from nat.utils.sdk.nat_base import NatBase
 
 
-class NatObjectStore(TypedBaseModel, NatBase):
-    """Base class for object store configurations that inherit from both ObjectStoreBaseConfig and NatBase."""
+class NatObjectStore(NatBase[ObjectStoreBaseConfig]):
+    """Base class for object store configurations.
+
+    Can be used in two ways:
+
+    1. **Subclass pattern**: Use specific object store classes
+       ```python
+       store = S3ObjectStore(...)
+       ```
+
+    2. **Factory pattern**: Pass a config object directly
+       ```python
+       config = S3ObjectStoreConfig(...)
+       store = NatObjectStore(config=config, name="my_store")
+       ```
+
+    The factory pattern is useful when you want to use an existing config
+    without creating a custom class.
+    """
 
     _marker_class: ClassVar[type] = ObjectStoreBaseConfig

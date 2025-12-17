@@ -328,3 +328,168 @@ class TestMultipleComponentsNaming:
         # All names should be unique
         names = {name1, name2, name3}
         assert len(names) == 3
+
+
+# ============================================================================
+# Factory Pattern (Config Wrapper) Tests
+# ============================================================================
+
+
+class TestFactoryPatternConfigWrapper:
+    """Tests for the factory pattern using config= parameter."""
+
+    def test_nat_agent_wraps_config(self):
+        """Test that NatAgent can wrap an agent config."""
+        from nat.agent.react_agent.register import ReActAgentWorkflowConfig
+        from nat.data_models.agent import AgentBaseConfig
+        from nat.utils.sdk.nat_agent import NatAgent
+
+        # Create a raw config
+        react_config = ReActAgentWorkflowConfig(llm_name="test_llm", tool_names=[], description="Test agent")
+
+        # Wrap it with NatAgent
+        agent = NatAgent(config=react_config, name="my_wrapped_agent")
+
+        # Verify the wrapper returns the original config
+        name, config = agent.compute_name_and_config(AgentBaseConfig)
+        assert name == "my_wrapped_agent"
+        assert config is react_config
+
+    def test_nat_agent_wrapper_auto_generates_name(self):
+        """Test that NatAgent wrapper auto-generates name when not provided."""
+        from nat.agent.react_agent.register import ReActAgentWorkflowConfig
+        from nat.data_models.agent import AgentBaseConfig
+        from nat.utils.sdk.nat_agent import NatAgent
+
+        react_config = ReActAgentWorkflowConfig(llm_name="test_llm", tool_names=[], description="Test agent")
+
+        agent = NatAgent(config=react_config)
+        name, config = agent.compute_name_and_config(AgentBaseConfig)
+
+        # Name should be auto-generated with config type
+        assert "react_agent" in name
+        assert "_" in name
+        assert config is react_config
+
+    def test_nat_agent_wrapper_name_is_stable(self):
+        """Test that auto-generated name is stable across multiple calls."""
+        from nat.agent.react_agent.register import ReActAgentWorkflowConfig
+        from nat.data_models.agent import AgentBaseConfig
+        from nat.utils.sdk.nat_agent import NatAgent
+
+        react_config = ReActAgentWorkflowConfig(llm_name="test_llm", tool_names=[], description="Test agent")
+
+        agent = NatAgent(config=react_config)
+        name1, _ = agent.compute_name_and_config(AgentBaseConfig)
+        name2, _ = agent.compute_name_and_config(AgentBaseConfig)
+
+        assert name1 == name2
+
+    def test_nat_llm_wraps_config(self):
+        """Test that NatLLM can wrap an LLM config."""
+        from nat.data_models.llm import LLMBaseConfig
+        from nat.llm.nim_llm import NIMModelConfig
+        from nat.utils.sdk.nat_llm import NatLLM
+
+        nim_config = NIMModelConfig(model="test-model")
+        llm = NatLLM(config=nim_config, name="my_wrapped_llm")
+
+        name, config = llm.compute_name_and_config(LLMBaseConfig)
+        assert name == "my_wrapped_llm"
+        assert config is nim_config
+
+    def test_nat_function_wraps_config(self):
+        """Test that NatFunction can wrap a function config."""
+        from nat.data_models.function import FunctionBaseConfig
+        from nat.tool.datetime_tools import CurrentTimeToolConfig
+        from nat.utils.sdk.nat_function import NatFunction
+
+        time_config = CurrentTimeToolConfig()
+        func = NatFunction(config=time_config, name="my_wrapped_func")
+
+        name, config = func.compute_name_and_config(FunctionBaseConfig)
+        assert name == "my_wrapped_func"
+        assert config is time_config
+
+    def test_nat_memory_wraps_config(self):
+        """Test that NatMemory can wrap a memory config."""
+
+        from nat.data_models.memory import MemoryBaseConfig
+        from nat.utils.sdk.nat_memory import NatMemory
+
+        # Create a minimal memory config for testing
+        class TestMemoryConfig(MemoryBaseConfig, name="test_memory"):
+            pass
+
+        mem_config = TestMemoryConfig()
+        memory = NatMemory(config=mem_config, name="my_wrapped_memory")
+
+        name, config = memory.compute_name_and_config(MemoryBaseConfig)
+        assert name == "my_wrapped_memory"
+        assert config is mem_config
+
+    def test_subclass_pattern_still_works(self):
+        """Test that subclass pattern (NatReActAgent) still works."""
+        llm = NimLLM(model_name="test-model", name="test_llm")
+        agent = NatReActAgent(llm=llm, tools=[], description="Subclass test", name="subclass_agent")
+
+        assert agent.computed_name == "subclass_agent"
+
+    def test_wrapper_and_subclass_coexist(self):
+        """Test that wrapper pattern and subclass pattern can be used together."""
+        from nat.agent.react_agent.register import ReActAgentWorkflowConfig
+        from nat.data_models.agent import AgentBaseConfig
+        from nat.utils.sdk.nat_agent import NatAgent
+
+        # Subclass pattern
+        llm = NimLLM(model_name="test-model", name="test_llm")
+        subclass_agent = NatReActAgent(llm=llm, tools=[], description="Subclass agent", name="agent_1")
+
+        # Factory pattern
+        react_config = ReActAgentWorkflowConfig(llm_name="test_llm", tool_names=[], description="Factory agent")
+        factory_agent = NatAgent(config=react_config, name="agent_2")
+
+        # Both should work
+        name1 = subclass_agent.computed_name
+        name2, _ = factory_agent.compute_name_and_config(AgentBaseConfig)
+
+        assert name1 == "agent_1"
+        assert name2 == "agent_2"
+
+    def test_factory_with_registered_function(self):
+        """Test that factory pattern works with registered_function parameter."""
+        from nat.agent.react_agent.register import ReActAgentWorkflowConfig
+        from nat.utils.sdk.nat_agent import NatAgent
+
+        react_config = ReActAgentWorkflowConfig(llm_name="test_llm", tool_names=[], description="Test agent")
+
+        # The registered_function is for custom build functions
+        # This just verifies the parameter is accepted
+        agent = NatAgent(config=react_config, name="test", registered_function=None)
+        assert agent.name == "test"
+
+    def test_config_type_validation(self):
+        """Test that config type validation works correctly."""
+        from nat.llm.nim_llm import NIMModelConfig
+        from nat.utils.sdk.nat_agent import NatAgent
+
+        # Passing an LLM config to NatAgent should raise ValueError
+        llm_config = NIMModelConfig(model="test-model")
+
+        with pytest.raises(ValueError, match="config must be an instance of AgentBaseConfig"):
+            NatAgent(config=llm_config)
+
+    def test_config_accepts_subclasses(self):
+        """Test that config accepts subclasses of the marker class."""
+        from nat.agent.react_agent.register import ReActAgentWorkflowConfig
+        from nat.data_models.agent import AgentBaseConfig
+        from nat.utils.sdk.nat_agent import NatAgent
+
+        # ReActAgentWorkflowConfig is a subclass of AgentBaseConfig
+        react_config = ReActAgentWorkflowConfig(llm_name="test_llm", tool_names=[], description="Test agent")
+
+        # This should work without raising
+        agent = NatAgent(config=react_config, name="test")
+        name, config = agent.compute_name_and_config(AgentBaseConfig)
+        assert name == "test"
+        assert config is react_config

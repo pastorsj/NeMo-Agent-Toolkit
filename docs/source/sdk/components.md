@@ -19,6 +19,48 @@ limitations under the License.
 
 The NeMo Agent toolkit SDK provides Python classes for creating LLMs, tools, and agents. This guide covers the main components and how to use them.
 
+## Two Ways to Create Components
+
+SDK components can be created in two ways:
+
+### 1. Subclass Pattern (Recommended for most use cases)
+
+Use specific classes like `NatReActAgent`, `NimLLM`, etc. for the most convenient API:
+
+```python
+from nat.llm.nim_llm import NimLLM
+from nat.agent.react_agent.register import NatReActAgent
+
+llm = NimLLM(model_name="meta/llama-3.1-70b-instruct")
+agent = NatReActAgent(llm=llm, tools=[...])
+```
+
+### 2. Factory Pattern (For advanced use cases)
+
+Wrap any config object using the base classes (`NatAgent`, `NatLLM`, `NatFunction`, etc.):
+
+```python
+from nat.utils.sdk.nat_agent import NatAgent
+from nat.agent.react_agent.register import ReActAgentWorkflowConfig
+
+# Create the config directly
+config = ReActAgentWorkflowConfig(
+    llm_name="my_llm",
+    tool_names=["tool1", "tool2"],
+    description="My agent",
+)
+
+# Wrap it with NatAgent for SDK integration
+agent = NatAgent(config=config, name="my_agent")
+```
+
+The factory pattern is useful when:
+- You need to work with config objects from YAML or other sources
+- You're building dynamic workflows where config types are determined at runtime
+- You want to separate config creation from SDK wrapper creation
+
+Both patterns work interchangeably in workflows and produce the same results.
+
 ## LLMs (Language Models)
 
 ### NimLLM

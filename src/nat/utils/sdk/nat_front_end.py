@@ -15,12 +15,28 @@
 
 from typing import ClassVar
 
-from nat.data_models.common import TypedBaseModel
 from nat.data_models.front_end import FrontEndBaseConfig
 from nat.utils.sdk.nat_base import NatBase
 
 
-class NatFrontEnd(TypedBaseModel, NatBase):
-    """Base class for front end configurations that inherit from both FrontEndBaseConfig and NatBase."""
+class NatFrontEnd(NatBase[FrontEndBaseConfig]):
+    """Base class for front end configurations.
+
+    Can be used in two ways:
+
+    1. **Subclass pattern**: Use specific front end classes
+       ```python
+       frontend = ConsoleFrontEnd(...)
+       ```
+
+    2. **Factory pattern**: Pass a config object directly
+       ```python
+       config = ConsoleFrontEndConfig(...)
+       frontend = NatFrontEnd(config=config, name="my_frontend")
+       ```
+
+    The factory pattern is useful when you want to use an existing config
+    without creating a custom class.
+    """
 
     _marker_class: ClassVar[type] = FrontEndBaseConfig

@@ -15,12 +15,28 @@
 
 from typing import ClassVar
 
-from nat.data_models.common import TypedBaseModel
 from nat.data_models.logging import LoggingBaseConfig
 from nat.utils.sdk.nat_base import NatBase
 
 
-class NatLogger(TypedBaseModel, NatBase):
-    """Base class for logger configurations that inherit from both LoggingBaseConfig and NatBase."""
+class NatLogger(NatBase[LoggingBaseConfig]):
+    """Base class for logger configurations.
+
+    Can be used in two ways:
+
+    1. **Subclass pattern**: Use specific logger classes
+       ```python
+       logger = MyLogger(...)
+       ```
+
+    2. **Factory pattern**: Pass a config object directly
+       ```python
+       config = MyLoggerConfig(...)
+       logger = NatLogger(config=config, name="my_logger")
+       ```
+
+    The factory pattern is useful when you want to use an existing config
+    without creating a custom class.
+    """
 
     _marker_class: ClassVar[type] = LoggingBaseConfig

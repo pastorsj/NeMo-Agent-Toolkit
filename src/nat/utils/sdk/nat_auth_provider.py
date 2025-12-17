@@ -16,11 +16,27 @@
 from typing import ClassVar
 
 from nat.authentication.interfaces import AuthProviderBaseConfig
-from nat.data_models.common import TypedBaseModel
 from nat.utils.sdk.nat_base import NatBase
 
 
-class NatAuthProvider(TypedBaseModel, NatBase):
-    """Base class for auth provider configurations that inherit from both AuthProviderBaseConfig and NatBase."""
+class NatAuthProvider(NatBase[AuthProviderBaseConfig]):
+    """Base class for auth provider configurations.
+
+    Can be used in two ways:
+
+    1. **Subclass pattern**: Use specific auth provider classes
+       ```python
+       auth = MyAuthProvider(...)
+       ```
+
+    2. **Factory pattern**: Pass a config object directly
+       ```python
+       config = MyAuthProviderConfig(...)
+       auth = NatAuthProvider(config=config, name="my_auth")
+       ```
+
+    The factory pattern is useful when you want to use an existing config
+    without creating a custom class.
+    """
 
     _marker_class: ClassVar[type] = AuthProviderBaseConfig

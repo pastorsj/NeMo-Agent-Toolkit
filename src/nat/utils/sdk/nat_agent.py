@@ -19,7 +19,24 @@ from nat.data_models.agent import AgentBaseConfig
 from nat.utils.sdk.nat_base import NatBase
 
 
-class NatAgent(AgentBaseConfig, NatBase):
-    """Base class for agent configurations that inherit from both AgentBaseConfig and NatBase."""
+class NatAgent(NatBase[AgentBaseConfig]):
+    """Base class for agent configurations.
+
+    Can be used in two ways:
+
+    1. **Subclass pattern**: Use specific agent classes like NatReActAgent
+       ```python
+       agent = NatReActAgent(llm=llm, tools=[...])
+       ```
+
+    2. **Factory pattern**: Pass a config object directly
+       ```python
+       config = ReActAgentWorkflowConfig(llm_name="...", tool_names=[...])
+       agent = NatAgent(config=config, name="my_agent")
+       ```
+
+    The factory pattern is useful when you want to use an existing config
+    without creating a custom class.
+    """
 
     _marker_class: ClassVar[type] = AgentBaseConfig

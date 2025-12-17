@@ -18,7 +18,9 @@ from __future__ import annotations
 import logging
 import warnings
 from collections.abc import Callable
+from typing import Any
 from typing import ClassVar
+from typing import Generic
 from typing import TypeVar
 from uuid import uuid4
 
@@ -28,15 +30,29 @@ from pydantic import PrivateAttr
 from pydantic import model_validator
 
 T = TypeVar("T")
+ConfigT = TypeVar("ConfigT", bound=BaseModel)
 
 logger = logging.getLogger(__name__)
 
 
-class NatBase(BaseModel):
+class NatBase(BaseModel, Generic[ConfigT]):
     """Base class for all NAT SDK components.
 
     Subclasses must set the `_marker_class` class variable to specify their base config type.
     This enables the `computed_name` property to automatically determine the correct name.
+
+    Can be used in two ways:
+
+    1. **Subclass pattern**: Create specific subclasses (e.g., NatReActAgent)
+       ```python
+       agent = NatReActAgent(llm=llm, tools=[...])
+       ```
+
+    2. **Factory pattern**: Pass a config object directly
+       ```python
+       config = ReActAgentWorkflowConfig(llm_name="...", tool_names=[...])
+       agent = NatAgent(config=config, name="my_agent")
+       ```
 
     If `registered_function` is provided, the component will be automatically registered
     with the GlobalTypeRegistry for local development/prototyping. Note that for production
@@ -54,10 +70,35 @@ class NatBase(BaseModel):
         default=None,
         exclude=True,
     )
+
+    # Config wrapper field - when provided, this acts as a factory/wrapper
+    # Using Any here because Pydantic doesn't handle Generic field types well at runtime
+    # The type is enforced by subclasses via _marker_class
+    config: Any = Field(
+        default=None,
+        exclude=True,
+        description="A config object to wrap. When provided, acts as a wrapper around this config.",
+    )
+
     # Internal attribute to hold the computed name in case the user does not provide one.
     _computed_name: str | None = PrivateAttr(default=None)
     # Track if we registered this function dynamically
     _dynamically_registered: bool = PrivateAttr(default=False)
+    # Private attribute to cache the wrapped config
+    _wrapped_config: BaseModel | None = PrivateAttr(default=None)
+
+    @model_validator(mode="after")
+    def _store_wrapped_config(self) -> NatBase:
+        """Store the wrapped config if provided and validate it matches the marker class."""
+        if self.config is not None:
+            # Validate that config is an instance of or subclass of the marker class
+            # type: ignore is needed because _marker_class is a ClassVar that static analyzers don't resolve
+            if self._marker_class is not None and not isinstance(self.config,
+                                                                 self._marker_class):  # type: ignore[arg-type]
+                raise ValueError(f"config must be an instance of {self._marker_class.__name__}, "
+                                 f"got {type(self.config).__name__}")
+            self._wrapped_config = self.config
+        return self
 
     @model_validator(mode="after")
     def _register_function_if_needed(self) -> NatBase:
@@ -107,8 +148,21 @@ class NatBase(BaseModel):
         return self
 
     def _get_config_type_for_registration(self) -> type | None:
-        """Get the config type that should be used for registration."""
-        # Find the config class in the MRO that directly inherits from the marker class
+        """Get the config type that should be used for registration.
+
+        For the factory pattern (config= parameter), returns the type of the wrapped config.
+        For the subclass pattern, finds the config type in the class hierarchy.
+        """
+        # Factory pattern: if we have a wrapped config, use its type
+        if self._wrapped_config is not None:
+            config_cls = type(self._wrapped_config)
+            # Verify it has the required attributes for registration
+            if hasattr(config_cls, 'full_type'):
+                return config_cls
+            # If wrapped config doesn't have full_type, it might be a base class
+            # Fall through to MRO search
+
+        # Subclass pattern: find the config class in the MRO
         mro = self.__class__.mro()
 
         for cls in mro:
@@ -329,6 +383,9 @@ class NatBase(BaseModel):
         This is the primary method for extracting the name and configuration from a NAT component.
         It handles name generation and casts the component to its base ancestor config type.
 
+        If a wrapped config is present (via config= parameter), returns that config directly.
+        Otherwise, casts self to the appropriate config type.
+
         Args:
             marker_cls: The base config class to cast to (e.g., LLMBaseConfig, FunctionBaseConfig)
 
@@ -336,6 +393,22 @@ class NatBase(BaseModel):
             A tuple of (name, config) where name is the component name and config is the
             casted configuration object.
         """
+        # If we have a wrapped config, use it directly
+        if self._wrapped_config is not None:
+            config = self._wrapped_config  # type: ignore[assignment]
+
+            # Determine name
+            if self.name is not None and self.name != "":
+                return self.name, config
+            elif self._computed_name is not None and self._computed_name != "":
+                return self._computed_name, config
+            else:
+                component_name = getattr(config, 'type', config.__class__.__name__)
+                computed_name = f"{component_name}_{uuid4().hex}"
+                self._computed_name = computed_name
+                return computed_name, config
+
+        # No wrapped config - use standard behavior (casting self to config type)
         config_type = self._cast_to_base_ancestor(marker_cls)
 
         name = self.name
