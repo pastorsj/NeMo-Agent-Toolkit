@@ -41,6 +41,8 @@ class ReasoningFunctionConfig(AgentBaseConfig, name="reasoning_agent"):
     Output is passed to the next function in the workflow.
 
     Designed to be used with an InterceptingFunction.
+
+    ![Icon](https://cdn.simpleicons.org/langchain/1C3C3C)
     """
     description: str = Field(default="Reasoning Agent", description="The description of this function's use.")
     augmented_fn: FunctionRef = Field(description="The name of the function to reason on.")

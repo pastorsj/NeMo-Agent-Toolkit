@@ -45,9 +45,9 @@ from .config import NeMoCustomizerTrainerAdapterConfig
 logger = logging.getLogger(__name__)
 
 
-class NeMoCustomizerTrainerAdapter(TrainerAdapter):
+class NeMoCustomizerTrainerAdapterImpl(TrainerAdapter):
     """
-    TrainerAdapter for NeMo Customizer backend.
+    Runtime implementation of TrainerAdapter for NeMo Customizer backend.
 
     This adapter:
     1. Converts trajectories to JSONL format for DPO training

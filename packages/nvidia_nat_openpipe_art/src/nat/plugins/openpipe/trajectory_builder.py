@@ -37,9 +37,9 @@ from .config import ARTTrajectoryBuilderConfig
 logger = logging.getLogger(__name__)
 
 
-class ARTTrajectoryBuilder(TrajectoryBuilder):
+class ARTTrajectoryBuilderImpl(TrajectoryBuilder):
     """
-    Trajectory builder for the ART backend.
+    Runtime implementation of trajectory builder for the ART backend.
     """
 
     def __init__(

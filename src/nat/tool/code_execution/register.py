@@ -32,6 +32,8 @@ logger = logging.getLogger(__name__)
 class CodeExecutionToolConfig(FunctionBaseConfig, name="code_execution"):
     """
     Tool for executing python code in a remotely hosted sandbox environment.
+
+    ![Icon](https://cdn.simpleicons.org/python/3776AB)
     """
     uri: HttpUrl = Field(default=HttpUrl("http://127.0.0.1:6000"),
                          description="URI for the code execution sandbox server")

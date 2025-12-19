@@ -142,9 +142,9 @@ class PreferencePair:
 # =============================================================================
 
 
-class DPOTrajectoryBuilder(TrajectoryBuilder):
+class DPOTrajectoryBuilderImpl(TrajectoryBuilder):
     """
-    Trajectory builder for DPO (Direct Preference Optimization) training.
+    Runtime implementation of trajectory builder for DPO (Direct Preference Optimization) training.
 
     This builder collects preference pairs from workflows that produce TTC_END
     intermediate steps with TTCEventData. It uses the structured data model

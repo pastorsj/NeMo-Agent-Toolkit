@@ -43,7 +43,10 @@ class RagasMetricConfig(BaseModel):
 
 
 class RagasEvaluatorConfig(EvaluatorBaseConfig, name="ragas"):
-    """Evaluation using RAGAS metrics."""
+    """Evaluation using RAGAS metrics.
+
+    ![Icon](https://cdn.simpleicons.org/pytest/0A9EDC)
+    """
 
     llm_name: str = Field(description="LLM as a judge.")
     # Ragas metric

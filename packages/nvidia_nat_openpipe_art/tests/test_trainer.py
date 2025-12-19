@@ -32,7 +32,7 @@ from nat.data_models.finetuning import Trajectory
 from nat.data_models.finetuning import TrajectoryCollection
 from nat.eval.config import EvaluationRunOutput
 from nat.plugins.openpipe.config import ARTTrainerConfig
-from nat.plugins.openpipe.trainer import ARTTrainer
+from nat.plugins.openpipe.trainer import ARTTrainerImpl
 
 
 class TestARTTrainer:
@@ -65,7 +65,7 @@ class TestARTTrainer:
     @pytest.fixture
     def trainer(self, trainer_config):
         """Create ARTTrainer instance."""
-        return ARTTrainer(trainer_config=trainer_config)
+        return ARTTrainerImpl(trainer_config=trainer_config)
 
     async def test_trainer_initialization(self, trainer, trainer_config):
         """Test that trainer initializes with correct configuration."""

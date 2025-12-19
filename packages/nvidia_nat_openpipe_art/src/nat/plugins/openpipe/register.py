@@ -21,9 +21,9 @@ from nat.cli.register_workflow import register_trajectory_builder
 from .config import ARTTrainerAdapterConfig
 from .config import ARTTrainerConfig
 from .config import ARTTrajectoryBuilderConfig
-from .trainer import ARTTrainer
-from .trainer_adapter import ARTTrainerAdapter
-from .trajectory_builder import ARTTrajectoryBuilder
+from .trainer import ARTTrainerImpl
+from .trainer_adapter import ARTTrainerAdapterImpl
+from .trajectory_builder import ARTTrajectoryBuilderImpl
 
 
 @register_trajectory_builder(config_type=ARTTrajectoryBuilderConfig)
@@ -38,7 +38,7 @@ async def register_art_trajectory_builder(config: ARTTrajectoryBuilderConfig, bu
     Returns:
         ARTTrajectoryBuilder instance
     """
-    yield ARTTrajectoryBuilder(trajectory_builder_config=config)
+    yield ARTTrajectoryBuilderImpl(trajectory_builder_config=config)
 
 
 @register_trainer_adapter(config_type=ARTTrainerAdapterConfig)
@@ -53,7 +53,7 @@ async def register_art_trainer_adapter(config: ARTTrainerAdapterConfig, builder:
     Returns:
         ARTTrainerAdapter instance
     """
-    yield ARTTrainerAdapter(adapter_config=config)
+    yield ARTTrainerAdapterImpl(adapter_config=config)
 
 
 @register_trainer(config_type=ARTTrainerConfig)
@@ -68,4 +68,4 @@ async def register_art_trainer(config: ARTTrainerConfig, builder: Builder):
     Returns:
         ARTTrainer instance
     """
-    yield ARTTrainer(trainer_config=config)
+    yield ARTTrainerImpl(trainer_config=config)

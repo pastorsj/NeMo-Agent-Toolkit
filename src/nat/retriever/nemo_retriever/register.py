@@ -28,6 +28,8 @@ from nat.utils.sdk.nat_retriever import NatRetriever
 class NemoRetrieverConfig(RetrieverBaseConfig, name="nemo_retriever"):
     """
     Configuration for a Retriever which pulls data from a Nemo Retriever service.
+
+    ![Icon](https://cdn.simpleicons.org/nvidia/76B900)
     """
     uri: HttpUrl = Field(description="The uri of the Nemo Retriever service.")
     collection_name: str | None = Field(description="The name of the collection to search", default=None)

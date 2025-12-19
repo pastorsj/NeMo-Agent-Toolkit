@@ -25,7 +25,10 @@ from nat.utils.sdk.nat_registry_handler import NatRegistryHandler
 
 
 class RestRegistryHandlerConfig(RegistryHandlerBaseConfig, name="rest"):
-    """Registry handler for interacting with a remote REST registry."""
+    """Registry handler for interacting with a remote REST registry.
+
+    ![Icon](https://cdn.simpleicons.org/openapiinitiative/6BA539)
+    """
 
     endpoint: str = Field(description="A string representing the remote endpoint.")
     token: OptionalSecretStr = Field(default=None,

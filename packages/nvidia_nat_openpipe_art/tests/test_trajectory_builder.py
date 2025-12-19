@@ -31,7 +31,7 @@ from nat.data_models.invocation_node import InvocationNode
 from nat.eval.evaluator.evaluator_model import EvalInputItem
 from nat.eval.evaluator.evaluator_model import EvalOutputItem
 from nat.plugins.openpipe.config import ARTTrajectoryBuilderConfig
-from nat.plugins.openpipe.trajectory_builder import ARTTrajectoryBuilder
+from nat.plugins.openpipe.trajectory_builder import ARTTrajectoryBuilderImpl
 
 
 class TestARTTrajectoryBuilder:
@@ -68,7 +68,7 @@ class TestARTTrajectoryBuilder:
     @pytest.fixture
     def builder(self, builder_config):
         """Create ARTTrajectoryBuilder instance."""
-        return ARTTrajectoryBuilder(trajectory_builder_config=builder_config)
+        return ARTTrajectoryBuilderImpl(trajectory_builder_config=builder_config)
 
     def test_builder_initialization(self, builder, builder_config):
         """Test that builder initializes with correct configuration."""

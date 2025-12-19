@@ -37,8 +37,8 @@ from nat.plugins.customizer.dpo.config import NeMoCustomizerHyperparameters
 from nat.plugins.customizer.dpo.config import NeMoCustomizerTrainerAdapterConfig
 from nat.plugins.customizer.dpo.config import NeMoCustomizerTrainerConfig
 from nat.plugins.customizer.dpo.config import NIMDeploymentConfig
-from nat.plugins.customizer.dpo.trainer import NeMoCustomizerTrainer
-from nat.plugins.customizer.dpo.trainer_adapter import NeMoCustomizerTrainerAdapter
+from nat.plugins.customizer.dpo.trainer import NeMoCustomizerTrainerImpl
+from nat.plugins.customizer.dpo.trainer_adapter import NeMoCustomizerTrainerAdapterImpl
 
 # =============================================================================
 # Configuration Tests
@@ -217,7 +217,7 @@ def adapter_config():
 @pytest.fixture
 def trainer_adapter(adapter_config):
     """Create a trainer adapter instance."""
-    return NeMoCustomizerTrainerAdapter(adapter_config=adapter_config)
+    return NeMoCustomizerTrainerAdapterImpl(adapter_config=adapter_config)
 
 
 @pytest.fixture
@@ -487,7 +487,7 @@ class TestTrainerAdapterIntegration:
 
     async def test_full_workflow_mock(self, adapter_config, sample_trajectories):
         """Test full workflow with mocked external services."""
-        adapter = NeMoCustomizerTrainerAdapter(adapter_config=adapter_config)
+        adapter = NeMoCustomizerTrainerAdapterImpl(adapter_config=adapter_config)
 
         # Mock all external dependencies
         mock_entity_client = MagicMock()
@@ -533,7 +533,7 @@ class TestTrainerAdapterIntegration:
             customization_config="meta/llama-3.2-1b-instruct@v1.0.0+A100",
             dataset_output_dir=str(tmp_path),
         )
-        adapter = NeMoCustomizerTrainerAdapter(adapter_config=config)
+        adapter = NeMoCustomizerTrainerAdapterImpl(adapter_config=config)
 
         # Mock all external dependencies
         mock_entity_client = MagicMock()
@@ -671,7 +671,7 @@ class TestNeMoCustomizerTrainer:
     @pytest.fixture
     def trainer(self, trainer_config):
         """Create trainer instance."""
-        return NeMoCustomizerTrainer(trainer_config=trainer_config)
+        return NeMoCustomizerTrainerImpl(trainer_config=trainer_config)
 
     @pytest.fixture
     def sample_dpo_trajectories(self):
@@ -823,7 +823,7 @@ class TestNeMoCustomizerTrainer:
     async def test_run_no_wait_for_completion(self, trainer_config, finetune_config, sample_dpo_trajectories):
         """Test running without waiting for completion."""
         trainer_config.wait_for_completion = False
-        trainer = NeMoCustomizerTrainer(trainer_config=trainer_config)
+        trainer = NeMoCustomizerTrainerImpl(trainer_config=trainer_config)
 
         trajectory_collection = TrajectoryCollection(
             trajectories=sample_dpo_trajectories,
@@ -876,7 +876,7 @@ class TestNeMoCustomizerTrainer:
         """Test collection error continues when configured."""
         trainer_config.continue_on_collection_error = True
         trainer_config.num_runs = 3
-        trainer = NeMoCustomizerTrainer(trainer_config=trainer_config)
+        trainer = NeMoCustomizerTrainerImpl(trainer_config=trainer_config)
 
         trajectory_collection = TrajectoryCollection(
             trajectories=sample_dpo_trajectories,

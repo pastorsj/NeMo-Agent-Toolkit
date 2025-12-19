@@ -23,7 +23,10 @@ logger = logging.getLogger(__name__)
 
 
 class LocalRegistryHandlerConfig(RegistryHandlerBaseConfig, name="local"):
-    """Interact with the local NAT environment to search and uninstall NAT components."""
+    """Interact with the local NAT environment to search and uninstall NAT components.
+
+    ![Icon](https://cdn.simpleicons.org/files/4285F4)
+    """
 
     pass
 

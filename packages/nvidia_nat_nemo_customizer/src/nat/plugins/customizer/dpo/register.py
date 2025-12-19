@@ -29,9 +29,9 @@ from nat.cli.register_workflow import register_trajectory_builder
 from .config import DPOTrajectoryBuilderConfig
 from .config import NeMoCustomizerTrainerAdapterConfig
 from .config import NeMoCustomizerTrainerConfig
-from .trainer import NeMoCustomizerTrainer
-from .trainer_adapter import NeMoCustomizerTrainerAdapter
-from .trajectory_builder import DPOTrajectoryBuilder
+from .trainer import NeMoCustomizerTrainerImpl
+from .trainer_adapter import NeMoCustomizerTrainerAdapterImpl
+from .trajectory_builder import DPOTrajectoryBuilderImpl
 
 
 @register_trajectory_builder(config_type=DPOTrajectoryBuilderConfig)
@@ -71,7 +71,7 @@ async def dpo_trajectory_builder(config: DPOTrajectoryBuilderConfig, builder: Bu
     Yields:
         A configured DPOTrajectoryBuilder instance.
     """
-    yield DPOTrajectoryBuilder(trajectory_builder_config=config)
+    yield DPOTrajectoryBuilderImpl(trajectory_builder_config=config)
 
 
 @register_trainer_adapter(config_type=NeMoCustomizerTrainerAdapterConfig)
@@ -117,7 +117,7 @@ async def nemo_customizer_trainer_adapter(config: NeMoCustomizerTrainerAdapterCo
     Yields:
         A configured NeMoCustomizerTrainerAdapter instance.
     """
-    yield NeMoCustomizerTrainerAdapter(adapter_config=config)
+    yield NeMoCustomizerTrainerAdapterImpl(adapter_config=config)
 
 
 @register_trainer(config_type=NeMoCustomizerTrainerConfig)
@@ -154,4 +154,4 @@ async def nemo_customizer_trainer(config: NeMoCustomizerTrainerConfig, builder: 
     Yields:
         A configured NeMoCustomizerTrainer instance.
     """
-    yield NeMoCustomizerTrainer(trainer_config=config)
+    yield NeMoCustomizerTrainerImpl(trainer_config=config)

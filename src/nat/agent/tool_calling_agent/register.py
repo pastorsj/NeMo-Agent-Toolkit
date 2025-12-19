@@ -41,6 +41,8 @@ class ToolCallAgentWorkflowConfig(AgentBaseConfig, name="tool_calling_agent"):
     """
     A Tool Calling Agent requires an LLM which supports tool calling. A tool Calling Agent utilizes the tool
     input parameters to select the optimal tool.  Supports handling tool errors.
+
+    ![Icon](https://cdn.simpleicons.org/langchain/1C3C3C)
     """
     description: str = Field(default="Tool Calling Agent Workflow", description="Description of this functions use.")
     tool_names: list[FunctionRef | FunctionGroupRef] = Field(

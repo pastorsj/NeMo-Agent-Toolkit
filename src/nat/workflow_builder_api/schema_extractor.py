@@ -21,6 +21,7 @@ that use custom validators not directly compatible with JSON schema.
 """
 
 import logging
+import re
 import types
 import typing
 from typing import Any
@@ -38,6 +39,9 @@ from nat.workflow_builder_api.models import RefType
 
 logger = logging.getLogger(__name__)
 
+# Pattern to match markdown image syntax for icons: ![Icon](URL)
+_ICON_PATTERN = re.compile(r'!\[Icon\]\(([^)]+)\)', re.IGNORECASE)
+
 # Mapping from ComponentRef class names to RefType enum
 COMPONENT_REF_TO_REF_TYPE: dict[str, RefType] = {
     "LLMRef": RefType.LLM,
@@ -49,7 +53,6 @@ COMPONENT_REF_TO_REF_TYPE: dict[str, RefType] = {
     "ObjectStoreRef": RefType.OBJECT_STORE,
     "AuthenticationRef": RefType.AUTHENTICATION,
     "MiddlewareRef": RefType.MIDDLEWARE,
-    "TTCStrategyRef": RefType.TTC_STRATEGY,
 }
 
 # Mapping from SDK class names to RefType enum
@@ -64,7 +67,18 @@ SDK_CLASS_TO_REF_TYPE: dict[str, RefType] = {
     "NatMemory": RefType.MEMORY,
     "NatObjectStore": RefType.OBJECT_STORE,
     "NatAuthProvider": RefType.AUTHENTICATION,
-    "NatMiddleware": RefType.MIDDLEWARE,
+    "NatMiddleware": RefType.MIDDLEWARE,  # Front-end and observability
+    "NatFrontEnd": RefType.FRONT_END,
+    "NatLogger": RefType.LOGGER,
+    "NatTelemetryExporter": RefType.TELEMETRY_EXPORTER,  # Evaluation
+    "NatEvaluator": RefType.EVALUATOR,  # Workflow configuration containers (for NatWorkflow connections)
+    "NatGeneralConfiguration": RefType.GENERAL_CONFIG,
+    "NatEvaluation": RefType.EVALUATION_CONFIG,
+    "NatOptimizer": RefType.OPTIMIZER_CONFIG,
+    "NatFinetuner": RefType.FINETUNER_CONFIG,  # Finetuning components
+    "NatTrainer": RefType.TRAINER,
+    "NatTrajectoryBuilder": RefType.TRAJECTORY_BUILDER,
+    "NatTrainerAdapter": RefType.TRAINER_ADAPTER,
 }
 
 
@@ -673,6 +687,8 @@ def get_model_description(config_type: type[BaseModel]) -> str | None:
     """
     Get the description from a Pydantic model's docstring or schema.
 
+    Strips the icon markdown syntax (![Icon](url)) from the description if present.
+
     Args:
         config_type: The Pydantic model class.
 
@@ -681,7 +697,13 @@ def get_model_description(config_type: type[BaseModel]) -> str | None:
     """
     # Try docstring first
     if config_type.__doc__:
-        return config_type.__doc__.strip().split("\n")[0]
+        # Get first non-empty line that isn't the icon marker
+        lines = config_type.__doc__.strip().split("\n")
+        for line in lines:
+            stripped = line.strip()
+            if stripped and not _ICON_PATTERN.match(stripped):
+                return stripped
+        return None
 
     # Try schema description (but don't fail if schema can't be generated)
     try:
@@ -689,3 +711,25 @@ def get_model_description(config_type: type[BaseModel]) -> str | None:
         return schema.get("description")
     except Exception:
         return None
+
+
+def get_icon_url_from_docstring(config_type: type[BaseModel]) -> str | None:
+    """
+    Extract icon URL from a Pydantic model's docstring.
+
+    Looks for markdown image syntax: ![Icon](https://example.com/icon.svg)
+
+    Args:
+        config_type: The Pydantic model class.
+
+    Returns:
+        Icon URL string or None if not found.
+    """
+    if not config_type.__doc__:
+        return None
+
+    match = _ICON_PATTERN.search(config_type.__doc__)
+    if match:
+        return match.group(1).strip()
+
+    return None

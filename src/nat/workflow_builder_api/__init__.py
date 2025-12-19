@@ -25,7 +25,6 @@ from nat.workflow_builder_api.models import ComponentCategory
 from nat.workflow_builder_api.models import ComponentTypeInfo
 from nat.workflow_builder_api.models import FieldInfo
 from nat.workflow_builder_api.models import RegisteredTypeInfo
-from nat.workflow_builder_api.models import RegistryResponse
 
 __all__ = [
     "create_app",
@@ -33,5 +32,4 @@ __all__ = [
     "ComponentTypeInfo",
     "FieldInfo",
     "RegisteredTypeInfo",
-    "RegistryResponse",
 ]

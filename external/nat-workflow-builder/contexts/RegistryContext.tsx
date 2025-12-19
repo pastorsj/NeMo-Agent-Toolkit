@@ -1,17 +1,16 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from 'react';
 import { registryAPI } from '@/lib/api';
 import {
   ComponentCategory,
   ComponentTypeInfo,
   RegisteredTypeInfo,
-  RegistryResponse,
   WORKFLOW_CATEGORIES,
 } from '@/types/registry';
 
 interface RegistryState {
   loading: boolean;
   error: string | null;
-  registry: RegistryResponse | null;
+  categories: Map<ComponentCategory, ComponentTypeInfo>;
   connected: boolean;
 }
 
@@ -28,11 +27,21 @@ export function RegistryProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<RegistryState>({
     loading: true,
     error: null,
-    registry: null,
+    categories: new Map(),
     connected: false,
   });
 
-  const fetchRegistry = useCallback(async () => {
+  // Guard to prevent duplicate fetches (React Strict Mode double-mounts)
+  const fetchingRef = useRef(false);
+  const hasFetchedRef = useRef(false);
+
+  const fetchRegistry = useCallback(async (force = false) => {
+    // Prevent duplicate fetches unless forced (manual refresh)
+    if (!force && (fetchingRef.current || hasFetchedRef.current)) {
+      return;
+    }
+
+    fetchingRef.current = true;
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
@@ -43,28 +52,31 @@ export function RegistryProvider({ children }: { children: ReactNode }) {
         setState({
           loading: false,
           error: 'Registry not loaded on server',
-          registry: null,
+          categories: new Map(),
           connected: true,
         });
         return;
       }
 
-      // Fetch the full registry
-      const registry = await registryAPI.getRegistry();
+      // Load all categories in parallel
+      const categoryMap = await registryAPI.loadAllCategories();
       
       setState({
         loading: false,
         error: null,
-        registry,
+        categories: categoryMap,
         connected: true,
       });
+      hasFetchedRef.current = true;
     } catch (error) {
       setState({
         loading: false,
         error: error instanceof Error ? error.message : 'Failed to connect to API',
-        registry: null,
+        categories: new Map(),
         connected: false,
       });
+    } finally {
+      fetchingRef.current = false;
     }
   }, []);
 
@@ -75,32 +87,32 @@ export function RegistryProvider({ children }: { children: ReactNode }) {
 
   const getTypesForCategory = useCallback(
     (category: ComponentCategory): RegisteredTypeInfo[] => {
-      if (!state.registry) return [];
-      
-      const categoryInfo = state.registry.components.find((c) => c.category === category);
+      const categoryInfo = state.categories.get(category);
       return categoryInfo?.registered_types || [];
     },
-    [state.registry]
+    [state.categories]
   );
 
   const getCategoryInfo = useCallback(
     (category: ComponentCategory): ComponentTypeInfo | null => {
-      if (!state.registry) return null;
-      return state.registry.components.find((c) => c.category === category) || null;
+      return state.categories.get(category) || null;
     },
-    [state.registry]
+    [state.categories]
   );
 
-  // Get only workflow-relevant categories with their info
-  const workflowCategories = state.registry?.components.filter((c) =>
-    WORKFLOW_CATEGORIES.includes(c.category)
-  ) || [];
+  // Get only workflow-relevant categories with their info (in order)
+  const workflowCategories = WORKFLOW_CATEGORIES
+    .map((cat) => state.categories.get(cat))
+    .filter((info): info is ComponentTypeInfo => info !== undefined);
+
+  // Force refresh bypasses the guard
+  const refresh = useCallback(() => fetchRegistry(true), [fetchRegistry]);
 
   return (
     <RegistryContext.Provider
       value={{
         ...state,
-        refresh: fetchRegistry,
+        refresh,
         getTypesForCategory,
         getCategoryInfo,
         workflowCategories,
@@ -118,4 +130,3 @@ export function useRegistry() {
   }
   return context;
 }
-

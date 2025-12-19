@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { X, ChevronDown, Save, AlertCircle, Link2 } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { X, ChevronDown, Save, AlertCircle, Link2, Search } from 'lucide-react';
 import { PlacedComponent, NAT_COMPONENTS, NATComponentType } from '@/types';
 import { useRegistry } from '@/contexts/RegistryContext';
 import { useWorkflow } from '@/contexts/WorkflowContext';
 import { RegisteredTypeInfo, ComponentCategory, REF_TYPE_LABELS, REF_TYPE_COLORS } from '@/types/registry';
 import { ComponentIcon } from '@/components/NATComponents/ComponentIcon';
+import { ProviderIcon } from '@/components/ProviderIcon';
 import { SchemaFormField } from './SchemaFormField';
 import { formatDisplayName } from '@/lib/format';
 
@@ -20,7 +21,35 @@ const TYPE_TO_CATEGORY: Partial<Record<NATComponentType, ComponentCategory>> = {
   object_store: 'object_store',
   authentication: 'authentication',
   middleware: 'middleware',
+  // Front-end and observability
+  front_end: 'front_end',
+  logger: 'logger',
+  telemetry_exporter: 'telemetry_exporter',
+  // Evaluation
+  evaluator: 'evaluator',
+  // Workflow-level configuration containers
+  nat_workflow: 'nat_workflow',
+  general_config: 'general_config',
+  evaluation_config: 'evaluation_config',
+  optimizer_config: 'optimizer_config',
+  finetuner_config: 'finetuner_config',
+  // Finetuning components
+  trainer: 'trainer',
+  trajectory_builder: 'trajectory_builder',
+  trainer_adapter: 'trainer_adapter',
 };
+
+// Categories that have exactly one type (no dropdown selection needed)
+// Categories that have exactly one type (no dropdown selection needed)
+// Trainer, trajectory_builder, and trainer_adapter are NOT included here
+// because they have multiple registered implementations from plugins
+const SINGLE_TYPE_CATEGORIES: Set<ComponentCategory> = new Set<ComponentCategory>([
+  'nat_workflow',
+  'general_config',
+  'evaluation_config',
+  'optimizer_config',
+  'finetuner_config',
+]);
 
 interface ConfigModalProps {
   component: PlacedComponent;
@@ -34,13 +63,47 @@ export function ConfigModal({ component, onClose, onSave }: ConfigModalProps) {
   const [selectedType, setSelectedType] = useState<RegisteredTypeInfo | null>(null);
   const [formData, setFormData] = useState<Record<string, unknown>>(component.config || {});
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const config = NAT_COMPONENTS[component.type];
   const category = TYPE_TO_CATEGORY[component.type];
   const availableTypes = category ? getTypesForCategory(category) : [];
 
-  // Initialize selected type from existing config
+  // Filter types based on search query
+  const filteredTypes = useMemo(() => {
+    if (!searchQuery.trim()) return availableTypes;
+    const query = searchQuery.toLowerCase();
+    return availableTypes.filter((type) => {
+      const typeName = formatDisplayName(type.local_name).toLowerCase();
+      const moduleName = type.module_name.toLowerCase();
+      const desc = (type.description || '').toLowerCase();
+      return typeName.includes(query) || moduleName.includes(query) || desc.includes(query);
+    });
+  }, [availableTypes, searchQuery]);
+
+  // Focus search input when dropdown opens
   useEffect(() => {
+    if (dropdownOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+    if (!dropdownOpen) {
+      setSearchQuery('');
+    }
+  }, [dropdownOpen]);
+
+  // Check if this is a single-type category (no dropdown needed)
+  const isSingleType = category ? SINGLE_TYPE_CATEGORIES.has(category) : false;
+
+  // Initialize selected type from existing config OR auto-select for single-type categories
+  useEffect(() => {
+    // For single-type categories, auto-select the only available type
+    if (isSingleType && availableTypes.length === 1 && !selectedType) {
+      setSelectedType(availableTypes[0]);
+      return;
+    }
+    
+    // For multi-type categories, restore from existing config
     if (component.config?._selected_type && availableTypes.length > 0) {
       const existing = availableTypes.find(
         (t) => t.full_type === component.config._selected_type
@@ -49,7 +112,7 @@ export function ConfigModal({ component, onClose, onSave }: ConfigModalProps) {
         setSelectedType(existing);
       }
     }
-  }, [component.config, availableTypes]);
+  }, [component.config, availableTypes, isSingleType, selectedType]);
 
   const handleFieldChange = (fieldName: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [fieldName]: value }));
@@ -93,6 +156,21 @@ export function ConfigModal({ component, onClose, onSave }: ConfigModalProps) {
     'nat-object-store': { border: 'border-violet-500', bg: 'bg-violet-500/10', icon: 'text-violet-400' },
     'nat-auth': { border: 'border-red-500', bg: 'bg-red-500/10', icon: 'text-red-400' },
     'nat-middleware': { border: 'border-cyan-500', bg: 'bg-cyan-500/10', icon: 'text-cyan-400' },
+    // Front-end and observability
+    'nat-frontend': { border: 'border-emerald-500', bg: 'bg-emerald-500/10', icon: 'text-emerald-400' },
+    'nat-logger': { border: 'border-slate-500', bg: 'bg-slate-500/10', icon: 'text-slate-400' },
+    'nat-telemetry': { border: 'border-amber-500', bg: 'bg-amber-500/10', icon: 'text-amber-400' },
+    // Evaluation
+    'nat-evaluator': { border: 'border-sky-500', bg: 'bg-sky-500/10', icon: 'text-sky-400' },
+    // Finetuning components
+    'nat-trainer': { border: 'border-lime-500', bg: 'bg-lime-500/10', icon: 'text-lime-400' },
+    'nat-trajectory': { border: 'border-purple-500', bg: 'bg-purple-500/10', icon: 'text-purple-400' },
+    'nat-adapter': { border: 'border-stone-500', bg: 'bg-stone-500/10', icon: 'text-stone-400' },
+    // Workflow-level configuration containers
+    'nat-workflow': { border: 'border-lime-500', bg: 'bg-lime-500/10', icon: 'text-lime-400' },
+    'nat-config': { border: 'border-gray-500', bg: 'bg-gray-500/10', icon: 'text-gray-400' },
+    'nat-optimizer': { border: 'border-orange-500', bg: 'bg-orange-500/10', icon: 'text-orange-400' },
+    'nat-finetuner': { border: 'border-red-500', bg: 'bg-red-500/10', icon: 'text-red-400' },
   };
 
   const colors = colorClasses[config.color] || { border: 'border-gray-500', bg: 'bg-gray-500/10', icon: 'text-gray-400' };
@@ -155,8 +233,8 @@ export function ConfigModal({ component, onClose, onSave }: ConfigModalProps) {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Type Selector Dropdown */}
-              {availableTypes.length > 0 && (
+              {/* Type Selector Dropdown - hidden for single-type categories */}
+              {availableTypes.length > 0 && !isSingleType && (
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Implementation Type
@@ -170,16 +248,24 @@ export function ConfigModal({ component, onClose, onSave }: ConfigModalProps) {
                           : 'border-gray-600 bg-gray-800 hover:border-gray-500'
                       }`}
                     >
-                      <span className="text-left">
+                      <span className="text-left flex items-center gap-3">
                         {selectedType ? (
-                          <span className="flex flex-col">
-                            <span className="font-medium text-white">
-                              {formatDisplayName(selectedType.local_name)}
+                          <>
+                            <ProviderIcon
+                              iconUrl={selectedType.icon_url}
+                              fallbackIcon={config.icon}
+                              size={24}
+                              className="shrink-0"
+                            />
+                            <span className="flex flex-col">
+                              <span className="font-medium text-white">
+                                {formatDisplayName(selectedType.local_name)}
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                {selectedType.module_name}
+                              </span>
                             </span>
-                            <span className="text-xs text-gray-400">
-                              {selectedType.module_name}
-                            </span>
-                          </span>
+                          </>
                         ) : (
                           <span className="text-gray-400">Select a type...</span>
                         )}
@@ -193,38 +279,72 @@ export function ConfigModal({ component, onClose, onSave }: ConfigModalProps) {
                     </button>
 
                     {dropdownOpen && (
-                      <div className="absolute z-10 w-full mt-2 py-2 bg-gray-800 border border-gray-700 rounded-lg shadow-xl max-h-[400px] overflow-y-auto">
-                        {availableTypes.map((type) => (
-                          <button
-                            key={type.full_type}
-                            onClick={() => handleTypeSelect(type)}
-                            className={`w-full px-4 py-3 text-left hover:bg-gray-700 transition-colors ${
-                              selectedType?.full_type === type.full_type
-                                ? 'bg-gray-700/50'
-                                : ''
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="font-medium text-white">
-                                {formatDisplayName(type.local_name)}
-                              </div>
-                              {type.input_ports.length > 0 && (
-                                <div className="flex items-center gap-1 text-xs text-gray-500">
-                                  <Link2 size={12} />
-                                  {type.input_ports.length}
+                      <div className="absolute z-10 w-full mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-xl overflow-hidden">
+                        {/* Search Input */}
+                        <div className="p-2 border-b border-gray-700">
+                          <div className="relative">
+                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                            <input
+                              ref={searchInputRef}
+                              type="text"
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              placeholder="Search types..."
+                              className="w-full pl-9 pr-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                        </div>
+                        {/* Type List */}
+                        <div className="max-h-[350px] overflow-y-auto py-2">
+                          {filteredTypes.length === 0 ? (
+                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                              No types found matching &quot;{searchQuery}&quot;
+                            </div>
+                          ) : (
+                            filteredTypes.map((type) => (
+                              <button
+                                key={type.full_type}
+                                onClick={() => handleTypeSelect(type)}
+                                className={`w-full px-4 py-3 text-left hover:bg-gray-700 transition-colors ${
+                                  selectedType?.full_type === type.full_type
+                                    ? 'bg-gray-700/50'
+                                    : ''
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <ProviderIcon
+                                    iconUrl={type.icon_url}
+                                    fallbackIcon={config.icon}
+                                    size={20}
+                                    className="shrink-0"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between">
+                                      <div className="font-medium text-white">
+                                        {formatDisplayName(type.local_name)}
+                                      </div>
+                                      {type.input_ports.length > 0 && (
+                                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                                          <Link2 size={12} />
+                                          {type.input_ports.length}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="text-xs text-gray-400">
+                                      {type.module_name}
+                                    </div>
+                                    {type.description && (
+                                      <div className="text-xs text-gray-500 mt-1 line-clamp-2">
+                                        {type.description}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              )}
-                            </div>
-                            <div className="text-xs text-gray-400">
-                              {type.module_name}
-                            </div>
-                            {type.description && (
-                              <div className="text-xs text-gray-500 mt-1 line-clamp-2">
-                                {type.description}
-                              </div>
-                            )}
-                          </button>
-                        ))}
+                              </button>
+                            ))
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>

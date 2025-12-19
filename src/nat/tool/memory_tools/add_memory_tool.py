@@ -31,7 +31,10 @@ logger = logging.getLogger(__name__)
 
 
 class AddToolConfig(FunctionBaseConfig, name="add_memory"):
-    """Function to add memory to a hosted memory platform."""
+    """Function to add memory to a hosted memory platform.
+
+    ![Icon](https://cdn.simpleicons.org/redis/DC382D)
+    """
 
     description: str = Field(default=("Tool to add a memory about a user's interactions to a system "
                                       "for retrieval later."),

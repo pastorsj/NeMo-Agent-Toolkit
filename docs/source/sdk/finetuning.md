@@ -41,7 +41,7 @@ from nat.utils.sdk.nat_finetuner import NatFinetuner, CurriculumLearning
 from nat.utils.sdk.nat_evaluation import NatEvaluation
 
 # With plugin implementations (e.g., OpenPipe ART):
-from nat.plugins.openpipe.register import ARTTrainer, ARTTrajectoryBuilder, ARTTrainerAdapter
+from nat.plugins.openpipe.config import ARTTrainer, ARTTrajectoryBuilder, ARTTrainerAdapter
 
 # Create your workflow (agent, LLM, etc.)
 # ... (see Creating Workflows documentation)
@@ -189,7 +189,7 @@ from nat.utils.sdk.nat_finetuner import NatFinetuner, CurriculumLearning
 from nat.utils.sdk.nat_evaluation import NatEvaluation, EvalDatasetJsonConfig
 
 # Import plugin components
-from nat.plugins.openpipe.register import ARTTrainer, ARTTrajectoryBuilder, ARTTrainerAdapter
+from nat.plugins.openpipe.config import ARTTrainer, ARTTrajectoryBuilder, ARTTrainerAdapter
 
 async def main():
     # Create LLM with log probabilities enabled

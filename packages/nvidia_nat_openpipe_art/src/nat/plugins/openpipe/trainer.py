@@ -45,13 +45,13 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-class ARTTrainer(Trainer):
+class ARTTrainerImpl(Trainer):
     """
     Concrete implementation of Trainer for the OpenPipe ART backend.
 
     This runner orchestrates the finetuning process using:
-    - ARTTrajectoryBuilder to collect trajectories from evaluations
-    - ARTTrainerAdapter to submit trajectories to the ART training backend
+    - ARTTrajectoryBuilderImpl to collect trajectories from evaluations
+    - ARTTrainerAdapterImpl to submit trajectories to the ART training backend
     """
 
     def __init__(self, trainer_config: ARTTrainerConfig, **kwargs) -> None:

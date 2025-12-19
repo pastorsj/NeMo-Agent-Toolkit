@@ -41,7 +41,11 @@ TruncationOption = typing.Annotated[str, AfterValidator(option_in_allowed_values
 
 
 class NIMEmbedderModelConfig(EmbedderBaseConfig, RetryMixin, name="nim"):
-    """A NVIDIA Inference Microservice (NIM) embedder provider to be used with an embedder client."""
+    """
+    A NVIDIA Inference Microservice (NIM) embedder provider to be used with an embedder client.
+
+    ![Icon](https://cdn.simpleicons.org/nvidia/76B900)
+    """
 
     api_key: OptionalSecretStr = Field(default=None, description="NVIDIA API key to interact with hosted NIM.")
     base_url: str | None = Field(default=None, description="Base url to the hosted NIM.")

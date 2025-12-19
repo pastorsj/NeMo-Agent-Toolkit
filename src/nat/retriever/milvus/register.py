@@ -32,6 +32,8 @@ from nat.utils.sdk.nat_retriever import NatRetriever
 class MilvusRetrieverConfig(RetrieverBaseConfig, name="milvus_retriever"):
     """
     Configuration for a Retriever which pulls data from a Milvus service.
+
+    ![Icon](https://cdn.simpleicons.org/milvus/00A1EA)
     """
     uri: Annotated[HttpUrl, PlainSerializer(str)] = Field(description="The uri of Milvus service")
     connection_args: dict = Field(

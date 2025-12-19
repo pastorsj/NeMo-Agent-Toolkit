@@ -25,6 +25,11 @@ from nat.profiler.parameter_optimization.prompt_optimizer import PromptOptimizer
 
 
 class PromptOptimizerConfig(FunctionBaseConfig, name="prompt_init"):
+    """
+    Prompt optimizer function that uses an LLM to optimize prompts.
+
+    ![Icon](https://cdn.simpleicons.org/openai/00A67E)
+    """
 
     optimizer_llm: LLMRef = Field(description="LLM to use for prompt optimization")
     optimizer_prompt: str = Field(
@@ -89,6 +94,11 @@ async def prompt_optimizer_function(config: PromptOptimizerConfig, builder: Buil
 
 
 class PromptRecombinerConfig(FunctionBaseConfig, name="prompt_recombiner"):
+    """
+    Prompt recombiner function that combines two prompts using an LLM.
+
+    ![Icon](https://cdn.simpleicons.org/openai/00A67E)
+    """
 
     optimizer_llm: LLMRef = Field(description="LLM to use for prompt recombination")
     optimizer_prompt: str = Field(

@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, Layers, Search } from 'lucide-react';
 import { NAT_COMPONENTS, COMPONENT_CATEGORIES, NATComponentType } from '@/types';
 import { FlowDraggablePaletteItem } from './FlowDraggablePaletteItem';
 import { useRegistry } from '@/contexts/RegistryContext';
+import { useWorkflow } from '@/contexts/WorkflowContext';
 
 export function FlowSidebar() {
   // All categories expanded by default
@@ -10,7 +11,8 @@ export function FlowSidebar() {
     new Set(Object.keys(COMPONENT_CATEGORIES))
   );
   const [searchQuery, setSearchQuery] = useState('');
-  const { connected, loading, registry } = useRegistry();
+  const { connected, loading, workflowCategories } = useRegistry();
+  const { isTypeDisabled } = useWorkflow();
 
   const toggleCategory = (category: string) => {
     setExpandedCategories((prev) => {
@@ -39,10 +41,10 @@ export function FlowSidebar() {
 
   // Count available types from registry for each category
   const getCategoryCount = (types: NATComponentType[]) => {
-    if (!registry?.components) return null;
+    if (workflowCategories.length === 0) return null;
     let count = 0;
     types.forEach((type) => {
-      const categoryData = registry.components.find((c) => c.category === type);
+      const categoryData = workflowCategories.find((c) => c.category === type);
       if (categoryData) {
         count += categoryData.registered_types.length;
       }
@@ -123,6 +125,7 @@ export function FlowSidebar() {
                       key={componentType}
                       componentType={componentType}
                       config={NAT_COMPONENTS[componentType]}
+                      disabled={isTypeDisabled(componentType)}
                     />
                   ))}
                 </div>

@@ -23,7 +23,10 @@ from nat.utils.sdk.nat_evaluator import NatEvaluator
 
 
 class TrajectoryEvaluatorConfig(EvaluatorBaseConfig, name="trajectory"):
-    """Agent Trajectory Evaluation."""
+    """Agent Trajectory Evaluation.
+
+    ![Icon](https://cdn.simpleicons.org/pytest/0A9EDC)
+    """
 
     llm_name: str = Field(description="LLM as a judge.")
 

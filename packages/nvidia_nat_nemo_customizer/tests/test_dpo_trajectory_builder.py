@@ -33,7 +33,7 @@ from nat.data_models.invocation_node import InvocationNode
 from nat.eval.evaluator.evaluator_model import EvalInput
 from nat.eval.evaluator.evaluator_model import EvalInputItem
 from nat.plugins.customizer.dpo.trajectory_builder import CandidateStep
-from nat.plugins.customizer.dpo.trajectory_builder import DPOTrajectoryBuilder
+from nat.plugins.customizer.dpo.trajectory_builder import DPOTrajectoryBuilderImpl
 from nat.plugins.customizer.dpo.trajectory_builder import PreferencePair
 
 
@@ -544,7 +544,7 @@ class TestDPOTrajectoryBuilder:
     def test_generate_best_vs_worst_pairs(self, dpo_config, sample_ttc_data):
         """Test best vs worst pair generation."""
         dpo_config.exhaustive_pairs = False
-        builder = DPOTrajectoryBuilder(dpo_config)
+        builder = DPOTrajectoryBuilderImpl(dpo_config)
 
         candidates = [
             CandidateStep(
@@ -567,7 +567,7 @@ class TestDPOTrajectoryBuilder:
     def test_generate_pairs_min_score_diff_filter(self, dpo_config):
         """Test that pairs below min_score_diff are filtered."""
         dpo_config.min_score_diff = 0.3
-        builder = DPOTrajectoryBuilder(dpo_config)
+        builder = DPOTrajectoryBuilderImpl(dpo_config)
 
         candidates = [
             CandidateStep("ex_1", "t0", 0, "p", "r1", 0.6),
@@ -585,7 +585,7 @@ class TestDPOTrajectoryBuilder:
     def test_generate_pairs_max_pairs_per_turn(self, dpo_config):
         """Test max_pairs_per_turn limit."""
         dpo_config.max_pairs_per_turn = 2
-        builder = DPOTrajectoryBuilder(dpo_config)
+        builder = DPOTrajectoryBuilderImpl(dpo_config)
 
         candidates = [
             CandidateStep("ex_1", "t0", 0, "p", "r1", 0.9),
@@ -612,7 +612,7 @@ class TestDPOTrajectoryBuilder:
     def test_generate_pairs_single_candidate_allowed(self, dpo_config):
         """Test single candidate turns when require_multiple_candidates=False."""
         dpo_config.require_multiple_candidates = False
-        builder = DPOTrajectoryBuilder(dpo_config)
+        builder = DPOTrajectoryBuilderImpl(dpo_config)
 
         candidates = [CandidateStep("ex_1", "t0", 0, "p", "r1", 0.9)]
 
@@ -667,7 +667,7 @@ class TestDPOTrajectoryBuilder:
     def test_build_trajectories_reward_from_chosen_score(self, dpo_config):
         """Test reward computation from chosen score instead of diff."""
         dpo_config.reward_from_score_diff = False
-        builder = DPOTrajectoryBuilder(dpo_config)
+        builder = DPOTrajectoryBuilderImpl(dpo_config)
 
         pairs = [PreferencePair(
             "ex_1",
@@ -846,7 +846,7 @@ class TestDPOTrajectoryBuilderIntegration:
         dpo_config.min_score_diff = 0.1
         dpo_config.max_pairs_per_turn = 1
 
-        builder = DPOTrajectoryBuilder(dpo_config)
+        builder = DPOTrajectoryBuilderImpl(dpo_config)
 
         ttc_data_list = [
             create_candidate_ttc_data("turn_0", 0, 0.9, "Prompt", "Best"),

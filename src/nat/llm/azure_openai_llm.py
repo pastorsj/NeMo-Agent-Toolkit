@@ -36,7 +36,11 @@ class AzureOpenAIModelConfig(
         ThinkingMixin,
         name="azure_openai",
 ):
-    """An Azure OpenAI LLM provider to be used with an LLM client."""
+    """
+    An Azure OpenAI LLM provider to be used with an LLM client.
+
+    ![Icon](https://cdn.simpleicons.org/microsoftazure/0078D4)
+    """
 
     model_config = ConfigDict(protected_namespaces=(), extra="allow")
 

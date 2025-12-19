@@ -23,7 +23,7 @@ Example:
     from nat.utils.sdk.nat_finetuner import NatFinetuner, CurriculumLearning
 
     # With plugin-specific implementations (e.g., OpenPipe ART):
-    from nat.plugins.openpipe.register import ARTTrainer, ARTTrajectoryBuilder, ARTTrainerAdapter
+    from nat.plugins.openpipe.config import ARTTrainer, ARTTrajectoryBuilder, ARTTrainerAdapter
 
     # Configure finetuning with objects (required)
     finetuning = NatFinetuner(

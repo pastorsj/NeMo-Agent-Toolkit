@@ -47,6 +47,8 @@ class ReActAgentWorkflowConfig(AgentBaseConfig, OptimizableMixin, name="react_ag
     """
     Defines a NAT function that uses a ReAct Agent performs reasoning inbetween tool calls, and utilizes the
     tool names and descriptions to select the optimal tool.
+
+    ![Icon](https://cdn.simpleicons.org/langchain/1C3C3C)
     """
     description: str = Field(default="ReAct Agent Workflow", description="The description of this functions use.")
     tool_names: list[FunctionRef | FunctionGroupRef] = Field(

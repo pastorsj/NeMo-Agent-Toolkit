@@ -27,7 +27,11 @@ from nat.utils.sdk.nat_embedder import NatEmbedder
 
 
 class OpenAIEmbedderModelConfig(EmbedderBaseConfig, RetryMixin, name="openai"):
-    """An OpenAI LLM provider to be used with an LLM client."""
+    """
+    An OpenAI embedder provider to be used with an embedder client.
+
+    ![Icon](https://cdn.simpleicons.org/openai/00A67E)
+    """
 
     model_config = ConfigDict(protected_namespaces=(), extra="allow")
 

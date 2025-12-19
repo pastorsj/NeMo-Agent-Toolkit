@@ -154,6 +154,8 @@ class EvaluateItemResponse(BaseModel):
 class FastApiFrontEndConfig(FrontEndBaseConfig, name="fastapi"):
     """
     A FastAPI based front end that allows a NAT workflow to be served as a microservice.
+
+    ![Icon](https://cdn.simpleicons.org/fastapi/009688)
     """
 
     class EndpointBase(BaseModel):

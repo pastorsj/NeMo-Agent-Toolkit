@@ -20,6 +20,11 @@ from nat.utils.sdk.nat_auth_provider import NatAuthProvider
 
 
 class HTTPBasicAuthProviderConfig(AuthProviderBaseConfig, name="http_basic"):
+    """
+    HTTP Basic authentication configuration.
+
+    ![Icon](https://cdn.simpleicons.org/auth0/EB5424)
+    """
     pass
 
 

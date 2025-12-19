@@ -39,9 +39,9 @@ from .config import NeMoCustomizerTrainerConfig
 logger = logging.getLogger(__name__)
 
 
-class NeMoCustomizerTrainer(Trainer):
+class NeMoCustomizerTrainerImpl(Trainer):
     """
-    Trainer for NeMo Customizer DPO/SFT finetuning.
+    Runtime implementation of Trainer for NeMo Customizer DPO/SFT finetuning.
 
     Unlike epoch-based trainers, this trainer:
     1. Runs the trajectory builder multiple times (num_runs) to collect data

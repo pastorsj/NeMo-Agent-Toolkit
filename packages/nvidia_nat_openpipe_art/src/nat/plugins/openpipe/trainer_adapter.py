@@ -38,9 +38,9 @@ from .config import ARTTrainerAdapterConfig
 logger = logging.getLogger(__name__)
 
 
-class ARTTrainerAdapter(TrainerAdapter):
+class ARTTrainerAdapterImpl(TrainerAdapter):
     """
-    Adapter for the ART Trainer backend.
+    Runtime implementation of adapter for the ART Trainer backend.
     """
 
     def __init__(self, adapter_config: ARTTrainerAdapterConfig):

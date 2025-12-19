@@ -24,6 +24,8 @@ from nat.utils.sdk.nat_front_end import NatFrontEnd
 class ConsoleFrontEndConfig(FrontEndBaseConfig, name="console"):
     """
     A front end that allows a NAT workflow to be run from the console.
+
+    ![Icon](https://cdn.simpleicons.org/gnubash/4EAA25)
     """
 
     input_query: list[str] | None = Field(default=None,

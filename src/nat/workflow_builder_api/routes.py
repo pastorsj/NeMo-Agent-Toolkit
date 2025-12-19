@@ -14,26 +14,38 @@
 # limitations under the License.
 """
 FastAPI routes for the Workflow Builder API.
+
+Provides per-category endpoints for efficient parallel loading of component types.
 """
 
 import logging
-from typing import Any
 
 from fastapi import APIRouter
 from fastapi import HTTPException
+from pydantic import BaseModel
 
 from nat.cli.type_registry import GlobalTypeRegistry
 from nat.cli.type_registry import RegisteredInfo
 from nat.data_models.agent import AgentBaseConfig
+from nat.utils.sdk.nat_evaluation import NatEvaluation
+from nat.utils.sdk.nat_finetuner import NatFinetuner
+from nat.utils.sdk.nat_general_configuraton import NatGeneralConfiguration
+from nat.utils.sdk.nat_optimizer import NatOptimizer
+
+# SDK workflow classes (not registered in type registry)
+from nat.utils.sdk.nat_workflow import NatWorkflow
+from nat.workflow_builder_api.component_metadata import apply_field_options
 from nat.workflow_builder_api.models import ComponentCategory
 from nat.workflow_builder_api.models import ComponentTypeInfo
+from nat.workflow_builder_api.models import ConnectionPort
+from nat.workflow_builder_api.models import FieldInfo
 from nat.workflow_builder_api.models import HealthResponse
 from nat.workflow_builder_api.models import RefType
 from nat.workflow_builder_api.models import RegisteredTypeInfo
-from nat.workflow_builder_api.models import RegistryResponse
 from nat.workflow_builder_api.schema_extractor import extract_all_connection_ports
 from nat.workflow_builder_api.schema_extractor import extract_fields
 from nat.workflow_builder_api.schema_extractor import extract_json_schema
+from nat.workflow_builder_api.schema_extractor import get_icon_url_from_docstring
 from nat.workflow_builder_api.schema_extractor import get_model_description
 from nat.workflow_builder_api.schema_extractor import get_sdk_excluded_fields
 
@@ -41,7 +53,41 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["registry"])
 
-# Mapping from ComponentCategory to RefType (categories that provide output ports)
+# =============================================================================
+# CATEGORY CONFIGURATION
+# =============================================================================
+
+# Categories used by the workflow builder UI
+UI_CATEGORIES: set[ComponentCategory] = {
+    ComponentCategory.LLM,
+    ComponentCategory.EMBEDDER,
+    ComponentCategory.AGENT,
+    ComponentCategory.FUNCTION,
+    ComponentCategory.FUNCTION_GROUP,
+    ComponentCategory.RETRIEVER,
+    ComponentCategory.MEMORY,
+    ComponentCategory.OBJECT_STORE,
+    ComponentCategory.AUTHENTICATION,
+    ComponentCategory.MIDDLEWARE,
+    # Front-end and observability
+    ComponentCategory.FRONT_END,
+    ComponentCategory.LOGGER,
+    ComponentCategory.TELEMETRY_EXPORTER,
+    # Evaluation
+    ComponentCategory.EVALUATOR,
+    # Finetuning components
+    ComponentCategory.TRAINER,
+    ComponentCategory.TRAJECTORY_BUILDER,
+    ComponentCategory.TRAINER_ADAPTER,
+    # Workflow-level configuration containers
+    ComponentCategory.NAT_WORKFLOW,
+    ComponentCategory.GENERAL_CONFIG,
+    ComponentCategory.EVALUATION_CONFIG,
+    ComponentCategory.OPTIMIZER_CONFIG,
+    ComponentCategory.FINETUNER_CONFIG,
+}
+
+# Mapping from ComponentCategory to RefType (what output port type each category provides)
 CATEGORY_TO_REF_TYPE: dict[ComponentCategory, RefType] = {
     ComponentCategory.LLM: RefType.LLM,
     ComponentCategory.EMBEDDER: RefType.EMBEDDER,
@@ -53,8 +99,57 @@ CATEGORY_TO_REF_TYPE: dict[ComponentCategory, RefType] = {
     ComponentCategory.OBJECT_STORE: RefType.OBJECT_STORE,
     ComponentCategory.AUTHENTICATION: RefType.AUTHENTICATION,
     ComponentCategory.MIDDLEWARE: RefType.MIDDLEWARE,
-    ComponentCategory.TTC_STRATEGY: RefType.TTC_STRATEGY,
+    # Front-end and observability
+    ComponentCategory.FRONT_END: RefType.FRONT_END,
+    ComponentCategory.LOGGER: RefType.LOGGER,
+    ComponentCategory.TELEMETRY_EXPORTER: RefType.TELEMETRY_EXPORTER,
+    # Evaluation
+    ComponentCategory.EVALUATOR: RefType.EVALUATOR,
+    # Finetuning components
+    ComponentCategory.TRAINER: RefType.TRAINER,
+    ComponentCategory.TRAJECTORY_BUILDER: RefType.TRAJECTORY_BUILDER,
+    ComponentCategory.TRAINER_ADAPTER: RefType.TRAINER_ADAPTER,
+    # Workflow-level configuration containers
+    ComponentCategory.NAT_WORKFLOW: RefType.NAT_WORKFLOW,
+    ComponentCategory.GENERAL_CONFIG: RefType.GENERAL_CONFIG,
+    ComponentCategory.EVALUATION_CONFIG: RefType.EVALUATION_CONFIG,
+    ComponentCategory.OPTIMIZER_CONFIG: RefType.OPTIMIZER_CONFIG,
+    ComponentCategory.FINETUNER_CONFIG: RefType.FINETUNER_CONFIG,
 }
+
+# Category display metadata
+CATEGORY_METADATA: dict[ComponentCategory, tuple[str, str]] = {
+    ComponentCategory.LLM: ("LLM Providers", "Large Language Model providers for reasoning and generation"),
+    ComponentCategory.EMBEDDER: ("Embedders", "Text embedding models for semantic search and retrieval"),
+    ComponentCategory.AGENT: ("Agents", "AI agents that can reason, use tools, and complete complex tasks"),
+    ComponentCategory.FUNCTION: ("Functions", "Custom functions and tools that agents can use"),
+    ComponentCategory.FUNCTION_GROUP: ("Function Groups", "Groups of related functions"),
+    ComponentCategory.RETRIEVER: ("Retrievers", "Document retrievers for RAG workflows"),
+    ComponentCategory.MEMORY: ("Memory", "Persistent memory storage for agent context"),
+    ComponentCategory.OBJECT_STORE: ("Object Stores", "Object storage backends (S3, etc.)"),
+    ComponentCategory.AUTHENTICATION: ("Authentication", "API authentication providers"),
+    ComponentCategory.MIDDLEWARE: ("Middleware", "Request/response middleware components"),
+    # Front-end and observability
+    ComponentCategory.FRONT_END: ("Front Ends", "Deployment front ends (FastAPI, Console, MCP)"),
+    ComponentCategory.LOGGER: ("Loggers", "Logging configurations for runtime observability"),
+    ComponentCategory.TELEMETRY_EXPORTER: ("Telemetry", "Telemetry exporters for tracing and metrics"),
+    # Evaluation
+    ComponentCategory.EVALUATOR: ("Evaluators", "Evaluation metrics for testing workflow quality"),
+    # Finetuning components
+    ComponentCategory.TRAINER: ("Trainers", "Training loop orchestrators for finetuning"),
+    ComponentCategory.TRAJECTORY_BUILDER: ("Trajectory Builders", "Training data collectors"),
+    ComponentCategory.TRAINER_ADAPTER: ("Trainer Adapters", "Training backend adapters"),
+    # Workflow-level configuration containers
+    ComponentCategory.NAT_WORKFLOW: ("Workflow", "Main workflow entry point"),
+    ComponentCategory.GENERAL_CONFIG: ("General Config", "Loggers, telemetry, and front-end configuration"),
+    ComponentCategory.EVALUATION_CONFIG: ("Evaluation", "Evaluation configuration with evaluators"),
+    ComponentCategory.OPTIMIZER_CONFIG: ("Optimizer", "Hyperparameter optimization configuration"),
+    ComponentCategory.FINETUNER_CONFIG: ("Finetuner", "Model finetuning configuration"),
+}
+
+# =============================================================================
+# HELPER FUNCTIONS
+# =============================================================================
 
 
 def _is_agent_config(config_type: type) -> bool:
@@ -63,6 +158,121 @@ def _is_agent_config(config_type: type) -> bool:
         return issubclass(config_type, AgentBaseConfig)
     except TypeError:
         return False
+
+
+def _is_test_type(registered_info: RegisteredInfo) -> bool:
+    """Check if a registered type is from a tests folder and should be excluded."""
+    module_name = registered_info.module_name or ""
+    parts = module_name.lower().split(".")
+    for part in parts:
+        if part in ("tests", "test", "testing"):
+            return True
+        if part.startswith("test_") or part.endswith("_test"):
+            return True
+    return False
+
+
+# Workflow SDK class metadata - each is a single-type category (no variants)
+# These are NOT registered in the type registry but are key workflow components
+SDK_CLASS_METADATA: dict[ComponentCategory, tuple[type[BaseModel], str, str | None]] = {
+    ComponentCategory.NAT_WORKFLOW: (
+        NatWorkflow,
+        "nat.utils.sdk.nat_workflow",
+        "https://cdn.simpleicons.org/nvidia/76B900",  # NVIDIA icon for workflow
+    ),
+    ComponentCategory.GENERAL_CONFIG: (
+        NatGeneralConfiguration,
+        "nat.utils.sdk.nat_general_configuraton",
+        "https://cdn.simpleicons.org/gnubash/4EAA25",  # Config icon
+    ),
+    ComponentCategory.EVALUATION_CONFIG: (
+        NatEvaluation,
+        "nat.utils.sdk.nat_evaluation",
+        "https://cdn.simpleicons.org/pytest/0A9EDC",  # Test icon for evaluation
+    ),
+    ComponentCategory.OPTIMIZER_CONFIG: (
+        NatOptimizer,
+        "nat.utils.sdk.nat_optimizer",
+        "https://cdn.simpleicons.org/apachespark/E25A1C",  # Spark icon for optimizer
+    ),
+    ComponentCategory.FINETUNER_CONFIG: (
+        NatFinetuner,
+        "nat.utils.sdk.nat_finetuner",
+        "https://cdn.simpleicons.org/pytorch/EE4C2C",  # PyTorch icon for finetuning
+    ),
+    # Note: TRAINER, TRAJECTORY_BUILDER, TRAINER_ADAPTER are NOT in SDK_CLASS_METADATA
+    # because they have registered implementations (from plugins) that should be
+    # fetched from the type registry instead. See _get_category_types() for handling.
+}
+
+
+def _mark_connection_fields(fields: list[FieldInfo], input_ports: list[ConnectionPort]) -> list[FieldInfo]:
+    """
+    Mark fields as component refs if they have a corresponding connection port.
+
+    This ensures that fields for SDK types (NatLogger, NatTelemetryExporter, etc.)
+    are properly marked as connection fields and hidden from the config form.
+
+    Args:
+        fields: List of extracted fields.
+        input_ports: List of connection ports.
+
+    Returns:
+        Filtered list of fields, excluding those that are connection ports.
+    """
+    # Get the set of field names that are connection ports
+    port_field_names = {port.field_name for port in input_ports}
+
+    # Filter out fields that are connection ports - they should not appear in the config form
+    # Connection ports are configured via visual connections, not text input
+    return [field for field in fields if field.name not in port_field_names]
+
+
+def _build_workflow_sdk_type_info(
+    sdk_class: type[BaseModel],
+    module_name: str,
+    icon_url: str | None,
+) -> RegisteredTypeInfo:
+    """Build a RegisteredTypeInfo from a workflow SDK class (not a registered type)."""
+    json_schema = extract_json_schema(sdk_class)
+
+    # For SDK classes, we don't have a config-level exclusion, so we pass empty set
+    fields = extract_fields(json_schema, set())
+    description = get_model_description(sdk_class)
+
+    # Extract connection ports from the SDK class
+    input_ports = extract_all_connection_ports(sdk_class)
+
+    # Remove fields that are connection ports (they're configured via connections, not text input)
+    fields = _mark_connection_fields(fields, input_ports)
+
+    # Use class name as local name
+    local_name = sdk_class.__name__
+    full_type = f"{module_name}/{local_name}"
+
+    return RegisteredTypeInfo(
+        full_type=full_type,
+        module_name=module_name,
+        local_name=local_name,
+        description=description,
+        json_schema=json_schema,
+        fields=fields,
+        is_per_user=False,
+        input_ports=input_ports,
+        icon_url=icon_url,
+    )
+
+
+def _get_sdk_class_type(category: ComponentCategory) -> RegisteredTypeInfo | None:
+    """Get RegisteredTypeInfo for a single SDK class category."""
+    if category not in SDK_CLASS_METADATA:
+        return None
+    sdk_class, module_name, icon_url = SDK_CLASS_METADATA[category]
+    try:
+        return _build_workflow_sdk_type_info(sdk_class, module_name, icon_url)
+    except Exception as e:
+        logger.warning(f"Failed to build type info for {sdk_class.__name__}: {e}")
+        return None
 
 
 def _build_registered_type_info(registered_info: RegisteredInfo) -> RegisteredTypeInfo:
@@ -78,6 +288,15 @@ def _build_registered_type_info(registered_info: RegisteredInfo) -> RegisteredTy
     # Extract connection ports from both config and SDK class
     input_ports = extract_all_connection_ports(config_type)
 
+    # Remove fields that are connection ports (they're configured via connections, not text input)
+    fields = _mark_connection_fields(fields, input_ports)
+
+    # Apply field options from the metadata registry
+    apply_field_options(fields, registered_info.module_name)
+
+    # Get icon URL from the model's docstring (e.g., ![Icon](https://...))
+    icon_url = get_icon_url_from_docstring(config_type)
+
     return RegisteredTypeInfo(
         full_type=registered_info.full_type,
         module_name=registered_info.module_name,
@@ -87,164 +306,112 @@ def _build_registered_type_info(registered_info: RegisteredInfo) -> RegisteredTy
         fields=fields,
         is_per_user=registered_info.is_per_user,
         input_ports=input_ports,
+        icon_url=icon_url,
     )
 
 
-def _get_component_types() -> list[ComponentTypeInfo]:
-    """Get all component types from the registry."""
-    registry = GlobalTypeRegistry.get()
-    components = []
-
-    # Get all functions first, then split into agents and regular functions
-    all_functions = registry.get_registered_functions()
-    agent_functions = [f for f in all_functions if _is_agent_config(f.config_type)]
-    regular_functions = [f for f in all_functions if not _is_agent_config(f.config_type)]
-
-    # Define all component categories with their getters
-    category_configs = [
-        {
-            "category": ComponentCategory.LLM,
-            "display_name": "LLM Providers",
-            "description": "Large Language Model providers for reasoning and generation",
-            "getter": lambda: registry.get_registered_llm_providers(),
-        },
-        {
-            "category": ComponentCategory.EMBEDDER,
-            "display_name": "Embedders",
-            "description": "Text embedding models for semantic search and retrieval",
-            "getter": lambda: registry.get_registered_embedder_providers(),
-        },
-        {
-            "category": ComponentCategory.AGENT,
-            "display_name": "Agents",
-            "description": "AI agents that can reason, use tools, and complete complex tasks",
-            "getter": lambda: agent_functions,
-        },
-        {
-            "category": ComponentCategory.FUNCTION,
-            "display_name": "Functions",
-            "description": "Custom functions and tools that agents can use",
-            "getter": lambda: regular_functions,
-        },
-        {
-            "category": ComponentCategory.FUNCTION_GROUP,
-            "display_name": "Function Groups",
-            "description": "Groups of related functions",
-            "getter": lambda: registry.get_registered_function_groups(),
-        },
-        {
-            "category": ComponentCategory.RETRIEVER,
-            "display_name": "Retrievers",
-            "description": "Document retrievers for RAG workflows",
-            "getter": lambda: registry.get_registered_retriever_providers(),
-        },
-        {
-            "category": ComponentCategory.MEMORY,
-            "display_name": "Memory",
-            "description": "Persistent memory storage for agent context",
-            "getter": lambda: registry.get_registered_memorys(),
-        },
-        {
-            "category": ComponentCategory.OBJECT_STORE,
-            "display_name": "Object Stores",
-            "description": "Object storage backends (S3, etc.)",
-            "getter": lambda: registry.get_registered_object_stores(),
-        },
-        {
-            "category": ComponentCategory.AUTHENTICATION,
-            "display_name": "Authentication Providers",
-            "description": "API authentication providers",
-            "getter": lambda: registry.get_registered_auth_providers(),
-        },
-        {
-            "category": ComponentCategory.MIDDLEWARE,
-            "display_name": "Middleware",
-            "description": "Request/response middleware components",
-            "getter": lambda: registry.get_registered_middleware(),
-        },
-        {
-            "category": ComponentCategory.TTC_STRATEGY,
-            "display_name": "TTC Strategies",
-            "description": "Time-to-complete strategies for agent execution",
-            "getter": lambda: registry.get_registered_ttc_strategies(),
-        },
-        {
-            "category": ComponentCategory.TRAINER,
-            "display_name": "Trainers",
-            "description": "Model training components",
-            "getter": lambda: registry.get_registered_trainers(),
-        },
-        {
-            "category": ComponentCategory.TRAINER_ADAPTER,
-            "display_name": "Trainer Adapters",
-            "description": "Adapters for training integrations",
-            "getter": lambda: registry.get_registered_trainer_adapters(),
-        },
-        {
-            "category": ComponentCategory.TRAJECTORY_BUILDER,
-            "display_name": "Trajectory Builders",
-            "description": "Builders for training trajectories",
-            "getter": lambda: registry.get_registered_trajectory_builders(),
-        },
-        {
-            "category": ComponentCategory.FRONT_END,
-            "display_name": "Front Ends",
-            "description": "Workflow front-end entry points",
-            "getter": lambda: registry.get_registered_front_ends(),
-        },
-        {
-            "category": ComponentCategory.EVALUATOR,
-            "display_name": "Evaluators",
-            "description": "Workflow evaluation components",
-            "getter": lambda: registry.get_registered_evaluators(),
-        },
-        {
-            "category": ComponentCategory.TELEMETRY_EXPORTER,
-            "display_name": "Telemetry Exporters",
-            "description": "Telemetry and observability exporters",
-            "getter": lambda: registry.get_registered_telemetry_exporters(),
-        },
-        {
-            "category": ComponentCategory.LOGGING,
-            "display_name": "Logging Methods",
-            "description": "Logging configuration methods",
-            "getter": lambda: registry.get_registered_logging_method(),
-        },
-        {
-            "category": ComponentCategory.REGISTRY_HANDLER,
-            "display_name": "Registry Handlers",
-            "description": "Component registry handlers",
-            "getter": lambda: registry.get_registered_registry_handlers(),
-        },
-    ]
-
-    for config in category_configs:
+def _build_type_infos(registered_items: list[RegisteredInfo]) -> list[RegisteredTypeInfo]:
+    """Build RegisteredTypeInfo list from registered items, filtering out test types."""
+    result = []
+    for item in registered_items:
+        if _is_test_type(item):
+            continue
         try:
-            registered_items = config["getter"]()
-            registered_types = []
-
-            for item in registered_items:
-                try:
-                    type_info = _build_registered_type_info(item)
-                    registered_types.append(type_info)
-                except Exception as e:
-                    logger.warning(f"Failed to build type info for {item.full_type}: {e}")
-
-            # Determine what RefType this category provides (if any)
-            provides_ref_type = CATEGORY_TO_REF_TYPE.get(config["category"])
-
-            components.append(
-                ComponentTypeInfo(
-                    category=config["category"],
-                    display_name=config["display_name"],
-                    description=config["description"],
-                    registered_types=registered_types,
-                    provides_ref_type=provides_ref_type,
-                ))
+            result.append(_build_registered_type_info(item))
         except Exception as e:
-            logger.warning(f"Failed to get registered types for {config['category']}: {e}")
+            logger.warning(f"Failed to build type info for {item.full_type}: {e}")
+    return result
 
-    return components
+
+def _get_category_types(category: ComponentCategory) -> ComponentTypeInfo:
+    """
+    Get component types for a specific category.
+
+    This is the optimized version that only fetches data for the requested category.
+    """
+    registry = GlobalTypeRegistry.get()
+
+    # Get the raw registered items based on category
+    if category == ComponentCategory.LLM:
+        items = registry.get_registered_llm_providers()
+    elif category == ComponentCategory.EMBEDDER:
+        items = registry.get_registered_embedder_providers()
+    elif category == ComponentCategory.AGENT:
+        # Agents are functions that use AgentBaseConfig
+        all_functions = registry.get_registered_functions()
+        items = [f for f in all_functions if _is_agent_config(f.config_type)]
+    elif category == ComponentCategory.FUNCTION:
+        # Regular functions (not agents)
+        all_functions = registry.get_registered_functions()
+        items = [f for f in all_functions if not _is_agent_config(f.config_type)]
+    elif category == ComponentCategory.FUNCTION_GROUP:
+        items = registry.get_registered_function_groups()
+    elif category == ComponentCategory.RETRIEVER:
+        items = registry.get_registered_retriever_providers()
+    elif category == ComponentCategory.MEMORY:
+        items = registry.get_registered_memorys()
+    elif category == ComponentCategory.OBJECT_STORE:
+        items = registry.get_registered_object_stores()
+    elif category == ComponentCategory.AUTHENTICATION:
+        items = registry.get_registered_auth_providers()
+    elif category == ComponentCategory.MIDDLEWARE:
+        items = registry.get_registered_middleware()
+    # Front-end and observability
+    elif category == ComponentCategory.FRONT_END:
+        items = registry.get_registered_front_ends()
+    elif category == ComponentCategory.LOGGER:
+        items = registry.get_registered_logging_method()
+    elif category == ComponentCategory.TELEMETRY_EXPORTER:
+        items = registry.get_registered_telemetry_exporters()
+    # Evaluation
+    elif category == ComponentCategory.EVALUATOR:
+        items = registry.get_registered_evaluators()
+    # Finetuning components
+    elif category == ComponentCategory.TRAINER:
+        items = registry.get_registered_trainers()
+    elif category == ComponentCategory.TRAJECTORY_BUILDER:
+        items = registry.get_registered_trajectory_builders()
+    elif category == ComponentCategory.TRAINER_ADAPTER:
+        items = registry.get_registered_trainer_adapters()
+    # Workflow SDK classes (single-type categories, not registered in type registry)
+    elif category in SDK_CLASS_METADATA:
+        # Get metadata
+        display_name, description = CATEGORY_METADATA.get(category, (category.value.title(), ""))
+        provides_ref_type = CATEGORY_TO_REF_TYPE.get(category)
+
+        # Get the single type for this category
+        sdk_type = _get_sdk_class_type(category)
+        registered_types = [sdk_type] if sdk_type else []
+
+        return ComponentTypeInfo(
+            category=category,
+            display_name=display_name,
+            description=description,
+            registered_types=registered_types,
+            provides_ref_type=provides_ref_type,
+        )
+    else:
+        raise HTTPException(status_code=404, detail=f"Category {category} not supported")
+
+    # Build type infos
+    registered_types = _build_type_infos(items)
+
+    # Get metadata
+    display_name, description = CATEGORY_METADATA.get(category, (category.value.title(), ""))
+    provides_ref_type = CATEGORY_TO_REF_TYPE.get(category)
+
+    return ComponentTypeInfo(
+        category=category,
+        display_name=display_name,
+        description=description,
+        registered_types=registered_types,
+        provides_ref_type=provides_ref_type,
+    )
+
+
+# =============================================================================
+# API ROUTES
+# =============================================================================
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -259,79 +426,41 @@ async def health_check() -> HealthResponse:
         return HealthResponse(status="healthy", registry_loaded=False)
 
 
-@router.get("/registry", response_model=RegistryResponse)
-async def get_registry() -> RegistryResponse:
+@router.get("/categories", response_model=list[ComponentCategory])
+async def get_available_categories() -> list[ComponentCategory]:
     """
-    Get all registered component types from the NAT TypeRegistry.
+    Get list of available component categories.
 
-    Returns a comprehensive list of all component categories and their
-    registered implementations, including JSON Schemas for configuration.
+    Returns the categories that the workflow builder UI supports.
+    Use this to know which category endpoints to call.
     """
-    components = _get_component_types()
-    total_types = sum(len(c.registered_types) for c in components)
-
-    return RegistryResponse(
-        components=components,
-        total_types=total_types,
-    )
+    return list(UI_CATEGORIES)
 
 
-@router.get("/registry/{category}", response_model=ComponentTypeInfo)
-async def get_category(category: ComponentCategory) -> ComponentTypeInfo:
+@router.get("/components/{category}", response_model=ComponentTypeInfo)
+async def get_category_components(category: ComponentCategory) -> ComponentTypeInfo:
     """
-    Get registered types for a specific component category.
+    Get all registered component types for a specific category.
+
+    This is the primary endpoint for loading component data.
+    Call multiple category endpoints in parallel for faster loading.
 
     Args:
-        category: The component category to retrieve.
+        category: The component category (e.g., 'llm', 'embedder', 'agent')
 
     Returns:
         ComponentTypeInfo with all registered types in that category.
     """
-    components = _get_component_types()
+    if category not in UI_CATEGORIES:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Category '{category}' is not available. Use /categories to see available categories.",
+        )
 
-    for component in components:
-        if component.category == category:
-            return component
-
-    raise HTTPException(status_code=404, detail=f"Category {category} not found")
-
-
-@router.get("/registry/{category}/{full_type:path}", response_model=RegisteredTypeInfo)
-async def get_type_info(category: ComponentCategory, full_type: str) -> RegisteredTypeInfo:
-    """
-    Get detailed information about a specific registered type.
-
-    Args:
-        category: The component category.
-        full_type: The full type identifier (e.g., "nvidia/nim_llm").
-
-    Returns:
-        RegisteredTypeInfo with full schema and field information.
-    """
-    components = _get_component_types()
-
-    for component in components:
-        if component.category == category:
-            for reg_type in component.registered_types:
-                if reg_type.full_type == full_type:
-                    return reg_type
-
-    raise HTTPException(status_code=404, detail=f"Type {full_type} not found in category {category}")
-
-
-@router.get("/schema/{category}/{full_type:path}")
-async def get_type_schema(category: ComponentCategory, full_type: str) -> dict[str, Any]:
-    """
-    Get just the JSON Schema for a specific registered type.
-
-    This is useful for form generation in the UI.
-
-    Args:
-        category: The component category.
-        full_type: The full type identifier.
-
-    Returns:
-        The JSON Schema dictionary.
-    """
-    type_info = await get_type_info(category, full_type)
-    return type_info.json_schema
+    try:
+        return _get_category_types(category)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error loading category {category}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to load category: {str(e)}")

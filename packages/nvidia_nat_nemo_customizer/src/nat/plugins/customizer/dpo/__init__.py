@@ -21,23 +21,31 @@ This module provides:
 """
 
 from .config import DPOSpecificHyperparameters
+from .config import DPOTrajectoryBuilder
 from .config import DPOTrajectoryBuilderConfig
 from .config import NeMoCustomizerHyperparameters
+from .config import NeMoCustomizerTrainer
+from .config import NeMoCustomizerTrainerAdapter
 from .config import NeMoCustomizerTrainerAdapterConfig
 from .config import NeMoCustomizerTrainerConfig
 from .config import NIMDeploymentConfig
-from .trainer import NeMoCustomizerTrainer
-from .trainer_adapter import NeMoCustomizerTrainerAdapter
-from .trajectory_builder import DPOTrajectoryBuilder
+
+# Runtime implementation classes (for internal use)
+from .trainer import NeMoCustomizerTrainerImpl
+from .trainer_adapter import NeMoCustomizerTrainerAdapterImpl
+from .trajectory_builder import DPOTrajectoryBuilderImpl
 
 __all__ = [
-    # Trajectory Builder
+    # SDK classes (for user-facing configuration)
     "DPOTrajectoryBuilderConfig",
-    "DPOTrajectoryBuilder",  # Trainer
+    "DPOTrajectoryBuilder",
     "NeMoCustomizerTrainerConfig",
-    "NeMoCustomizerTrainer",  # TrainerAdapter
+    "NeMoCustomizerTrainer",
     "NeMoCustomizerTrainerAdapterConfig",
-    "NeMoCustomizerTrainerAdapter",
+    "NeMoCustomizerTrainerAdapter",  # Runtime implementation classes
+    "DPOTrajectoryBuilderImpl",
+    "NeMoCustomizerTrainerImpl",
+    "NeMoCustomizerTrainerAdapterImpl",  # Other configs
     "NeMoCustomizerHyperparameters",
     "DPOSpecificHyperparameters",
     "NIMDeploymentConfig",

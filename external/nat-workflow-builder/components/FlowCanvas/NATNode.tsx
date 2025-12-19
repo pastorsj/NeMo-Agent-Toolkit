@@ -2,7 +2,7 @@ import React, { memo, useMemo, useState, useCallback, useRef, useEffect } from '
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { PlacedComponent, NAT_COMPONENTS } from '@/types';
 import { REF_TYPE_COLORS, REF_TYPE_LABELS } from '@/types/registry';
-import { ComponentIcon } from '@/components/NATComponents/ComponentIcon';
+import { ProviderIcon } from '@/components/ProviderIcon';
 import { formatDisplayName } from '@/lib/format';
 import { Settings, Check, Trash2, X, Link2, Pencil } from 'lucide-react';
 
@@ -17,6 +17,7 @@ interface NATNodeData {
   component: PlacedComponent;
   label: string;
   connections: ConnectionInfo[];
+  iconUrl?: string | null;
   onConfigure: () => void;
   onDelete: () => void;
   onDeleteConnection: (connectionId: string) => void;
@@ -84,11 +85,81 @@ const colorClasses: Record<string, { border: string; bg: string; icon: string; a
     icon: 'text-cyan-400',
     accent: '#06b6d4',
   },
+  // Front-end and observability
+  'nat-frontend': {
+    border: 'border-emerald-500/50',
+    bg: 'from-emerald-500/20 to-emerald-600/5',
+    icon: 'text-emerald-400',
+    accent: '#10b981',
+  },
+  'nat-logger': {
+    border: 'border-slate-500/50',
+    bg: 'from-slate-500/20 to-slate-600/5',
+    icon: 'text-slate-400',
+    accent: '#64748b',
+  },
+  'nat-telemetry': {
+    border: 'border-amber-500/50',
+    bg: 'from-amber-500/20 to-amber-600/5',
+    icon: 'text-amber-400',
+    accent: '#f59e0b',
+  },
+  // Evaluation
+  'nat-evaluator': {
+    border: 'border-sky-500/50',
+    bg: 'from-sky-500/20 to-sky-600/5',
+    icon: 'text-sky-400',
+    accent: '#0ea5e9',
+  },
+  // Finetuning components
+  'nat-trainer': {
+    border: 'border-lime-500/50',
+    bg: 'from-lime-500/20 to-lime-600/5',
+    icon: 'text-lime-400',
+    accent: '#84cc16',
+  },
+  'nat-trajectory': {
+    border: 'border-purple-500/50',
+    bg: 'from-purple-500/20 to-purple-600/5',
+    icon: 'text-purple-400',
+    accent: '#a855f7',
+  },
+  'nat-adapter': {
+    border: 'border-stone-500/50',
+    bg: 'from-stone-500/20 to-stone-600/5',
+    icon: 'text-stone-400',
+    accent: '#78716c',
+  },
+  // Workflow-level configuration containers
+  'nat-workflow': {
+    border: 'border-lime-500/50',
+    bg: 'from-lime-500/20 to-lime-600/5',
+    icon: 'text-lime-400',
+    accent: '#76b900',
+  },
+  'nat-config': {
+    border: 'border-gray-500/50',
+    bg: 'from-gray-500/20 to-gray-600/5',
+    icon: 'text-gray-400',
+    accent: '#6b7280',
+  },
+  'nat-optimizer': {
+    border: 'border-orange-500/50',
+    bg: 'from-orange-500/20 to-orange-600/5',
+    icon: 'text-orange-400',
+    accent: '#e25a1c',
+  },
+  'nat-finetuner': {
+    border: 'border-red-500/50',
+    bg: 'from-red-500/20 to-red-600/5',
+    icon: 'text-red-400',
+    accent: '#ee4c2c',
+  },
 };
 
 function NATNodeComponent({ data, selected }: NodeProps) {
   const nodeData = data as unknown as NATNodeData;
-  const { component, connections, onConfigure, onDelete, onDeleteConnection, onNameChange } = nodeData;
+  const { component, connections, iconUrl, onConfigure, onDelete, onDeleteConnection, onNameChange } = nodeData;
   const config = NAT_COMPONENTS[component.type];
   const colors = colorClasses[config.color] || {
     border: 'border-gray-500/50',
@@ -210,8 +281,13 @@ function NATNodeComponent({ data, selected }: NodeProps) {
 
       {/* Header */}
       <div className="flex items-center gap-3 px-3 py-2.5 border-b border-gray-700/30">
-        <div className={`w-8 h-8 rounded-lg bg-gray-800/50 flex items-center justify-center ${colors.icon}`}>
-          <ComponentIcon icon={config.icon} size={18} />
+        <div className={`w-8 h-8 rounded-lg bg-gray-800/50 flex items-center justify-center ${iconUrl ? '' : colors.icon}`}>
+          <ProviderIcon
+            iconUrl={iconUrl}
+            fallbackIcon={config.icon}
+            size={18}
+            className={iconUrl ? '' : colors.icon}
+          />
         </div>
         <div className="flex-1 min-w-0">
           {isEditingName ? (

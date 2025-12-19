@@ -32,7 +32,11 @@ from nat.utils.sdk.nat_llm import NatLLM
 
 
 class NIMModelConfig(LLMBaseConfig, RetryMixin, OptimizableMixin, ThinkingMixin, name="nim"):
-    """An NVIDIA Inference Microservice (NIM) llm provider to be used with an LLM client."""
+    """
+    An NVIDIA Inference Microservice (NIM) llm provider to be used with an LLM client.
+
+    ![Icon](https://cdn.simpleicons.org/nvidia/76B900)
+    """
 
     model_config = ConfigDict(protected_namespaces=(), extra="allow")
 

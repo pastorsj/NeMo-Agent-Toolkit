@@ -39,7 +39,13 @@ class LiteLlmModelConfig(
         ThinkingMixin,
         name="litellm",
 ):
-    """A LiteLlm provider to be used with an LLM client."""
+    """
+    A LiteLlm provider to be used with an LLM client.
+
+    LiteLLM is a unified interface for multiple LLM providers.
+
+    ![Icon](https://cdn.simpleicons.org/litellm/FF6F61)
+    """
 
     model_config = ConfigDict(protected_namespaces=(), extra="allow")
 

@@ -77,6 +77,7 @@ function workflowToNodes(
         component: comp,
         label: comp.name,
         connections: incomingConnections,
+        iconUrl: comp.registeredType?.icon_url,
         onConfigure: () => onConfigure(comp),
         onDelete: () => onDelete(comp.id),
         onDeleteConnection: (connectionId: string) => onDeleteConnection(connectionId),

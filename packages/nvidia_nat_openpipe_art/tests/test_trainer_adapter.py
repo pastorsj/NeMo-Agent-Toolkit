@@ -33,7 +33,7 @@ from nat.data_models.finetuning import Trajectory
 from nat.data_models.finetuning import TrajectoryCollection
 from nat.plugins.openpipe.config import ARTBackendConfig
 from nat.plugins.openpipe.config import ARTTrainerAdapterConfig
-from nat.plugins.openpipe.trainer_adapter import ARTTrainerAdapter
+from nat.plugins.openpipe.trainer_adapter import ARTTrainerAdapterImpl
 
 
 class TestARTTrainerAdapter:
@@ -99,7 +99,7 @@ class TestARTTrainerAdapter:
     def adapter(self, adapter_config, mock_art_backend, mock_art_model):
         """Create ARTTrainerAdapter instance with mocked dependencies."""
         with patch('nat.plugins.openpipe.trainer_adapter.art.dev.InternalModelConfig'):
-            adapter = ARTTrainerAdapter(adapter_config=adapter_config)
+            adapter = ARTTrainerAdapterImpl(adapter_config=adapter_config)
             adapter.model = mock_art_model
             adapter.remote_backend = mock_art_backend
             return adapter

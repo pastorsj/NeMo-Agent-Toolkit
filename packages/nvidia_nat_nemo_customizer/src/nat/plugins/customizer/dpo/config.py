@@ -29,6 +29,9 @@ from pydantic import model_validator
 from nat.data_models.finetuning import TrainerAdapterConfig
 from nat.data_models.finetuning import TrainerConfig
 from nat.data_models.finetuning import TrajectoryBuilderConfig
+from nat.utils.sdk.nat_trainer import NatTrainer
+from nat.utils.sdk.nat_trainer import NatTrainerAdapter
+from nat.utils.sdk.nat_trainer import NatTrajectoryBuilder
 
 
 class DPOTrajectoryBuilderConfig(TrajectoryBuilderConfig, name="dpo_traj_builder"):
@@ -358,3 +361,89 @@ class NeMoCustomizerTrainerAdapterConfig(TrainerAdapterConfig, name="nemo_custom
         self.entity_host = self.entity_host.rstrip("/")
         self.datastore_host = self.datastore_host.rstrip("/")
         return self
+
+
+# =============================================================================
+# SDK Wrapper Classes
+# =============================================================================
+# These classes combine config and SDK base classes to enable:
+# 1. Python SDK usage: `DPOTrajectoryBuilderSDK(exhaustive_pairs=True)`
+# 2. Registration with the workflow builder UI
+#
+# Note: Named with "SDK" suffix to avoid conflicts with runtime implementation
+# classes (DPOTrajectoryBuilder, NeMoCustomizerTrainer, NeMoCustomizerTrainerAdapter)
+# which are used internally by the finetuning harness.
+
+
+class DPOTrajectoryBuilder(DPOTrajectoryBuilderConfig, NatTrajectoryBuilder):
+    """DPO Trajectory Builder for collecting preference pairs.
+
+    ![Icon](https://cdn.simpleicons.org/nvidia/76B900)
+
+    Collects preference data from workflows that produce TTC_END intermediate
+    steps with TTCEventData. Groups candidates by turn_id and creates preference
+    pairs based on score differences.
+
+    Example:
+        ```python
+        from nat.plugins.customizer.dpo.config import DPOTrajectoryBuilder
+
+        trajectory_builder = DPOTrajectoryBuilder(
+            ttc_step_name="dpo_candidate_move",
+            exhaustive_pairs=True,
+            min_score_diff=0.05,
+            max_pairs_per_turn=5,
+        )
+        ```
+    """
+
+
+class NeMoCustomizerTrainer(NeMoCustomizerTrainerConfig, NatTrainer):
+    """NeMo Customizer Trainer for DPO/SFT finetuning.
+
+    ![Icon](https://cdn.simpleicons.org/nvidia/76B900)
+
+    Orchestrates DPO data collection and training job submission. Runs the
+    trajectory builder multiple times to collect data, then submits a single
+    training job to NeMo Customizer.
+
+    Example:
+        ```python
+        from nat.plugins.customizer.dpo.config import NeMoCustomizerTrainer
+
+        trainer = NeMoCustomizerTrainer(
+            num_runs=5,
+            wait_for_completion=True,
+            deduplicate_pairs=True,
+            max_pairs=10000,
+        )
+        ```
+    """
+
+
+class NeMoCustomizerTrainerAdapter(NeMoCustomizerTrainerAdapterConfig, NatTrainerAdapter):
+    """NeMo Customizer Trainer Adapter for submitting training jobs.
+
+    ![Icon](https://cdn.simpleicons.org/nvidia/76B900)
+
+    Submits DPO/SFT training jobs to NeMo Customizer and optionally deploys
+    the trained model.
+
+    Example:
+        ```python
+        from nat.plugins.customizer.dpo.config import NeMoCustomizerTrainerAdapter
+
+        adapter = NeMoCustomizerTrainerAdapter(
+            entity_host="https://nmp.example.com",
+            datastore_host="https://datastore.example.com",
+            namespace="my-project",
+            customization_config="meta/llama-3.2-1b-instruct@v1.0.0+A100",
+            hyperparameters=NeMoCustomizerHyperparameters(
+                training_type="dpo",
+                epochs=5,
+                batch_size=8,
+            ),
+            deploy_on_completion=True,
+        )
+        ```
+    """

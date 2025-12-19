@@ -142,6 +142,8 @@ class GithubGroupConfig(FunctionGroupBaseConfig, name="github"):
     """Function group for GitHub repository operations.
 
     Exposes issue, pull request, and commit operations with shared configuration.
+
+    ![Icon](https://cdn.simpleicons.org/github/181717)
     """
     repo_name: str = Field(description="The repository name in the format 'owner/repo'")
     timeout: int = Field(default=300, description="Timeout in seconds for GitHub API requests")
@@ -377,6 +379,10 @@ async def github_tool(config: GithubGroupConfig, _builder: Builder):
 
 
 class GithubFilesGroupConfig(FunctionBaseConfig, name="github_files_tool"):
+    """GitHub files tool for retrieving file contents from GitHub repositories.
+
+    ![Icon](https://cdn.simpleicons.org/github/181717)
+    """
     timeout: int = Field(default=5, description="Timeout in seconds for HTTP requests")
 
 

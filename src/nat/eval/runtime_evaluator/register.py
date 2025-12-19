@@ -24,25 +24,37 @@ from nat.eval.evaluator.evaluator_model import EvalOutput
 
 
 class AverageLLMLatencyConfig(EvaluatorBaseConfig, name="avg_llm_latency"):
-    """Mean difference between connected LLM_START and LLM_END events (same UUID)."""
+    """Mean difference between connected LLM_START and LLM_END events (same UUID).
+
+    ![Icon](https://cdn.simpleicons.org/pytest/0A9EDC)
+    """
 
     max_concurrency: int = Field(default=8, description="Max concurrency for evaluation.")
 
 
 class AverageWorkflowRuntimeConfig(EvaluatorBaseConfig, name="avg_workflow_runtime"):
-    """Average workflow runtime per item (max timestamp - min timestamp)."""
+    """Average workflow runtime per item (max timestamp - min timestamp).
+
+    ![Icon](https://cdn.simpleicons.org/pytest/0A9EDC)
+    """
 
     max_concurrency: int = Field(default=8, description="Max concurrency for evaluation.")
 
 
 class AverageNumberOfLLMCallsConfig(EvaluatorBaseConfig, name="avg_num_llm_calls"):
-    """Average number of LLM calls per item (count of LLM_END)."""
+    """Average number of LLM calls per item (count of LLM_END).
+
+    ![Icon](https://cdn.simpleicons.org/pytest/0A9EDC)
+    """
 
     max_concurrency: int = Field(default=8, description="Max concurrency for evaluation.")
 
 
 class AverageTokensPerLLMEndConfig(EvaluatorBaseConfig, name="avg_tokens_per_llm_end"):
-    """Average total tokens per LLM_END event (prompt + completion if available)."""
+    """Average total tokens per LLM_END event (prompt + completion if available).
+
+    ![Icon](https://cdn.simpleicons.org/pytest/0A9EDC)
+    """
 
     max_concurrency: int = Field(default=8, description="Max concurrency for evaluation.")
 

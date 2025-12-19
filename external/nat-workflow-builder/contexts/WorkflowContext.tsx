@@ -7,6 +7,7 @@ import {
   NATComponentType,
   NAT_COMPONENTS,
   COMPONENT_TO_REF_TYPE,
+  SINGLE_INSTANCE_TYPES,
 } from '@/types';
 import { ConnectionPort, RefType, RegisteredTypeInfo } from '@/types/registry';
 
@@ -168,6 +169,7 @@ function workflowReducer(state: WorkflowState, action: WorkflowAction): Workflow
                 registeredType: {
                   full_type: registeredType.full_type,
                   local_name: registeredType.local_name,
+                  icon_url: registeredType.icon_url,
                 },
                 inputPorts: registeredType.input_ports,
                 config,
@@ -270,6 +272,8 @@ interface WorkflowContextType {
   getConnectionForPort: (componentId: string, fieldName: string) => ComponentConnection | undefined;
   getComponentsOfType: (refType: RefType) => PlacedComponent[];
   getAndClearLastAddedComponent: () => PlacedComponent | undefined;
+  getPlacedSingleInstanceTypes: () => Set<NATComponentType>;
+  isTypeDisabled: (componentType: NATComponentType) => boolean;
 }
 
 const WorkflowContext = createContext<WorkflowContextType | undefined>(undefined);
@@ -365,6 +369,28 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
     return undefined;
   }, [state.components]);
 
+  // Get all single-instance types that are currently on the canvas
+  const getPlacedSingleInstanceTypes = useCallback(() => {
+    const placedTypes = new Set<NATComponentType>();
+    state.components.forEach((component) => {
+      if (SINGLE_INSTANCE_TYPES.has(component.type)) {
+        placedTypes.add(component.type);
+      }
+    });
+    return placedTypes;
+  }, [state.components]);
+
+  // Check if a component type should be disabled in the sidebar
+  const isTypeDisabled = useCallback(
+    (componentType: NATComponentType) => {
+      if (!SINGLE_INSTANCE_TYPES.has(componentType)) {
+        return false;
+      }
+      return state.components.some((c) => c.type === componentType);
+    },
+    [state.components]
+  );
+
   return (
     <WorkflowContext.Provider
       value={{
@@ -384,6 +410,8 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         getConnectionForPort,
         getComponentsOfType,
         getAndClearLastAddedComponent,
+        getPlacedSingleInstanceTypes,
+        isTypeDisabled,
       }}
     >
       {children}

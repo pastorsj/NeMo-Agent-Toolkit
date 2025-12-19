@@ -35,6 +35,8 @@ class MilvusDocumentSearchToolConfig(FunctionBaseConfig, name="milvus_document_s
     """
     This tool retrieves relevant documents for a given user query. The input query is mapped to the most appropriate
     Milvus collection database. This will return relevant documents from the selected collection.
+
+    ![Icon](https://cdn.simpleicons.org/milvus/00A1EA)
     """
     base_url: str = Field(description="The base url used to connect to the milvus database.")
     top_k: int = Field(default=4, description="The number of results to return from the milvus database.")

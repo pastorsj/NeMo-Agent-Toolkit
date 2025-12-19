@@ -30,6 +30,8 @@ from .models import ObjectStoreItem
 class InMemoryObjectStoreConfig(ObjectStoreBaseConfig, name="in_memory"):
     """
     Object store that stores objects in memory. Objects are not persisted when the process shuts down.
+
+    ![Icon](https://cdn.simpleicons.org/redis/DC382D)
     """
     pass
 

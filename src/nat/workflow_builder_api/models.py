@@ -24,7 +24,7 @@ from pydantic import Field
 
 
 class ComponentCategory(str, Enum):
-    """Categories of NAT components."""
+    """Categories of NAT components supported by the workflow builder."""
 
     LLM = "llm"
     EMBEDDER = "embedder"
@@ -36,15 +36,22 @@ class ComponentCategory(str, Enum):
     OBJECT_STORE = "object_store"
     AUTHENTICATION = "authentication"
     MIDDLEWARE = "middleware"
-    TTC_STRATEGY = "ttc_strategy"
-    TRAINER = "trainer"
-    TRAINER_ADAPTER = "trainer_adapter"
-    TRAJECTORY_BUILDER = "trajectory_builder"
+    # Front-end and observability
     FRONT_END = "front_end"
-    EVALUATOR = "evaluator"
+    LOGGER = "logger"
     TELEMETRY_EXPORTER = "telemetry_exporter"
-    LOGGING = "logging"
-    REGISTRY_HANDLER = "registry_handler"
+    # Evaluation and optimization
+    EVALUATOR = "evaluator"
+    # Finetuning components
+    TRAINER = "trainer"
+    TRAJECTORY_BUILDER = "trajectory_builder"
+    TRAINER_ADAPTER = "trainer_adapter"
+    # Workflow-level configuration containers (each is a single type, no variants)
+    NAT_WORKFLOW = "nat_workflow"
+    GENERAL_CONFIG = "general_config"
+    EVALUATION_CONFIG = "evaluation_config"
+    OPTIMIZER_CONFIG = "optimizer_config"
+    FINETUNER_CONFIG = "finetuner_config"
 
 
 class RefType(str, Enum):
@@ -59,7 +66,22 @@ class RefType(str, Enum):
     OBJECT_STORE = "object_store"
     AUTHENTICATION = "authentication"
     MIDDLEWARE = "middleware"
-    TTC_STRATEGY = "ttc_strategy"
+    # Front-end and observability
+    FRONT_END = "front_end"
+    LOGGER = "logger"
+    TELEMETRY_EXPORTER = "telemetry_exporter"
+    # Evaluation
+    EVALUATOR = "evaluator"
+    # Finetuning components
+    TRAINER = "trainer"
+    TRAJECTORY_BUILDER = "trajectory_builder"
+    TRAINER_ADAPTER = "trainer_adapter"
+    # Workflow-level configuration containers
+    NAT_WORKFLOW = "nat_workflow"
+    GENERAL_CONFIG = "general_config"
+    EVALUATION_CONFIG = "evaluation_config"
+    OPTIMIZER_CONFIG = "optimizer_config"
+    FINETUNER_CONFIG = "finetuner_config"
 
 
 class ConnectionPort(BaseModel):
@@ -98,10 +120,12 @@ class FieldInfo(BaseModel):
     pattern: str | None = Field(default=None, description="Regex pattern for string fields")
     items: dict[str, Any] | None = Field(default=None, description="Schema for array items")
     properties: dict[str, Any] | None = Field(default=None, description="Nested object properties")
-    # New: ComponentRef information
+    # ComponentRef information
     is_component_ref: bool = Field(default=False, description="Whether this field is a component reference")
     ref_type: RefType | None = Field(default=None, description="Type of component reference if is_component_ref")
     is_ref_list: bool = Field(default=False, description="Whether this is a list of component references")
+    # Suggested options for dropdown (not strict like enum - allows free text)
+    options: list[str] | None = Field(default=None, description="Suggested values for dropdown selection")
 
 
 class RegisteredTypeInfo(BaseModel):
@@ -114,9 +138,11 @@ class RegisteredTypeInfo(BaseModel):
     json_schema: dict[str, Any] = Field(description="Full JSON Schema for configuration")
     fields: list[FieldInfo] = Field(default_factory=list, description="Parsed field information")
     is_per_user: bool = Field(default=False, description="Whether this is a per-user component")
-    # New: Connection ports
+    # Connection ports
     input_ports: list[ConnectionPort] = Field(
         default_factory=list, description="Input connection ports - fields that accept references to other components")
+    # Custom icon URL for the component (e.g., provider logo)
+    icon_url: str | None = Field(default=None, description="URL to custom SVG icon for this component type")
 
 
 class ComponentTypeInfo(BaseModel):
@@ -127,16 +153,8 @@ class ComponentTypeInfo(BaseModel):
     description: str = Field(description="Category description")
     registered_types: list[RegisteredTypeInfo] = Field(default_factory=list,
                                                        description="All registered types in this category")
-    # New: Output port type - what type of reference this category provides
     provides_ref_type: RefType | None = Field(
         default=None, description="The reference type that components in this category provide (for connections)")
-
-
-class RegistryResponse(BaseModel):
-    """Response containing all registered component types."""
-
-    components: list[ComponentTypeInfo] = Field(description="All component categories and their registered types")
-    total_types: int = Field(description="Total number of registered types")
 
 
 class HealthResponse(BaseModel):

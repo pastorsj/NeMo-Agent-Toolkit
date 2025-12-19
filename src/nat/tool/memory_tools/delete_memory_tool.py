@@ -31,7 +31,10 @@ logger = logging.getLogger(__name__)
 
 
 class DeleteToolConfig(FunctionBaseConfig, name="delete_memory"):
-    """Function to delete memory from a hosted memory platform."""
+    """Function to delete memory from a hosted memory platform.
+
+    ![Icon](https://cdn.simpleicons.org/redis/DC382D)
+    """
 
     description: str = Field(default="Tool to delete a memory from a hosted memory platform.",
                              description="The description of this function's use for tool calling agents.")

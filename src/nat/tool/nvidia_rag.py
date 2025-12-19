@@ -30,6 +30,8 @@ logger = logging.getLogger(__name__)
 class NVIDIARAGToolConfig(FunctionBaseConfig, name="nvidia_rag"):
     """
     Tool used to search the NVIDIA Developer database for documents across a variety of NVIDIA asset types.
+
+    ![Icon](https://cdn.simpleicons.org/nvidia/76B900)
     """
     base_url: str = Field(description="The base url to the RAG service.")
     timeout: int = Field(default=60, description="The timeout configuration to use when sending requests.")

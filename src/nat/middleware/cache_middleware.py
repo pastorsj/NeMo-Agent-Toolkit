@@ -244,6 +244,8 @@ class CacheMiddlewareConfig(FunctionMiddlewareBaseConfig, name="cache"):
         similarity_threshold: Float between 0 and 1 for input matching:
             - 1.0: Exact string matching (fastest)
             - < 1.0: Fuzzy matching using difflib similarity
+
+    ![Icon](https://cdn.simpleicons.org/redis/DC382D)
     """
 
     enabled_mode: Literal["always", "eval"] = Field(

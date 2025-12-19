@@ -34,7 +34,11 @@ from nat.utils.sdk.nat_llm import NatLLM
 
 
 class OpenAIModelConfig(LLMBaseConfig, RetryMixin, OptimizableMixin, ThinkingMixin, name="openai"):
-    """An OpenAI LLM provider to be used with an LLM client."""
+    """
+    An OpenAI LLM provider to be used with an LLM client.
+
+    ![Icon](https://cdn.simpleicons.org/openai/00A67E)
+    """
 
     model_config = ConfigDict(protected_namespaces=(), extra="allow")
 
