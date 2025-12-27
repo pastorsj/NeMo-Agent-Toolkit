@@ -21,6 +21,8 @@ export type RefType =
   | 'trainer'
   | 'trajectory_builder'
   | 'trainer_adapter'
+  // Test-Time Compute strategies
+  | 'ttc_strategy'
   // Workflow-level configuration containers
   | 'nat_workflow'
   | 'general_config'
@@ -65,6 +67,8 @@ export interface RegisteredTypeInfo {
   full_type: string;
   module_name: string;
   local_name: string;
+  // Human-readable display name parsed from docstring (e.g., "NIM LLM")
+  display_name: string | null;
   description: string | null;
   json_schema: Record<string, unknown>;
   fields: FieldInfo[];
@@ -97,6 +101,8 @@ export type ComponentCategory =
   | 'trainer'
   | 'trajectory_builder'
   | 'trainer_adapter'
+  // Test-Time Compute strategies
+  | 'ttc_strategy'
   // Workflow-level configuration containers
   | 'nat_workflow'
   | 'general_config'
@@ -140,6 +146,8 @@ export const WORKFLOW_CATEGORIES: ComponentCategory[] = [
   'trainer',
   'trajectory_builder',
   'trainer_adapter',
+  // Test-Time Compute strategies
+  'ttc_strategy',
   // Workflow-level configuration containers
   'nat_workflow',
   'general_config',
@@ -169,6 +177,8 @@ export const REF_TYPE_LABELS: Record<RefType, string> = {
   trainer: 'Trainer',
   trajectory_builder: 'Trajectory Builder',
   trainer_adapter: 'Trainer Adapter',
+  // Test-Time Compute strategies
+  ttc_strategy: 'TTC Strategy',
   // Workflow-level configuration containers
   nat_workflow: 'Workflow',
   general_config: 'General Config',
@@ -198,6 +208,8 @@ export const REF_TYPE_COLORS: Record<RefType, string> = {
   trainer: '#84cc16', // lime-500
   trajectory_builder: '#a855f7', // purple-500
   trainer_adapter: '#78716c', // stone-500
+  // Test-Time Compute strategies
+  ttc_strategy: '#facc15', // yellow-400
   // Workflow-level configuration containers
   nat_workflow: '#76b900', // NVIDIA green
   general_config: '#6b7280', // gray-500

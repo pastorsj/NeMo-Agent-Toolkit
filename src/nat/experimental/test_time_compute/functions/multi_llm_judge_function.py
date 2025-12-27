@@ -33,6 +33,10 @@ class MultiLLMJudgeFunctionConfig(FunctionBaseConfig, name="multi_llm_judge_func
     """
     Configuration for a function that orchestrates multi-LLM search and
     judge-based selection.
+
+    ## Details
+    Name: Multi-LLM Judge Function
+    Icon: ![Icon](N/A)
     """
     search_strategy: TTCStrategyRef = Field(description="Strategy to search/generate responses "
                                             "(e.g. multi_llm_generation)")

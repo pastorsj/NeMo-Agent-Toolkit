@@ -31,9 +31,12 @@ logger = logging.getLogger(__name__)
 
 
 class FileTelemetryExporterConfig(TelemetryExporterBaseConfig, name="file"):
-    """A telemetry exporter that writes runtime traces to local files with optional rolling.
+    """
+    A telemetry exporter that writes runtime traces to local files with optional rolling.
 
-    ![Icon](https://cdn.simpleicons.org/opentelemetry/F5A800)
+    ## Details
+    Name: File Telemetry Exporter
+    Icon: ![Icon](https://cdn.simpleicons.org/opentelemetry/F5A800)
     """
 
     output_path: str = Field(description="Output path for logs. When rolling is disabled: exact file path. "
@@ -72,9 +75,12 @@ async def file_telemetry_exporter(config: FileTelemetryExporterConfig, builder: 
 
 
 class ConsoleLoggingMethodConfig(LoggingBaseConfig, name="console"):
-    """A logger to write runtime logs to the console.
+    """
+    A logger to write runtime logs to the console.
 
-    ![Icon](https://cdn.simpleicons.org/gnubash/4EAA25)
+    ## Details
+    Name: Console Logger
+    Icon: ![Icon](https://cdn.simpleicons.org/gnubash/4EAA25)
     """
 
     level: str = Field(description="The logging level of console logger.")
@@ -106,9 +112,12 @@ async def console_logging_method(config: ConsoleLoggingMethodConfig, builder: Bu
 
 
 class FileLoggingMethod(LoggingBaseConfig, name="file"):
-    """A logger to write runtime logs to a file.
+    """
+    A logger to write runtime logs to a file.
 
-    ![Icon](https://cdn.simpleicons.org/opentelemetry/F5A800)
+    ## Details
+    Name: File Logger
+    Icon: ![Icon](https://cdn.simpleicons.org/files/1976D2)
     """
 
     path: str = Field(description="The file path to save the logging output.")

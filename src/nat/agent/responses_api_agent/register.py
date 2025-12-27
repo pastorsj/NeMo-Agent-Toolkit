@@ -40,7 +40,9 @@ class ResponsesAPIAgentWorkflowConfig(FunctionBaseConfig, name="responses_api_ag
     Agent performs reasoning inbetween tool calls, and utilizes the
     tool names and descriptions to select the optimal tool.
 
-    ![Icon](https://cdn.simpleicons.org/openai/00A67E)
+    ## Details
+    Name: Responses API Agent
+    Icon: ![Icon](https://cdn.simpleicons.org/openai/00A67E)
     """
 
     llm_name: LLMRef = Field(description="The LLM model to use with the agent.")

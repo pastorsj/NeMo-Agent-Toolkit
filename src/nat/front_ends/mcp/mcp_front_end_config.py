@@ -29,11 +29,12 @@ logger = logging.getLogger(__name__)
 
 
 class MCPFrontEndConfig(FrontEndBaseConfig, name="mcp"):
-    """MCP front end configuration.
-
+    """
     A simple MCP (Model Context Protocol) front end for NeMo Agent toolkit.
 
-    ![Icon](https://cdn.simpleicons.org/anthropic/191919)
+    ## Details
+    Name: MCP Server
+    Icon: ![Icon](https://cdn.simpleicons.org/anthropic/191919)
     """
 
     name: str = Field(default="NeMo Agent Toolkit MCP",

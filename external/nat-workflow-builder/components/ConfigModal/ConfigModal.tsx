@@ -7,7 +7,7 @@ import { RegisteredTypeInfo, ComponentCategory, REF_TYPE_LABELS, REF_TYPE_COLORS
 import { ComponentIcon } from '@/components/NATComponents/ComponentIcon';
 import { ProviderIcon } from '@/components/ProviderIcon';
 import { SchemaFormField } from './SchemaFormField';
-import { formatDisplayName } from '@/lib/format';
+import { formatDisplayName, getTypeDisplayName } from '@/lib/format';
 
 // Map UI component types to registry categories
 const TYPE_TO_CATEGORY: Partial<Record<NATComponentType, ComponentCategory>> = {
@@ -37,6 +37,8 @@ const TYPE_TO_CATEGORY: Partial<Record<NATComponentType, ComponentCategory>> = {
   trainer: 'trainer',
   trajectory_builder: 'trajectory_builder',
   trainer_adapter: 'trainer_adapter',
+  // Test-Time Compute strategies
+  ttc_strategy: 'ttc_strategy',
 };
 
 // Categories that have exactly one type (no dropdown selection needed)
@@ -75,7 +77,7 @@ export function ConfigModal({ component, onClose, onSave }: ConfigModalProps) {
     if (!searchQuery.trim()) return availableTypes;
     const query = searchQuery.toLowerCase();
     return availableTypes.filter((type) => {
-      const typeName = formatDisplayName(type.local_name).toLowerCase();
+      const typeName = getTypeDisplayName(type).toLowerCase();
       const moduleName = type.module_name.toLowerCase();
       const desc = (type.description || '').toLowerCase();
       return typeName.includes(query) || moduleName.includes(query) || desc.includes(query);
@@ -95,8 +97,35 @@ export function ConfigModal({ component, onClose, onSave }: ConfigModalProps) {
   // Check if this is a single-type category (no dropdown needed)
   const isSingleType = category ? SINGLE_TYPE_CATEGORIES.has(category) : false;
 
-  // Initialize selected type from existing config OR auto-select for single-type categories
+  // Initialize selected type from existing registeredType, config, or auto-select for single-type categories
   useEffect(() => {
+    // If component already has a registeredType (e.g., from import), use it directly
+    if (component.registeredType && !selectedType) {
+      // Find the full type info from available types, or construct from registeredType
+      const existing = availableTypes.find(
+        (t) => t.full_type === component.registeredType?.full_type
+      );
+      if (existing) {
+        setSelectedType(existing);
+      } else if (component.registeredType.full_type) {
+        // Use the registeredType info we have from import
+        // This handles cases where the component was imported with full type info
+        setSelectedType({
+          full_type: component.registeredType.full_type,
+          local_name: component.registeredType.local_name || component.registeredType.full_type.split('/').pop() || '',
+          display_name: component.registeredType.display_name || null,
+          module_name: component.registeredType.full_type.split('/')[0] || '',
+          description: null,
+          icon_url: component.registeredType.icon_url || null,
+          fields: component.fields || [], // Use imported fields
+          input_ports: component.inputPorts || [],
+          json_schema: {}, // Not needed for display
+          is_per_user: false,
+        });
+      }
+      return;
+    }
+    
     // For single-type categories, auto-select the only available type
     if (isSingleType && availableTypes.length === 1 && !selectedType) {
       setSelectedType(availableTypes[0]);
@@ -112,7 +141,7 @@ export function ConfigModal({ component, onClose, onSave }: ConfigModalProps) {
         setSelectedType(existing);
       }
     }
-  }, [component.config, availableTypes, isSingleType, selectedType]);
+  }, [component.config, component.registeredType, component.inputPorts, availableTypes, isSingleType, selectedType]);
 
   const handleFieldChange = (fieldName: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [fieldName]: value }));
@@ -166,6 +195,8 @@ export function ConfigModal({ component, onClose, onSave }: ConfigModalProps) {
     'nat-trainer': { border: 'border-lime-500', bg: 'bg-lime-500/10', icon: 'text-lime-400' },
     'nat-trajectory': { border: 'border-purple-500', bg: 'bg-purple-500/10', icon: 'text-purple-400' },
     'nat-adapter': { border: 'border-stone-500', bg: 'bg-stone-500/10', icon: 'text-stone-400' },
+    // Test-Time Compute strategies
+    'nat-ttc': { border: 'border-yellow-400', bg: 'bg-yellow-400/10', icon: 'text-yellow-400' },
     // Workflow-level configuration containers
     'nat-workflow': { border: 'border-lime-500', bg: 'bg-lime-500/10', icon: 'text-lime-400' },
     'nat-config': { border: 'border-gray-500', bg: 'bg-gray-500/10', icon: 'text-gray-400' },
@@ -259,7 +290,7 @@ export function ConfigModal({ component, onClose, onSave }: ConfigModalProps) {
                             />
                             <span className="flex flex-col">
                               <span className="font-medium text-white">
-                                {formatDisplayName(selectedType.local_name)}
+                                {getTypeDisplayName(selectedType)}
                               </span>
                               <span className="text-xs text-gray-400">
                                 {selectedType.module_name}
@@ -322,7 +353,7 @@ export function ConfigModal({ component, onClose, onSave }: ConfigModalProps) {
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between">
                                       <div className="font-medium text-white">
-                                        {formatDisplayName(type.local_name)}
+                                        {getTypeDisplayName(type)}
                                       </div>
                                       {type.input_ports.length > 0 && (
                                         <div className="flex items-center gap-1 text-xs text-gray-500">

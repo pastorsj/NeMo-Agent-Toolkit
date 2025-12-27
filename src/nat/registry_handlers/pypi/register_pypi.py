@@ -23,9 +23,12 @@ from nat.utils.sdk.nat_registry_handler import NatRegistryHandler
 
 
 class PypiRegistryHandlerConfig(RegistryHandlerBaseConfig, name="pypi"):
-    """Registry handler for interacting with a remote PyPI registry index.
+    """
+    Registry handler for interacting with a remote PyPI registry index.
 
-    ![Icon](https://cdn.simpleicons.org/pypi/3775A9)
+    ## Details
+    Name: PyPI Registry Handler
+    Icon: ![Icon](https://cdn.simpleicons.org/pypi/3775A9)
     """
 
     endpoint: str = Field(description="A string representing the remote endpoint.")

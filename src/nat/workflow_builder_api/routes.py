@@ -15,402 +15,48 @@
 """
 FastAPI routes for the Workflow Builder API.
 
-Provides per-category endpoints for efficient parallel loading of component types.
+Provides endpoints for:
+- Health checks
+- Component category listing
+- Component type information
+- Configuration validation
 """
 
 import logging
 
 from fastapi import APIRouter
 from fastapi import HTTPException
+from fastapi import WebSocket
+from fastapi import WebSocketDisconnect
 from pydantic import BaseModel
+from pydantic import Field
 
 from nat.cli.type_registry import GlobalTypeRegistry
-from nat.cli.type_registry import RegisteredInfo
-from nat.data_models.agent import AgentBaseConfig
-from nat.utils.sdk.nat_evaluation import NatEvaluation
-from nat.utils.sdk.nat_finetuner import NatFinetuner
-from nat.utils.sdk.nat_general_configuraton import NatGeneralConfiguration
-from nat.utils.sdk.nat_optimizer import NatOptimizer
-
-# SDK workflow classes (not registered in type registry)
-from nat.utils.sdk.nat_workflow import NatWorkflow
-from nat.workflow_builder_api.component_metadata import apply_field_options
+from nat.workflow_builder_api.constants import UI_CATEGORIES
 from nat.workflow_builder_api.models import ComponentCategory
 from nat.workflow_builder_api.models import ComponentTypeInfo
-from nat.workflow_builder_api.models import ConnectionPort
-from nat.workflow_builder_api.models import FieldInfo
+from nat.workflow_builder_api.models import ConfigValidationRequest
+from nat.workflow_builder_api.models import ConfigValidationResponse
+from nat.workflow_builder_api.models import ExportConfigResponse
+from nat.workflow_builder_api.models import ExportWorkflowRequest
 from nat.workflow_builder_api.models import HealthResponse
-from nat.workflow_builder_api.models import RefType
-from nat.workflow_builder_api.models import RegisteredTypeInfo
-from nat.workflow_builder_api.schema_extractor import extract_all_connection_ports
-from nat.workflow_builder_api.schema_extractor import extract_fields
-from nat.workflow_builder_api.schema_extractor import extract_json_schema
-from nat.workflow_builder_api.schema_extractor import get_icon_url_from_docstring
-from nat.workflow_builder_api.schema_extractor import get_model_description
-from nat.workflow_builder_api.schema_extractor import get_sdk_excluded_fields
+from nat.workflow_builder_api.models import ImportedWorkflowState
+from nat.workflow_builder_api.session_registry import WorkflowSessionRegistry
+from nat.workflow_builder_api.utils import export_workflow_to_yaml
+from nat.workflow_builder_api.utils import get_category_types
+from nat.workflow_builder_api.utils import parse_config_to_workflow_state
+from nat.workflow_builder_api.utils import validate_yaml_config
+from nat.workflow_builder_api.utils.config_builder import ConfigBuildError
+from nat.workflow_builder_api.utils.config_builder import build_config_from_request
+from nat.workflow_builder_api.utils.config_builder import validate_workflow_for_execution
+from nat.workflow_builder_api.websocket_handler import WorkflowBuilderWebSocketHandler
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["registry"])
 
 # =============================================================================
-# CATEGORY CONFIGURATION
-# =============================================================================
-
-# Categories used by the workflow builder UI
-UI_CATEGORIES: set[ComponentCategory] = {
-    ComponentCategory.LLM,
-    ComponentCategory.EMBEDDER,
-    ComponentCategory.AGENT,
-    ComponentCategory.FUNCTION,
-    ComponentCategory.FUNCTION_GROUP,
-    ComponentCategory.RETRIEVER,
-    ComponentCategory.MEMORY,
-    ComponentCategory.OBJECT_STORE,
-    ComponentCategory.AUTHENTICATION,
-    ComponentCategory.MIDDLEWARE,
-    # Front-end and observability
-    ComponentCategory.FRONT_END,
-    ComponentCategory.LOGGER,
-    ComponentCategory.TELEMETRY_EXPORTER,
-    # Evaluation
-    ComponentCategory.EVALUATOR,
-    # Finetuning components
-    ComponentCategory.TRAINER,
-    ComponentCategory.TRAJECTORY_BUILDER,
-    ComponentCategory.TRAINER_ADAPTER,
-    # Workflow-level configuration containers
-    ComponentCategory.NAT_WORKFLOW,
-    ComponentCategory.GENERAL_CONFIG,
-    ComponentCategory.EVALUATION_CONFIG,
-    ComponentCategory.OPTIMIZER_CONFIG,
-    ComponentCategory.FINETUNER_CONFIG,
-}
-
-# Mapping from ComponentCategory to RefType (what output port type each category provides)
-CATEGORY_TO_REF_TYPE: dict[ComponentCategory, RefType] = {
-    ComponentCategory.LLM: RefType.LLM,
-    ComponentCategory.EMBEDDER: RefType.EMBEDDER,
-    ComponentCategory.FUNCTION: RefType.FUNCTION,
-    ComponentCategory.FUNCTION_GROUP: RefType.FUNCTION_GROUP,
-    ComponentCategory.AGENT: RefType.FUNCTION,  # Agents can be used as functions/tools
-    ComponentCategory.RETRIEVER: RefType.RETRIEVER,
-    ComponentCategory.MEMORY: RefType.MEMORY,
-    ComponentCategory.OBJECT_STORE: RefType.OBJECT_STORE,
-    ComponentCategory.AUTHENTICATION: RefType.AUTHENTICATION,
-    ComponentCategory.MIDDLEWARE: RefType.MIDDLEWARE,
-    # Front-end and observability
-    ComponentCategory.FRONT_END: RefType.FRONT_END,
-    ComponentCategory.LOGGER: RefType.LOGGER,
-    ComponentCategory.TELEMETRY_EXPORTER: RefType.TELEMETRY_EXPORTER,
-    # Evaluation
-    ComponentCategory.EVALUATOR: RefType.EVALUATOR,
-    # Finetuning components
-    ComponentCategory.TRAINER: RefType.TRAINER,
-    ComponentCategory.TRAJECTORY_BUILDER: RefType.TRAJECTORY_BUILDER,
-    ComponentCategory.TRAINER_ADAPTER: RefType.TRAINER_ADAPTER,
-    # Workflow-level configuration containers
-    ComponentCategory.NAT_WORKFLOW: RefType.NAT_WORKFLOW,
-    ComponentCategory.GENERAL_CONFIG: RefType.GENERAL_CONFIG,
-    ComponentCategory.EVALUATION_CONFIG: RefType.EVALUATION_CONFIG,
-    ComponentCategory.OPTIMIZER_CONFIG: RefType.OPTIMIZER_CONFIG,
-    ComponentCategory.FINETUNER_CONFIG: RefType.FINETUNER_CONFIG,
-}
-
-# Category display metadata
-CATEGORY_METADATA: dict[ComponentCategory, tuple[str, str]] = {
-    ComponentCategory.LLM: ("LLM Providers", "Large Language Model providers for reasoning and generation"),
-    ComponentCategory.EMBEDDER: ("Embedders", "Text embedding models for semantic search and retrieval"),
-    ComponentCategory.AGENT: ("Agents", "AI agents that can reason, use tools, and complete complex tasks"),
-    ComponentCategory.FUNCTION: ("Functions", "Custom functions and tools that agents can use"),
-    ComponentCategory.FUNCTION_GROUP: ("Function Groups", "Groups of related functions"),
-    ComponentCategory.RETRIEVER: ("Retrievers", "Document retrievers for RAG workflows"),
-    ComponentCategory.MEMORY: ("Memory", "Persistent memory storage for agent context"),
-    ComponentCategory.OBJECT_STORE: ("Object Stores", "Object storage backends (S3, etc.)"),
-    ComponentCategory.AUTHENTICATION: ("Authentication", "API authentication providers"),
-    ComponentCategory.MIDDLEWARE: ("Middleware", "Request/response middleware components"),
-    # Front-end and observability
-    ComponentCategory.FRONT_END: ("Front Ends", "Deployment front ends (FastAPI, Console, MCP)"),
-    ComponentCategory.LOGGER: ("Loggers", "Logging configurations for runtime observability"),
-    ComponentCategory.TELEMETRY_EXPORTER: ("Telemetry", "Telemetry exporters for tracing and metrics"),
-    # Evaluation
-    ComponentCategory.EVALUATOR: ("Evaluators", "Evaluation metrics for testing workflow quality"),
-    # Finetuning components
-    ComponentCategory.TRAINER: ("Trainers", "Training loop orchestrators for finetuning"),
-    ComponentCategory.TRAJECTORY_BUILDER: ("Trajectory Builders", "Training data collectors"),
-    ComponentCategory.TRAINER_ADAPTER: ("Trainer Adapters", "Training backend adapters"),
-    # Workflow-level configuration containers
-    ComponentCategory.NAT_WORKFLOW: ("Workflow", "Main workflow entry point"),
-    ComponentCategory.GENERAL_CONFIG: ("General Config", "Loggers, telemetry, and front-end configuration"),
-    ComponentCategory.EVALUATION_CONFIG: ("Evaluation", "Evaluation configuration with evaluators"),
-    ComponentCategory.OPTIMIZER_CONFIG: ("Optimizer", "Hyperparameter optimization configuration"),
-    ComponentCategory.FINETUNER_CONFIG: ("Finetuner", "Model finetuning configuration"),
-}
-
-# =============================================================================
-# HELPER FUNCTIONS
-# =============================================================================
-
-
-def _is_agent_config(config_type: type) -> bool:
-    """Check if a config type inherits from AgentBaseConfig."""
-    try:
-        return issubclass(config_type, AgentBaseConfig)
-    except TypeError:
-        return False
-
-
-def _is_test_type(registered_info: RegisteredInfo) -> bool:
-    """Check if a registered type is from a tests folder and should be excluded."""
-    module_name = registered_info.module_name or ""
-    parts = module_name.lower().split(".")
-    for part in parts:
-        if part in ("tests", "test", "testing"):
-            return True
-        if part.startswith("test_") or part.endswith("_test"):
-            return True
-    return False
-
-
-# Workflow SDK class metadata - each is a single-type category (no variants)
-# These are NOT registered in the type registry but are key workflow components
-SDK_CLASS_METADATA: dict[ComponentCategory, tuple[type[BaseModel], str, str | None]] = {
-    ComponentCategory.NAT_WORKFLOW: (
-        NatWorkflow,
-        "nat.utils.sdk.nat_workflow",
-        "https://cdn.simpleicons.org/nvidia/76B900",  # NVIDIA icon for workflow
-    ),
-    ComponentCategory.GENERAL_CONFIG: (
-        NatGeneralConfiguration,
-        "nat.utils.sdk.nat_general_configuraton",
-        "https://cdn.simpleicons.org/gnubash/4EAA25",  # Config icon
-    ),
-    ComponentCategory.EVALUATION_CONFIG: (
-        NatEvaluation,
-        "nat.utils.sdk.nat_evaluation",
-        "https://cdn.simpleicons.org/pytest/0A9EDC",  # Test icon for evaluation
-    ),
-    ComponentCategory.OPTIMIZER_CONFIG: (
-        NatOptimizer,
-        "nat.utils.sdk.nat_optimizer",
-        "https://cdn.simpleicons.org/apachespark/E25A1C",  # Spark icon for optimizer
-    ),
-    ComponentCategory.FINETUNER_CONFIG: (
-        NatFinetuner,
-        "nat.utils.sdk.nat_finetuner",
-        "https://cdn.simpleicons.org/pytorch/EE4C2C",  # PyTorch icon for finetuning
-    ),
-    # Note: TRAINER, TRAJECTORY_BUILDER, TRAINER_ADAPTER are NOT in SDK_CLASS_METADATA
-    # because they have registered implementations (from plugins) that should be
-    # fetched from the type registry instead. See _get_category_types() for handling.
-}
-
-
-def _mark_connection_fields(fields: list[FieldInfo], input_ports: list[ConnectionPort]) -> list[FieldInfo]:
-    """
-    Mark fields as component refs if they have a corresponding connection port.
-
-    This ensures that fields for SDK types (NatLogger, NatTelemetryExporter, etc.)
-    are properly marked as connection fields and hidden from the config form.
-
-    Args:
-        fields: List of extracted fields.
-        input_ports: List of connection ports.
-
-    Returns:
-        Filtered list of fields, excluding those that are connection ports.
-    """
-    # Get the set of field names that are connection ports
-    port_field_names = {port.field_name for port in input_ports}
-
-    # Filter out fields that are connection ports - they should not appear in the config form
-    # Connection ports are configured via visual connections, not text input
-    return [field for field in fields if field.name not in port_field_names]
-
-
-def _build_workflow_sdk_type_info(
-    sdk_class: type[BaseModel],
-    module_name: str,
-    icon_url: str | None,
-) -> RegisteredTypeInfo:
-    """Build a RegisteredTypeInfo from a workflow SDK class (not a registered type)."""
-    json_schema = extract_json_schema(sdk_class)
-
-    # For SDK classes, we don't have a config-level exclusion, so we pass empty set
-    fields = extract_fields(json_schema, set())
-    description = get_model_description(sdk_class)
-
-    # Extract connection ports from the SDK class
-    input_ports = extract_all_connection_ports(sdk_class)
-
-    # Remove fields that are connection ports (they're configured via connections, not text input)
-    fields = _mark_connection_fields(fields, input_ports)
-
-    # Use class name as local name
-    local_name = sdk_class.__name__
-    full_type = f"{module_name}/{local_name}"
-
-    return RegisteredTypeInfo(
-        full_type=full_type,
-        module_name=module_name,
-        local_name=local_name,
-        description=description,
-        json_schema=json_schema,
-        fields=fields,
-        is_per_user=False,
-        input_ports=input_ports,
-        icon_url=icon_url,
-    )
-
-
-def _get_sdk_class_type(category: ComponentCategory) -> RegisteredTypeInfo | None:
-    """Get RegisteredTypeInfo for a single SDK class category."""
-    if category not in SDK_CLASS_METADATA:
-        return None
-    sdk_class, module_name, icon_url = SDK_CLASS_METADATA[category]
-    try:
-        return _build_workflow_sdk_type_info(sdk_class, module_name, icon_url)
-    except Exception as e:
-        logger.warning(f"Failed to build type info for {sdk_class.__name__}: {e}")
-        return None
-
-
-def _build_registered_type_info(registered_info: RegisteredInfo) -> RegisteredTypeInfo:
-    """Build a RegisteredTypeInfo from a RegisteredInfo object."""
-    config_type = registered_info.config_type
-    json_schema = extract_json_schema(config_type)
-
-    # Get fields that should be excluded based on SDK class (init=False fields)
-    sdk_excluded = get_sdk_excluded_fields(config_type)
-    fields = extract_fields(json_schema, sdk_excluded)
-    description = get_model_description(config_type)
-
-    # Extract connection ports from both config and SDK class
-    input_ports = extract_all_connection_ports(config_type)
-
-    # Remove fields that are connection ports (they're configured via connections, not text input)
-    fields = _mark_connection_fields(fields, input_ports)
-
-    # Apply field options from the metadata registry
-    apply_field_options(fields, registered_info.module_name)
-
-    # Get icon URL from the model's docstring (e.g., ![Icon](https://...))
-    icon_url = get_icon_url_from_docstring(config_type)
-
-    return RegisteredTypeInfo(
-        full_type=registered_info.full_type,
-        module_name=registered_info.module_name,
-        local_name=registered_info.local_name,
-        description=description,
-        json_schema=json_schema,
-        fields=fields,
-        is_per_user=registered_info.is_per_user,
-        input_ports=input_ports,
-        icon_url=icon_url,
-    )
-
-
-def _build_type_infos(registered_items: list[RegisteredInfo]) -> list[RegisteredTypeInfo]:
-    """Build RegisteredTypeInfo list from registered items, filtering out test types."""
-    result = []
-    for item in registered_items:
-        if _is_test_type(item):
-            continue
-        try:
-            result.append(_build_registered_type_info(item))
-        except Exception as e:
-            logger.warning(f"Failed to build type info for {item.full_type}: {e}")
-    return result
-
-
-def _get_category_types(category: ComponentCategory) -> ComponentTypeInfo:
-    """
-    Get component types for a specific category.
-
-    This is the optimized version that only fetches data for the requested category.
-    """
-    registry = GlobalTypeRegistry.get()
-
-    # Get the raw registered items based on category
-    if category == ComponentCategory.LLM:
-        items = registry.get_registered_llm_providers()
-    elif category == ComponentCategory.EMBEDDER:
-        items = registry.get_registered_embedder_providers()
-    elif category == ComponentCategory.AGENT:
-        # Agents are functions that use AgentBaseConfig
-        all_functions = registry.get_registered_functions()
-        items = [f for f in all_functions if _is_agent_config(f.config_type)]
-    elif category == ComponentCategory.FUNCTION:
-        # Regular functions (not agents)
-        all_functions = registry.get_registered_functions()
-        items = [f for f in all_functions if not _is_agent_config(f.config_type)]
-    elif category == ComponentCategory.FUNCTION_GROUP:
-        items = registry.get_registered_function_groups()
-    elif category == ComponentCategory.RETRIEVER:
-        items = registry.get_registered_retriever_providers()
-    elif category == ComponentCategory.MEMORY:
-        items = registry.get_registered_memorys()
-    elif category == ComponentCategory.OBJECT_STORE:
-        items = registry.get_registered_object_stores()
-    elif category == ComponentCategory.AUTHENTICATION:
-        items = registry.get_registered_auth_providers()
-    elif category == ComponentCategory.MIDDLEWARE:
-        items = registry.get_registered_middleware()
-    # Front-end and observability
-    elif category == ComponentCategory.FRONT_END:
-        items = registry.get_registered_front_ends()
-    elif category == ComponentCategory.LOGGER:
-        items = registry.get_registered_logging_method()
-    elif category == ComponentCategory.TELEMETRY_EXPORTER:
-        items = registry.get_registered_telemetry_exporters()
-    # Evaluation
-    elif category == ComponentCategory.EVALUATOR:
-        items = registry.get_registered_evaluators()
-    # Finetuning components
-    elif category == ComponentCategory.TRAINER:
-        items = registry.get_registered_trainers()
-    elif category == ComponentCategory.TRAJECTORY_BUILDER:
-        items = registry.get_registered_trajectory_builders()
-    elif category == ComponentCategory.TRAINER_ADAPTER:
-        items = registry.get_registered_trainer_adapters()
-    # Workflow SDK classes (single-type categories, not registered in type registry)
-    elif category in SDK_CLASS_METADATA:
-        # Get metadata
-        display_name, description = CATEGORY_METADATA.get(category, (category.value.title(), ""))
-        provides_ref_type = CATEGORY_TO_REF_TYPE.get(category)
-
-        # Get the single type for this category
-        sdk_type = _get_sdk_class_type(category)
-        registered_types = [sdk_type] if sdk_type else []
-
-        return ComponentTypeInfo(
-            category=category,
-            display_name=display_name,
-            description=description,
-            registered_types=registered_types,
-            provides_ref_type=provides_ref_type,
-        )
-    else:
-        raise HTTPException(status_code=404, detail=f"Category {category} not supported")
-
-    # Build type infos
-    registered_types = _build_type_infos(items)
-
-    # Get metadata
-    display_name, description = CATEGORY_METADATA.get(category, (category.value.title(), ""))
-    provides_ref_type = CATEGORY_TO_REF_TYPE.get(category)
-
-    return ComponentTypeInfo(
-        category=category,
-        display_name=display_name,
-        description=description,
-        registered_types=registered_types,
-        provides_ref_type=provides_ref_type,
-    )
-
-
-# =============================================================================
-# API ROUTES
+# HEALTH CHECK
 # =============================================================================
 
 
@@ -419,38 +65,26 @@ async def health_check() -> HealthResponse:
     """Check the health of the API and registry."""
     try:
         registry = GlobalTypeRegistry.get()
-        # Try to access one registry to verify it's loaded
         _ = registry.get_registered_llm_providers()
         return HealthResponse(status="healthy", registry_loaded=True)
     except Exception:
         return HealthResponse(status="healthy", registry_loaded=False)
 
 
+# =============================================================================
+# COMPONENT CATEGORIES
+# =============================================================================
+
+
 @router.get("/categories", response_model=list[ComponentCategory])
 async def get_available_categories() -> list[ComponentCategory]:
-    """
-    Get list of available component categories.
-
-    Returns the categories that the workflow builder UI supports.
-    Use this to know which category endpoints to call.
-    """
+    """Get list of available component categories."""
     return list(UI_CATEGORIES)
 
 
 @router.get("/components/{category}", response_model=ComponentTypeInfo)
 async def get_category_components(category: ComponentCategory) -> ComponentTypeInfo:
-    """
-    Get all registered component types for a specific category.
-
-    This is the primary endpoint for loading component data.
-    Call multiple category endpoints in parallel for faster loading.
-
-    Args:
-        category: The component category (e.g., 'llm', 'embedder', 'agent')
-
-    Returns:
-        ComponentTypeInfo with all registered types in that category.
-    """
+    """Get all registered component types for a specific category."""
     if category not in UI_CATEGORIES:
         raise HTTPException(
             status_code=404,
@@ -458,9 +92,286 @@ async def get_category_components(category: ComponentCategory) -> ComponentTypeI
         )
 
     try:
-        return _get_category_types(category)
+        return get_category_types(category)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error loading category {category}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to load category: {str(e)}")
+        logger.error("Error loading category %s: %s", category, e)
+        raise HTTPException(status_code=500, detail=f"Failed to load category: {str(e)}") from e
+
+
+# =============================================================================
+# CONFIG VALIDATION
+# =============================================================================
+
+
+@router.post("/config/validate", response_model=ConfigValidationResponse)
+async def validate_config(request: ConfigValidationRequest) -> ConfigValidationResponse:
+    """Validate a YAML configuration file against the NAT Config schema."""
+    return validate_yaml_config(request.yaml_content)
+
+
+# =============================================================================
+# CONFIG IMPORT
+# =============================================================================
+
+
+@router.post("/config/import", response_model=ImportedWorkflowState)
+async def import_config(request: ConfigValidationRequest) -> ImportedWorkflowState:
+    """
+    Import a YAML configuration file and return a workflow state for the UI.
+
+    This endpoint:
+    1. Validates the YAML configuration
+    2. Parses it into components and connections
+    3. Calculates layout positions for each component
+    4. Returns the complete workflow state
+
+    The returned state can be loaded directly into the UI canvas.
+    """
+    # First validate the config
+    validation_result = validate_yaml_config(request.yaml_content)
+
+    if not validation_result.valid:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": validation_result.error_message,
+                "errors": validation_result.error_details,
+            },
+        )
+
+    if not validation_result.config_dict:
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "Config validation succeeded but config_dict is empty"},
+        )
+
+    # Parse the config into workflow state
+    try:
+        workflow_state = parse_config_to_workflow_state(validation_result.config_dict)
+        return workflow_state
+    except Exception as e:
+        logger.error("Error parsing config: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail={"message": f"Failed to parse configuration: {str(e)}"},
+        ) from e
+
+
+# =============================================================================
+# CONFIG EXPORT
+# =============================================================================
+
+
+@router.post("/config/export", response_model=ExportConfigResponse)
+async def export_config(request: ExportWorkflowRequest) -> ExportConfigResponse:
+    """
+    Export a workflow from the UI to a YAML configuration file.
+
+    This endpoint:
+    1. Takes the current workflow state (components and connections)
+    2. Converts it to a valid NAT configuration YAML format
+    3. Returns the YAML string for download
+
+    The exported config can be used with `nat run` or `nat serve` commands.
+    """
+    try:
+        result = export_workflow_to_yaml(request)
+
+        if not result.success:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "message": result.error_message, "warnings": result.warnings
+                },
+            )
+
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error exporting config: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail={"message": f"Failed to export configuration: {str(e)}"},
+        ) from e
+
+
+# =============================================================================
+# WORKFLOW SESSION MANAGEMENT
+# =============================================================================
+
+
+class CreateSessionRequest(BaseModel):
+    """Request to create a workflow session."""
+
+    components: list = Field(default_factory=list, description="Components from the UI canvas")
+    connections: list = Field(default_factory=list, description="Connections between components")
+
+
+class CreateSessionResponse(BaseModel):
+    """Response from creating a workflow session."""
+
+    session_id: str = Field(description="Unique session identifier")
+    websocket_path: str = Field(description="Path to WebSocket endpoint for this session")
+
+
+class ValidateWorkflowRequest(BaseModel):
+    """Request to validate a workflow for execution."""
+
+    components: list = Field(default_factory=list, description="Components from the UI canvas")
+    connections: list = Field(default_factory=list, description="Connections between components")
+
+
+class ValidateWorkflowResponse(BaseModel):
+    """Response from workflow validation."""
+
+    valid: bool = Field(description="Whether the workflow is valid for execution")
+    errors: list[str] = Field(default_factory=list, description="List of validation errors")
+
+
+@router.post("/workflow/validate", response_model=ValidateWorkflowResponse)
+async def validate_workflow(request: ValidateWorkflowRequest) -> ValidateWorkflowResponse:
+    """
+    Validate that a workflow is ready for execution.
+
+    Checks that:
+    - A Workflow component exists
+    - The Workflow has an entrypoint connected
+    - The entrypoint is properly configured
+    """
+    from nat.workflow_builder_api.models import ExportComponent
+    from nat.workflow_builder_api.models import ExportConnection
+
+    try:
+        components = [ExportComponent(**c) for c in request.components]
+        connections = [ExportConnection(**c) for c in request.connections]
+
+        errors = validate_workflow_for_execution(components, connections)
+
+        return ValidateWorkflowResponse(
+            valid=len(errors) == 0,
+            errors=errors,
+        )
+    except Exception as e:
+        logger.exception("Error validating workflow: %s", e)
+        return ValidateWorkflowResponse(
+            valid=False,
+            errors=[f"Validation error: {e!s}"],
+        )
+
+
+@router.post("/workflow/session/create", response_model=CreateSessionResponse)
+async def create_workflow_session(request: CreateSessionRequest) -> CreateSessionResponse:
+    """
+    Create a new workflow session for the chat interface.
+
+    This endpoint:
+    1. Validates the workflow components and connections
+    2. Builds a Config object from the workflow
+    3. Creates a SessionManager for running the workflow
+    4. Returns a session ID for WebSocket connection
+    """
+    from nat.workflow_builder_api.models import ExportComponent
+    from nat.workflow_builder_api.models import ExportConnection
+
+    try:
+        # Parse components and connections
+        components = [ExportComponent(**c) for c in request.components]
+        connections = [ExportConnection(**c) for c in request.connections]
+
+        # Validate the workflow
+        errors = validate_workflow_for_execution(components, connections)
+        if errors:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "message": "Workflow validation failed", "errors": errors
+                },
+            )
+
+        # Build the Export request
+        export_request = ExportWorkflowRequest(
+            components=components,
+            connections=connections,
+            workflow_name="runtime_workflow",
+        )
+
+        # Build and validate the config
+        config = build_config_from_request(export_request)
+
+        # Log the config for debugging
+        logger.info("Built config for session:")
+        logger.info("  LLMs: %s", list(config.llms.keys()) if config.llms else [])
+        logger.info("  Functions: %s", list(config.functions.keys()) if config.functions else [])
+        logger.info("  Workflow type: %s", type(config.workflow).__name__ if config.workflow else None)
+
+        # Create the session
+        registry = WorkflowSessionRegistry.get()
+        session = await registry.create_session(config)
+
+        return CreateSessionResponse(
+            session_id=session.session_id,
+            websocket_path=f"/api/v1/workflow/session/{session.session_id}/ws",
+        )
+
+    except ConfigBuildError as e:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": e.message, "errors": e.details
+            },
+        ) from e
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Error creating workflow session: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail={"message": f"Failed to create session: {e!s}"},
+        ) from e
+
+
+@router.delete("/workflow/session/{session_id}")
+async def destroy_workflow_session(session_id: str) -> dict:
+    """
+    Destroy a workflow session and clean up resources.
+    """
+    registry = WorkflowSessionRegistry.get()
+    destroyed = await registry.destroy_session(session_id)
+
+    if not destroyed:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    return {"status": "destroyed", "session_id": session_id}
+
+
+@router.websocket("/workflow/session/{session_id}/ws")
+async def workflow_session_websocket(websocket: WebSocket, session_id: str):
+    """
+    WebSocket endpoint for chatting with a workflow session.
+
+    Connect to this endpoint after creating a session to send messages
+    and receive streaming responses.
+    """
+    registry = WorkflowSessionRegistry.get()
+    session = await registry.get_session(session_id)
+
+    if not session:
+        await websocket.close(code=4004, reason="Session not found")
+        return
+
+    try:
+        async with WorkflowBuilderWebSocketHandler(websocket, session) as handler:
+            await handler.run()
+    except WebSocketDisconnect:
+        logger.info("WebSocket disconnected for session %s", session_id)
+    except Exception as e:
+        logger.exception("WebSocket error for session %s: %s", session_id, e)
+        try:
+            await websocket.close(code=1011, reason=str(e))
+        except Exception:
+            pass

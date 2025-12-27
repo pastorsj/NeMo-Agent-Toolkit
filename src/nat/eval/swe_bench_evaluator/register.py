@@ -23,9 +23,12 @@ from nat.utils.sdk.nat_evaluator import NatEvaluator
 
 
 class SweBenchEvaluatorConfig(EvaluatorBaseConfig, name="swe_bench"):
-    """Code patch evaluation for SWE Bench problems.
+    """
+    Code patch evaluation for SWE Bench problems.
 
-    ![Icon](https://cdn.simpleicons.org/pytest/0A9EDC)
+    ## Details
+    Name: SWE-Bench Evaluator
+    Icon: ![Icon](https://cdn.simpleicons.org/pytest/0A9EDC)
     """
 
     run_id: str = Field(description="swe-bench test harness run identifier.")

@@ -30,7 +30,9 @@ class AzureOpenAIEmbedderModelConfig(EmbedderBaseConfig, RetryMixin, name="azure
     """
     An Azure OpenAI embedder provider to be used with an embedder client.
 
-    ![Icon](https://cdn.simpleicons.org/microsoftazure/0078D4)
+    ## Details
+    Name: Azure OpenAI Embedder
+    Icon: ![Icon](https://cdn.simpleicons.org/microsoftazure/0078D4)
     """
 
     model_config = ConfigDict(protected_namespaces=(), extra="allow")

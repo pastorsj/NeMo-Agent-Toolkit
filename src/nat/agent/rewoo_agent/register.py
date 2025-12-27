@@ -43,10 +43,12 @@ logger = logging.getLogger(__name__)
 
 class ReWOOAgentWorkflowConfig(AgentBaseConfig, name="rewoo_agent"):
     """
-    Defines a NAT function that uses a ReWOO Agent performs reasoning inbetween tool calls, and utilizes the
-    tool names and descriptions to select the optimal tool.
+    Defines a NAT function that uses a ReWOO Agent. ReWOO (Reasoning WithOut Observation) performs all
+    planning upfront before tool execution, improving efficiency for multi-step tasks.
 
-    ![Icon](https://cdn.simpleicons.org/langchain/1C3C3C)
+    ## Details
+    Name: ReWOO Agent
+    Icon: ![Icon](https://cdn.simpleicons.org/langchain/1C3C3C)
     """
     description: str = Field(default="ReWOO Agent Workflow", description="The description of this functions use.")
     tool_names: list[FunctionRef | FunctionGroupRef] = Field(

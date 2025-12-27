@@ -27,7 +27,9 @@ class RequestAttributesTool(FunctionBaseConfig, name="current_request_attributes
     'examples/getting_started/simple_web_query/configs/config-metadata.yml' directory to see how to define a
     custom route using a YAML file and associate it with a corresponding function to acquire request attributes.
 
-    ![Icon](https://cdn.simpleicons.org/fastapi/009688)
+    ## Details
+    Name: Request Attributes Tool
+    Icon: ![Icon](https://cdn.simpleicons.org/fastapi/009688)
     """
     pass
 

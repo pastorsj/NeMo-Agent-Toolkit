@@ -39,7 +39,11 @@ logger = logging.getLogger(__name__)
 
 class TTCToolOrchestrationFunctionConfig(FunctionBaseConfig, name="ttc_tool_orchestration"):
     """
-    Configuration for the TTCToolOrchestrationFunction, which is used to orchestrate multiple functions.
+    Configuration for the TTC Tool Orchestration Function, which is used to orchestrate multiple functions.
+
+    ## Details
+    Name: TTC Tool Orchestration
+    Icon: ![Icon](N/A)
     """
 
     augmented_fns: list[FunctionRef] = Field(

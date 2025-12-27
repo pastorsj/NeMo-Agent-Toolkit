@@ -26,7 +26,11 @@ from nat.utils.sdk.nat_ttc_strategy import NatTTCStrategy
 
 class LLMBasedPlanScoringConfig(TTCStrategyBaseConfig, name="llm_based_plan_scoring"):
     """
-    Configuration for LLMBasedScoring.
+    Configuration for LLM-based plan scoring strategy.
+
+    ## Details
+    Name: LLM Plan Scoring
+    Icon: ![Icon](N/A)
     """
     scoring_llm: LLMRef | typing.Any | None = Field(
         default=None,
@@ -74,7 +78,11 @@ class LLMBasedPlanScoring(LLMBasedPlanScoringConfig, NatTTCStrategy):
 
 class LLMBasedAgentScoringConfig(TTCStrategyBaseConfig, name="llm_based_agent_scoring"):
     """
-    Configuration for LLMBasedScoring.
+    Configuration for LLM-based agent output scoring strategy.
+
+    ## Details
+    Name: LLM Agent Scoring
+    Icon: ![Icon](N/A)
     """
     scoring_llm: LLMRef | typing.Any | None = Field(
         default=None,
@@ -126,6 +134,10 @@ class MotivationAwareScoringConfig(TTCStrategyBaseConfig, name="motivation_aware
     """
     Configuration for a scoring strategy that considers both the original input (task)
     and the motivation (from metadata) along with the current output.
+
+    ## Details
+    Name: Motivation-Aware Scoring
+    Icon: ![Icon](N/A)
     """
 
     scoring_llm: LLMRef | None = Field(

@@ -25,6 +25,14 @@ from nat.utils.sdk.nat_ttc_strategy import NatTTCStrategy
 
 
 class SingleShotMultiPlanConfig(TTCStrategyBaseConfig, name="single_shot_multi_plan"):
+    """
+    Configuration for single-shot multi-plan generation strategy.
+
+    ## Details
+    Name: Single-Shot Multi-Plan
+    Icon: ![Icon](N/A)
+    """
+
     num_plans: int = Field(default=4, description="Number of plans to generate.")
     max_temperature: float = Field(default=1.0,
                                    description="Maximum temperature to use for sampling when generating plans. "
@@ -84,7 +92,13 @@ class SingleShotMultiPlan(SingleShotMultiPlanConfig, NatTTCStrategy):
 
 
 class MultiLLMPlanConfig(TTCStrategyBaseConfig, name="multi_llm_plan"):
-    """Configuration for a 'multi LLM plan generation' strategy."""
+    """
+    Configuration for a multi-LLM plan generation strategy.
+
+    ## Details
+    Name: Multi-LLM Plan
+    Icon: ![Icon](N/A)
+    """
     llms: list[LLMRef] = Field(
         default_factory=list,
         description="list of LLMs to use for plan generation. Each LLM can generate one or more plans.")
@@ -136,9 +150,13 @@ class MultiLLMPlan(MultiLLMPlanConfig, NatTTCStrategy):
 
 class MultiQueryRetrievalSearchConfig(TTCStrategyBaseConfig, name="multi_query_retrieval_search"):
     """
-    Configuration for the MultiQueryRetrievalSearch strategy.
-    This strategy generates multiple new 'TTCItem's per original item,
+    Configuration for the Multi-Query Retrieval Search strategy.
+    This strategy generates multiple new TTCItems per original item,
     each containing a differently phrased or re-focused version of the original task.
+
+    ## Details
+    Name: Multi-Query Retrieval Search
+    Icon: ![Icon](N/A)
     """
     llms: list[LLMRef] = Field(default_factory=list,
                                description="list of LLM references to use for generating diverse queries.")
@@ -180,7 +198,13 @@ class MultiQueryRetrievalSearch(MultiQueryRetrievalSearchConfig, NatTTCStrategy)
 
 
 class MultiLLMGenerationConfig(TTCStrategyBaseConfig, name="multi_llm_generation"):
-    """Configuration for a 'multi LLM generation' strategy."""
+    """
+    Configuration for a multi-LLM generation strategy.
+
+    ## Details
+    Name: Multi-LLM Generation
+    Icon: ![Icon](N/A)
+    """
     llms: list[LLMRef] = Field(default_factory=list, description="List of LLMs to use for response generation.")
     generation_template: str = Field(default=("You are a helpful AI assistant. Answer the following user "
                                               "query:\n\nQuery: {prompt}\n\nAnswer:"),

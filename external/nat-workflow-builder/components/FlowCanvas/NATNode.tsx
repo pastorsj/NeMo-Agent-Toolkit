@@ -130,6 +130,13 @@ const colorClasses: Record<string, { border: string; bg: string; icon: string; a
     icon: 'text-stone-400',
     accent: '#78716c',
   },
+  // Test-Time Compute strategies
+  'nat-ttc': {
+    border: 'border-yellow-400/50',
+    bg: 'from-yellow-400/20 to-yellow-500/5',
+    icon: 'text-yellow-400',
+    accent: '#facc15',
+  },
   // Workflow-level configuration containers
   'nat-workflow': {
     border: 'border-lime-500/50',
@@ -168,8 +175,12 @@ function NATNodeComponent({ data, selected }: NodeProps) {
     accent: '#6b7280',
   };
 
-  const isConfigured = Boolean(component.config?._selected_type);
-  const selectedTypeName = component.config?._selected_type
+  // Component is configured if it has a selected type (from UI) or registeredType (from import)
+  const isConfigured = Boolean(component.config?._selected_type || component.registeredType);
+  // Use display_name from docstring if available, otherwise format local_name
+  const selectedTypeName = component.registeredType
+    ? component.registeredType.display_name || formatDisplayName(component.registeredType.local_name)
+    : component.config?._selected_type
     ? formatDisplayName(String(component.config._selected_type).split('/').pop() || '')
     : null;
 

@@ -23,7 +23,9 @@ class HTTPBasicAuthProviderConfig(AuthProviderBaseConfig, name="http_basic"):
     """
     HTTP Basic authentication configuration.
 
-    ![Icon](https://cdn.simpleicons.org/auth0/EB5424)
+    ## Details
+    Name: HTTP Basic Auth
+    Icon: ![Icon](https://cdn.simpleicons.org/auth0/EB5424)
     """
     pass
 

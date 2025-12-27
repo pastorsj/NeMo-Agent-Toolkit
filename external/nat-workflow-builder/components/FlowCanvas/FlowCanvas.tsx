@@ -94,6 +94,7 @@ function workflowToEdges(
   return connections.map((conn) => ({
     id: conn.id,
     source: conn.sourceId,
+    sourceHandle: 'output', // All NAT nodes use 'output' as the source handle ID
     target: conn.targetId,
     targetHandle: conn.targetField,
     type: 'natEdge',

@@ -232,7 +232,8 @@ class CacheMiddleware(FunctionMiddleware):
 
 
 class CacheMiddlewareConfig(FunctionMiddlewareBaseConfig, name="cache"):
-    """Configuration for cache middleware.
+    """
+    Configuration for cache middleware.
 
     The cache middleware memoizes function outputs based on input similarity,
     with support for both exact and fuzzy matching.
@@ -245,7 +246,9 @@ class CacheMiddlewareConfig(FunctionMiddlewareBaseConfig, name="cache"):
             - 1.0: Exact string matching (fastest)
             - < 1.0: Fuzzy matching using difflib similarity
 
-    ![Icon](https://cdn.simpleicons.org/redis/DC382D)
+    ## Details
+    Name: Cache Middleware
+    Icon: ![Icon](https://cdn.simpleicons.org/redis/DC382D)
     """
 
     enabled_mode: Literal["always", "eval"] = Field(

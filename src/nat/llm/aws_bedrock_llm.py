@@ -31,9 +31,11 @@ from nat.utils.sdk.nat_llm import NatLLM
 
 class AWSBedrockModelConfig(LLMBaseConfig, RetryMixin, OptimizableMixin, ThinkingMixin, name="aws_bedrock"):
     """
-    An AWS Bedrock llm provider to be used with an LLM client.
+    An AWS Bedrock LLM provider to be used with an LLM client.
 
-    ![Icon](https://cdn.simpleicons.org/amazonwebservices/FF9900)
+    ## Details
+    Name: AWS Bedrock LLM
+    Icon: ![Icon](https://cdn.simpleicons.org/amazonwebservices/FF9900)
     """
 
     model_config = ConfigDict(protected_namespaces=(), extra="allow")

@@ -32,9 +32,12 @@ from nat.utils.sdk.nat_llm import NatLLM
 
 
 class ChatCompletionConfig(FunctionBaseConfig, name="chat_completion"):
-    """Configuration for the Chat Completion Function.
+    """
+    Configuration for the Chat Completion Function.
 
-    ![Icon](https://cdn.simpleicons.org/googlechat/00AC47)
+    ## Details
+    Name: Chat Completion
+    Icon: ![Icon](https://cdn.simpleicons.org/googlechat/00AC47)
     """
 
     system_prompt: str = Field(("You are a helpful AI assistant. Provide clear, accurate, and helpful "

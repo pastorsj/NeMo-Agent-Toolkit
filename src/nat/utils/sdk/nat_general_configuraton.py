@@ -22,6 +22,12 @@ from nat.utils.sdk.nat_telemetry_exporter import NatTelemetryExporter
 
 
 class NatGeneralConfiguration(BaseModel):
+    """General workflow configuration for loggers, telemetry, and front-end.
+
+    ## Details
+    Name: General Configuration
+    Icon: N/A
+    """
 
     loggers: list[NatLogger] = Field(description="A list of loggers", default=[])
     telemetry_exporters: list[NatTelemetryExporter] = Field(description="A list of telemetry exporters", default=[])

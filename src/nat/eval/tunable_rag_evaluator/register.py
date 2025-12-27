@@ -27,10 +27,13 @@ from nat.utils.sdk.nat_llm import NatLLM
 
 
 class TunableRagEvaluatorConfig(EvaluatorBaseConfig, name="tunable_rag_evaluator"):
-    '''Configuration for tunable RAG evaluator.
+    """
+    Configuration for tunable RAG evaluator with customizable prompts.
 
-    ![Icon](https://cdn.simpleicons.org/pytest/0A9EDC)
-    '''
+    ## Details
+    Name: Tunable RAG Evaluator
+    Icon: ![Icon](https://cdn.simpleicons.org/pytest/0A9EDC)
+    """
     llm_name: LLMRef = Field(description="Name of the judge LLM")
     llm_retry_control_params: dict | None = Field(description="Parameters to control LLM retry behavior", default=None)
     judge_llm_prompt: str = Field(description="LLM prompt for the judge LLM")

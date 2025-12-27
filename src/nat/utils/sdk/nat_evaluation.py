@@ -74,6 +74,10 @@ class NatEvaluation(EvalGeneralConfig):
     are inherited from EvalGeneralConfig. Runtime parameters (reps, endpoint,
     etc.) are passed to workflow.evaluate() when executing.
 
+    ## Details
+    Name: Evaluation Configuration
+    Icon: N/A
+
     Inherited fields from EvalGeneralConfig:
         - max_concurrency: Maximum concurrent evaluations (default: 8)
         - workflow_alias: Display alias for the workflow

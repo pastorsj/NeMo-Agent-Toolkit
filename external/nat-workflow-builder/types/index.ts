@@ -1,4 +1,4 @@
-import { ConnectionPort, RefType } from './registry';
+import { ConnectionPort, RefType, FieldInfo } from './registry';
 
 // NAT Component Types - Derived from component_ref.py
 // Focused on core agent building components
@@ -23,6 +23,8 @@ export type NATComponentType =
   | 'trainer'
   | 'trajectory_builder'
   | 'trainer_adapter'
+  // Test-Time Compute strategies
+  | 'ttc_strategy'
   // Workflow-level configuration containers (single-type, no dropdown)
   | 'nat_workflow'
   | 'general_config'
@@ -60,12 +62,15 @@ export interface PlacedComponent {
   registeredType?: {
     full_type: string;
     local_name: string;
+    display_name?: string | null;
     icon_url?: string | null;
   };
   // Input ports derived from the selected registered type
   inputPorts: ConnectionPort[];
   // Output port type this component provides
   outputRefType?: RefType;
+  // Configuration fields (from import or registry)
+  fields?: FieldInfo[];
 }
 
 // Connection between components
@@ -255,6 +260,15 @@ export const NAT_COMPONENTS: Record<NATComponentType, NATComponentConfig> = {
     icon: 'Plug',
     category: 'finetuning',
   },
+  // Test-Time Compute strategies
+  ttc_strategy: {
+    type: 'ttc_strategy',
+    label: 'TTC Strategy',
+    description: 'Test-Time Compute strategy for enhanced reasoning',
+    color: 'nat-ttc',
+    icon: 'Lightbulb',
+    category: 'core',
+  },
   // Improvement section (evaluation, optimization, finetuning configs)
   evaluation_config: {
     type: 'evaluation_config',
@@ -318,6 +332,8 @@ export const COMPONENT_TO_REF_TYPE: Record<NATComponentType, RefType> = {
   trainer: 'trainer',
   trajectory_builder: 'trajectory_builder',
   trainer_adapter: 'trainer_adapter',
+  // Test-Time Compute strategies
+  ttc_strategy: 'ttc_strategy',
   // Workflow-level configuration containers
   nat_workflow: 'nat_workflow',
   general_config: 'general_config',
@@ -367,6 +383,11 @@ export const COMPONENT_CATEGORIES = {
     label: 'Finetuning',
     description: 'Model finetuning components',
     types: ['trainer', 'trajectory_builder', 'trainer_adapter'] as NATComponentType[],
+  },
+  ttc: {
+    label: 'Test-Time Compute',
+    description: 'Advanced reasoning strategies using test-time compute',
+    types: ['ttc_strategy'] as NATComponentType[],
   },
   improvement: {
     label: 'Improvement',

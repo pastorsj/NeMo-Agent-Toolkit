@@ -35,9 +35,11 @@ logger = logging.getLogger(__name__)
 class RouterAgentWorkflowConfig(AgentBaseConfig, name="router_agent"):
     """
     A router agent takes in the incoming message, combines it with a prompt and the list of branches,
-    and ask a LLM about which branch to take.
+    and asks an LLM about which branch to take.
 
-    ![Icon](https://cdn.simpleicons.org/langchain/1C3C3C)
+    ## Details
+    Name: Router Agent
+    Icon: ![Icon](https://cdn.simpleicons.org/langchain/1C3C3C)
     """
     description: str = Field(default="Router Agent Workflow", description="Description of this functions use.")
     branches: list[FunctionRef] = Field(default_factory=list,

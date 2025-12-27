@@ -68,7 +68,7 @@ trainer_adapters:
     # Training Arguments
     # Adjust these arguments based on GPU size
     training:
-      learning_rate: 1e-5
+      learning_rate: 1.0e-5
       beta: 0.1
 
 trainers:

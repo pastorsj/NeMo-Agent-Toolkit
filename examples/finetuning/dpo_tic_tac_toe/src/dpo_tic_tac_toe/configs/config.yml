@@ -114,8 +114,8 @@ trajectory_builders:
   # DPO trajectory builder that collects preference pairs from scored candidates
   dpo_builder:
     _type: dpo_traj_builder
-    # Name of the CUSTOM intermediate step to collect
-    custom_step_name: dpo_candidate_move
+    # Name of the TTC intermediate step to collect
+    ttc_step_name: dpo_candidate_move
     # Generate all pairwise comparisons (not just best vs worst)
     exhaustive_pairs: true
     # Minimum score difference to create a pair (filters trivial pairs)

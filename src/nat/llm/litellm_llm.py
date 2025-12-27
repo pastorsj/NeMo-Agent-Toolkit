@@ -40,11 +40,13 @@ class LiteLlmModelConfig(
         name="litellm",
 ):
     """
-    A LiteLlm provider to be used with an LLM client.
+    A LiteLLM provider to be used with an LLM client.
 
     LiteLLM is a unified interface for multiple LLM providers.
 
-    ![Icon](https://cdn.simpleicons.org/litellm/FF6F61)
+    ## Details
+    Name: LiteLLM
+    Icon: ![Icon](https://cdn.simpleicons.org/litellm/FF6F61)
     """
 
     model_config = ConfigDict(protected_namespaces=(), extra="allow")

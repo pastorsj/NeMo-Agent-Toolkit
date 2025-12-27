@@ -83,6 +83,10 @@ class NatOptimizer(OptimizerConfig):
     from OptimizerConfig. Runtime parameters (endpoint, dataset override, etc.)
     are passed to workflow.optimize() when executing.
 
+    ## Details
+    Name: Optimizer Configuration
+    Icon: N/A
+
     Inherited fields from OptimizerConfig:
         - output_path: Path to save optimization results
         - eval_metrics: Dictionary of metrics to optimize (OptimizerMetric)

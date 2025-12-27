@@ -9,7 +9,63 @@ import {
   COMPONENT_TO_REF_TYPE,
   SINGLE_INSTANCE_TYPES,
 } from '@/types';
-import { ConnectionPort, RefType, RegisteredTypeInfo } from '@/types/registry';
+import { ConnectionPort, RefType, RegisteredTypeInfo, FieldInfo } from '@/types/registry';
+
+// Imported workflow state from backend
+export interface ImportedConnectionPort {
+  field_name: string;
+  ref_type: string;
+  accepts_ref_types: string[];
+  required: boolean;
+  is_list: boolean;
+  description: string | null;
+  title: string | null;
+}
+
+export interface ImportedFieldInfo {
+  name: string;
+  type: string;
+  title: string | null;
+  description: string | null;
+  required: boolean;
+  default: unknown;
+  enum: unknown[] | null;
+  minimum: number | null;
+  maximum: number | null;
+  pattern: string | null;
+  items: Record<string, unknown> | null;
+  properties: Record<string, unknown> | null;
+  is_component_ref: boolean;
+  ref_type: string | null;
+  is_ref_list: boolean;
+  options: string[] | null;
+}
+
+export interface ImportedComponent {
+  id: string;
+  component_type: string;
+  name: string;
+  position: { x: number; y: number };
+  full_type: string;
+  config: Record<string, unknown>;
+  input_ports: ImportedConnectionPort[];
+  fields: ImportedFieldInfo[];
+  icon_url: string | null;
+  display_name: string | null;
+}
+
+export interface ImportedConnection {
+  id: string;
+  source_id: string;
+  target_id: string;
+  target_field: string;
+  ref_type: string;
+}
+
+export interface ImportedWorkflowState {
+  components: ImportedComponent[];
+  connections: ImportedConnection[];
+}
 
 // Action types
 type WorkflowAction =
@@ -25,7 +81,8 @@ type WorkflowAction =
   | { type: 'ADD_CONNECTION'; payload: { sourceId: string; targetId: string; targetField: string; refType: RefType } }
   | { type: 'REMOVE_CONNECTION'; payload: { id: string } }
   | { type: 'REMOVE_CONNECTIONS_FOR_FIELD'; payload: { componentId: string; fieldName: string } }
-  | { type: 'CLEAR_WORKFLOW'; payload?: undefined };
+  | { type: 'CLEAR_WORKFLOW'; payload?: undefined }
+  | { type: 'LOAD_IMPORTED_STATE'; payload: { importedState: ImportedWorkflowState } };
 
 // Helper function to convert PascalCase/camelCase/snake_case to human-readable format
 function toHumanReadable(name: string): string {
@@ -34,6 +91,12 @@ function toHumanReadable(name: string): string {
     .replace(/_?config$/i, '')
     .replace(/_?workflow$/i, '')
     .replace(/_?workflow_?config$/i, '');
+  
+  // If the name already contains spaces, it's already human-readable (e.g., "ReAct Agent")
+  // Just return it without applying PascalCase/camelCase conversion
+  if (cleanName.includes(' ')) {
+    return cleanName.trim() || name;
+  }
   
   // Check if it's snake_case (contains underscores)
   if (cleanName.includes('_')) {
@@ -152,11 +215,11 @@ function workflowReducer(state: WorkflowState, action: WorkflowAction): Workflow
     case 'UPDATE_COMPONENT_REGISTERED_TYPE': {
       const { id, registeredType, config } = action.payload;
       
-      // Generate a unique name based on the type's local_name
+      // Generate a unique name based on the type's display_name (or local_name as fallback)
       const existingNames = state.components
         .filter((c) => c.id !== id)
         .map((c) => c.name);
-      const baseName = registeredType.local_name;
+      const baseName = registeredType.display_name || registeredType.local_name;
       const newName = generateUniqueName(baseName, existingNames);
       
       return {
@@ -169,6 +232,7 @@ function workflowReducer(state: WorkflowState, action: WorkflowAction): Workflow
                 registeredType: {
                   full_type: registeredType.full_type,
                   local_name: registeredType.local_name,
+                  display_name: registeredType.display_name,
                   icon_url: registeredType.icon_url,
                 },
                 inputPorts: registeredType.input_ports,
@@ -249,6 +313,88 @@ function workflowReducer(state: WorkflowState, action: WorkflowAction): Workflow
       return initialState;
     }
 
+    case 'LOAD_IMPORTED_STATE': {
+      const { importedState } = action.payload;
+
+      // Track used names to ensure uniqueness
+      const usedNames: string[] = [];
+
+      // Convert imported components to PlacedComponents
+      const components: PlacedComponent[] = importedState.components.map((ic) => {
+        const componentType = ic.component_type as NATComponentType;
+
+        // Convert imported input ports to ConnectionPort format
+        const inputPorts: ConnectionPort[] = ic.input_ports.map((port) => ({
+          field_name: port.field_name,
+          ref_type: port.ref_type as RefType,
+          accepts_ref_types: port.accepts_ref_types as RefType[],
+          required: port.required,
+          is_list: port.is_list,
+          description: port.description,
+          title: port.title,
+        }));
+
+        // Convert imported fields to FieldInfo format
+        const fields: FieldInfo[] = (ic.fields || []).map((field) => ({
+          name: field.name,
+          type: field.type,
+          title: field.title,
+          description: field.description,
+          required: field.required,
+          default: field.default,
+          enum: field.enum,
+          minimum: field.minimum,
+          maximum: field.maximum,
+          pattern: field.pattern,
+          items: field.items,
+          properties: field.properties,
+          is_component_ref: field.is_component_ref,
+          ref_type: field.ref_type as RefType | null,
+          is_ref_list: field.is_ref_list,
+          options: field.options,
+        }));
+
+        // Generate unique name to avoid duplicates (e.g., two "Milvus Retriever" components)
+        const baseName = ic.name;
+        const uniqueName = generateUniqueName(baseName, usedNames);
+        usedNames.push(uniqueName);
+
+        return {
+          id: ic.id,
+          type: componentType,
+          position: { x: ic.position.x, y: ic.position.y },
+          config: ic.config,
+          name: uniqueName,
+          // Populate registeredType with info from the import
+          registeredType: ic.full_type
+            ? {
+                full_type: ic.full_type,
+                local_name: ic.full_type.split('/').pop() || ic.full_type,
+                display_name: ic.display_name,
+                icon_url: ic.icon_url,
+              }
+            : undefined,
+          inputPorts,
+          outputRefType: COMPONENT_TO_REF_TYPE[componentType],
+          fields,
+        };
+      });
+
+      // Convert imported connections to ComponentConnections
+      const connections: ComponentConnection[] = importedState.connections.map((ic) => ({
+        id: ic.id,
+        sourceId: ic.source_id,
+        targetId: ic.target_id,
+        targetField: ic.target_field,
+        refType: ic.ref_type as RefType,
+      }));
+
+      return {
+        components,
+        connections,
+      };
+    }
+
     default:
       return state;
   }
@@ -257,6 +403,9 @@ function workflowReducer(state: WorkflowState, action: WorkflowAction): Workflow
 // Context type
 interface WorkflowContextType {
   state: WorkflowState;
+  // Direct access to state for export
+  components: PlacedComponent[];
+  connections: ComponentConnection[];
   addComponent: (componentType: NATComponentType, position: { x: number; y: number }) => void;
   addComponentWithId: (componentType: NATComponentType, position: { x: number; y: number }) => string;
   removeComponent: (id: string) => void;
@@ -268,6 +417,7 @@ interface WorkflowContextType {
   removeConnection: (id: string) => void;
   removeConnectionsForField: (componentId: string, fieldName: string) => void;
   clearWorkflow: () => void;
+  loadImportedState: (importedState: ImportedWorkflowState) => void;
   getConnectionsForComponent: (componentId: string) => ComponentConnection[];
   getConnectionForPort: (componentId: string, fieldName: string) => ComponentConnection | undefined;
   getComponentsOfType: (refType: RefType) => PlacedComponent[];
@@ -335,6 +485,10 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'CLEAR_WORKFLOW' });
   }, []);
 
+  const loadImportedState = useCallback((importedState: ImportedWorkflowState) => {
+    dispatch({ type: 'LOAD_IMPORTED_STATE', payload: { importedState } });
+  }, []);
+
   // Helper to get all connections for a component
   const getConnectionsForComponent = useCallback(
     (componentId: string) => {
@@ -395,6 +549,9 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
     <WorkflowContext.Provider
       value={{
         state,
+        // Direct access to state for export
+        components: state.components,
+        connections: state.connections,
         addComponent,
         addComponentWithId,
         removeComponent,
@@ -406,6 +563,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         removeConnection,
         removeConnectionsForField,
         clearWorkflow,
+        loadImportedState,
         getConnectionsForComponent,
         getConnectionForPort,
         getComponentsOfType,

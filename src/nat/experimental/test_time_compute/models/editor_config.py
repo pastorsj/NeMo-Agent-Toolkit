@@ -26,7 +26,11 @@ from nat.utils.sdk.nat_ttc_strategy import NatTTCStrategy
 
 class LLMAsAJudgeEditorConfig(TTCStrategyBaseConfig, name="llm_as_a_judge_editor"):
     """
-    Configuration for the LLMAsAJudgeEditor.
+    Configuration for the LLM-as-a-Judge Editor strategy.
+
+    ## Details
+    Name: LLM-as-a-Judge Editor
+    Icon: ![Icon](N/A)
     """
     num_feedback: int = Field(default=10,
                               description="Number of feedback items to generate for each plan during editing. "
@@ -117,7 +121,13 @@ class LLMAsAJudgeEditor(LLMAsAJudgeEditorConfig, NatTTCStrategy):
 
 
 class IterativePlanRefinementConfig(TTCStrategyBaseConfig, name="iterative_plan_refinement"):
-    """Configuration for an 'iterative plan refinement' strategy."""
+    """
+    Configuration for an iterative plan refinement strategy.
+
+    ## Details
+    Name: Iterative Plan Refinement
+    Icon: ![Icon](N/A)
+    """
     editor_llm: LLMRef | typing.Any | None = Field(
         default=None, description="The LLM to use for generating and refining the plan across multiple iterations.")
     num_iterations: int = Field(default=3, description="How many refinement steps to perform.")
@@ -158,7 +168,11 @@ class IterativePlanRefinement(IterativePlanRefinementConfig, NatTTCStrategy):
 
 class MotivationAwareSummarizationConfig(TTCStrategyBaseConfig, name="motivation_aware_editing"):
     """
-    Configuration for the MotivationAwareSummarization strategy.
+    Configuration for the Motivation-Aware Summarization strategy.
+
+    ## Details
+    Name: Motivation-Aware Editing
+    Icon: ![Icon](N/A)
     """
     editor_llm: LLMRef | typing.Any | None = Field(
         default=None,

@@ -119,6 +119,10 @@ class EvalDatasetCustomConfig(EvalDatasetBaseConfig, name="custom"):
     """
     Configuration for custom dataset type that allows users to specify
     a custom Python function to transform their dataset into EvalInput format.
+
+    ## Details
+    Name: Custom Dataset
+    Icon: ![Icon](N/A)
     """
 
     function: str  # Direct import path to function, format: "module.path.function_name"

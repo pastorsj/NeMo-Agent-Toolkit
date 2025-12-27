@@ -36,8 +36,12 @@ logger = logging.getLogger(__name__)
 
 class TTCToolWrapperFunctionConfig(FunctionBaseConfig, name="ttc_tool_wrapper"):
     """
-    Configuration for the TTCToolWrapperFunction, which is used to wrap a function that will be executed
+    Configuration for the TTC Tool Wrapper Function, which is used to wrap a function that will be executed
     in the inference time scaling pipeline.
+
+    ## Details
+    Name: TTC Tool Wrapper
+    Icon: ![Icon](N/A)
 
     This function is responsible for turning an 'objective' or description for the tool into tool input.
 

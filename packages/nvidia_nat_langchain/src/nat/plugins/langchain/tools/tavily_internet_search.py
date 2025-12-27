@@ -18,7 +18,7 @@ from pydantic import Field
 from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
-from nat.data_models.common import SerializableSecretStr
+from nat.data_models.common import OptionalSecretStr
 from nat.data_models.common import get_secret_value
 from nat.data_models.function import FunctionBaseConfig
 from nat.utils.sdk.nat_function import NatFunction
@@ -29,9 +29,13 @@ class TavilyInternetSearchToolConfig(FunctionBaseConfig, name="tavily_internet_s
     """
     Tool that retrieves relevant contexts from web search (using Tavily) for the given question.
     Requires a TAVILY_API_KEY.
+
+    ## Details
+    Name: Tavily Internet Search
+    Icon: N/A
     """
     max_results: int = 3
-    api_key: SerializableSecretStr = Field(default="", description="The API key for the Tavily service.")
+    api_key: OptionalSecretStr = Field(default=None, description="The API key for the Tavily service.")
 
 
 class TavilyInternetSearchTool(TavilyInternetSearchToolConfig, NatFunction):
@@ -39,14 +43,15 @@ class TavilyInternetSearchTool(TavilyInternetSearchToolConfig, NatFunction):
 
 
 @register_function(config_type=TavilyInternetSearchToolConfig)
-async def tavily_internet_search(tool_config: TavilyInternetSearchToolConfig, builder: Builder):
+async def tavily_internet_search(tool_config: TavilyInternetSearchToolConfig, builder: Builder):  # noqa: ARG001
     import os
 
     from langchain_tavily import TavilySearch
 
     if not os.environ.get("TAVILY_API_KEY"):
-        if tool_config.api_key:
-            os.environ["TAVILY_API_KEY"] = get_secret_value(tool_config.api_key)
+        api_key_value = get_secret_value(tool_config.api_key)
+        if api_key_value:
+            os.environ["TAVILY_API_KEY"] = api_key_value
     # This tavily tool requires an API Key and it must be set as an environment variable (TAVILY_API_KEY)
     # Refer to create_customize_workflow.md for instructions of getting the API key
 

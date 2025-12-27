@@ -24,7 +24,9 @@ class OAuth2AuthCodeFlowProviderConfig(AuthProviderBaseConfig, name="oauth2_auth
     """
     OAuth2 Authorization Code Flow authentication configuration.
 
-    ![Icon](https://cdn.simpleicons.org/oauth/000000)
+    ## Details
+    Name: OAuth2 Auth Code Flow
+    Icon: ![Icon](https://cdn.simpleicons.org/oauth/000000)
     """
 
     client_id: str = Field(description="The client ID for OAuth 2.0 authentication.")

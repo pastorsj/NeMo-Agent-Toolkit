@@ -170,6 +170,46 @@ class TypedBaseModel(BaseModel):
         # Otherwise we use the property
         return getattr(v, "type")
 
+    @classmethod
+    def get_field_options(cls, field_name: str) -> list[str] | None:
+        """
+        Get available options for a specific field.
+
+        This method looks for a classmethod named `get_{field_name}_options`
+        on the class and calls it if found. Subclasses can implement these
+        methods to provide dropdown options in the UI.
+
+        Example:
+            class MyConfig(TypedBaseModel, name="my_config"):
+                metric: str = Field(default="accuracy")
+
+                @classmethod
+                def get_metric_options(cls) -> list[str]:
+                    return ["accuracy", "precision", "recall", "f1"]
+
+        The UI will automatically show a dropdown with these options for
+        the "metric" field, while still allowing free text input.
+
+        Args:
+            field_name: The name of the field to get options for.
+
+        Returns:
+            List of valid options for the field, or None if no options method exists.
+        """
+        # Look for a method named get_{field_name}_options
+        method_name = f"get_{field_name}_options"
+        method = getattr(cls, method_name, None)
+
+        if method is not None and callable(method):
+            try:
+                result = method()
+                if isinstance(result, list):
+                    return result
+            except Exception:
+                pass
+
+        return None
+
 
 TypedBaseModelT = typing.TypeVar("TypedBaseModelT", bound=TypedBaseModel)
 

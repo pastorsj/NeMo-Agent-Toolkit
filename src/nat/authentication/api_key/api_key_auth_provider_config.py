@@ -39,7 +39,9 @@ class APIKeyAuthProviderConfig(AuthProviderBaseConfig, name="api_key"):
     """
     API Key authentication configuration model.
 
-    ![Icon](https://cdn.simpleicons.org/auth0/EB5424)
+    ## Details
+    Name: API Key Auth
+    Icon: ![Icon](https://cdn.simpleicons.org/auth0/EB5424)
     """
 
     raw_key: SerializableSecretStr = Field(

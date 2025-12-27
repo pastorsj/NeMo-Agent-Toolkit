@@ -18,17 +18,21 @@ from pydantic import Field
 from nat.builder.builder import EvalBuilder
 from nat.builder.evaluator import EvaluatorInfo
 from nat.cli.register_workflow import register_evaluator
+from nat.data_models.component_ref import LLMRef
 from nat.data_models.evaluator import EvaluatorBaseConfig
 from nat.utils.sdk.nat_evaluator import NatEvaluator
 
 
 class TrajectoryEvaluatorConfig(EvaluatorBaseConfig, name="trajectory"):
-    """Agent Trajectory Evaluation.
+    """
+    Agent Trajectory Evaluation using LLM-as-a-judge.
 
-    ![Icon](https://cdn.simpleicons.org/pytest/0A9EDC)
+    ## Details
+    Name: Trajectory Evaluator
+    Icon: ![Icon](https://cdn.simpleicons.org/pytest/0A9EDC)
     """
 
-    llm_name: str = Field(description="LLM as a judge.")
+    llm_name: LLMRef = Field(description="LLM to use as a judge for trajectory evaluation.")
 
 
 class TrajectoryEvaluator(TrajectoryEvaluatorConfig, NatEvaluator):

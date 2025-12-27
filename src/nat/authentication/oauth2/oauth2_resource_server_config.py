@@ -25,11 +25,16 @@ from nat.utils.sdk.nat_auth_provider import NatAuthProvider
 
 
 class OAuth2ResourceServerConfig(AuthProviderBaseConfig, name="oauth2_resource_server"):
-    """OAuth 2.0 Resource Server authentication configuration.
+    """
+    OAuth 2.0 Resource Server authentication configuration.
 
     Supports:
       • JWT access tokens via JWKS / OIDC Discovery / issuer fallback
       • Opaque access tokens via RFC 7662 introspection
+
+    ## Details
+    Name: OAuth2 Resource Server
+    Icon: ![Icon](https://cdn.simpleicons.org/oauth/000000)
     """
 
     issuer_url: str = Field(

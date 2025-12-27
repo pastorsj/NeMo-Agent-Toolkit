@@ -41,9 +41,12 @@ class ToolExecutionConfig(BaseModel):
 
 
 class SequentialExecutorConfig(FunctionBaseConfig, name="sequential_executor"):
-    """Configuration for sequential execution of a list of functions.
+    """
+    Configuration for sequential execution of a list of functions.
 
-    ![Icon](https://cdn.simpleicons.org/apachekafka/231F20)
+    ## Details
+    Name: Sequential Executor
+    Icon: ![Icon](https://cdn.simpleicons.org/apachekafka/231F20)
     """
 
     tool_list: list[FunctionRef] = Field(default_factory=list,

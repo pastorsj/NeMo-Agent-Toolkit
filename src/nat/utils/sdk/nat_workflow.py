@@ -182,6 +182,10 @@ class NatWorkflow(BaseModel):
     (LLMs, embedders, retrievers, tools, etc.) and builds a complete configuration that
     can be saved to a YAML file or used to run the workflow.
 
+    ## Details
+    Name: Workflow
+    Icon: N/A
+
     Example:
         ```python
         from nat.llm.nim_llm import NimLLM

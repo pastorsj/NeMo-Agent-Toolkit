@@ -36,9 +36,11 @@ logger = logging.getLogger(__name__)
 class RetrieverToolConfig(FunctionBaseConfig, name="nat_retriever"):
     """
     Retriever tool which provides a common interface for different vectorstores. Its
-    configuration uses clients, which are the vectorstore-specific implementaiton of the retriever interface.
+    configuration uses clients, which are the vectorstore-specific implementation of the retriever interface.
 
-    ![Icon](https://cdn.simpleicons.org/elasticsearch/005571)
+    ## Details
+    Name: Retriever Tool
+    Icon: ![Icon](https://cdn.simpleicons.org/elasticsearch/005571)
     """
     retriever: RetrieverRef = Field(description="The retriever instance name from the workflow configuration object.")
     raise_errors: bool = Field(

@@ -15,9 +15,17 @@
 """
 Workflow Builder API
 
-This module provides a FastAPI-based REST API that exposes the NAT TypeRegistry,
-allowing UI applications to discover registered component types and their
-configuration schemas for building agent workflows.
+A FastAPI-based REST API that exposes the NAT TypeRegistry,
+allowing UI applications to discover registered component types
+and their configuration schemas for building agent workflows.
+
+Package Structure:
+    - models.py: Pydantic response models
+    - routes.py: FastAPI route definitions
+    - app.py: FastAPI app factory
+    - server.py: Server startup
+    - constants/: Category and ref type constants
+    - utils/: Utility functions (schema, validation, etc.)
 """
 
 from nat.workflow_builder_api.app import create_app

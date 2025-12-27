@@ -34,6 +34,8 @@ export function FlowDraggablePaletteItem({
     'nat-trainer': 'border-lime-500/50 bg-lime-500/10 hover:border-lime-400 hover:bg-lime-500/20',
     'nat-trajectory': 'border-purple-500/50 bg-purple-500/10 hover:border-purple-400 hover:bg-purple-500/20',
     'nat-adapter': 'border-stone-500/50 bg-stone-500/10 hover:border-stone-400 hover:bg-stone-500/20',
+    // Test-Time Compute strategies
+    'nat-ttc': 'border-yellow-400/50 bg-yellow-400/10 hover:border-yellow-300 hover:bg-yellow-400/20',
     // Workflow-level configuration containers
     'nat-workflow': 'border-lime-500/50 bg-lime-500/10 hover:border-lime-400 hover:bg-lime-500/20',
     'nat-config': 'border-gray-500/50 bg-gray-500/10 hover:border-gray-400 hover:bg-gray-500/20',
@@ -62,6 +64,8 @@ export function FlowDraggablePaletteItem({
     'nat-trainer': 'text-lime-400',
     'nat-trajectory': 'text-purple-400',
     'nat-adapter': 'text-stone-400',
+    // Test-Time Compute strategies
+    'nat-ttc': 'text-yellow-400',
     // Workflow-level configuration containers
     'nat-workflow': 'text-lime-400',
     'nat-config': 'text-gray-400',

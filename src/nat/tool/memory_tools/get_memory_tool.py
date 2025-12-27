@@ -31,9 +31,12 @@ logger = logging.getLogger(__name__)
 
 
 class GetToolConfig(FunctionBaseConfig, name="get_memory"):
-    """Function to get memory to a hosted memory platform.
+    """
+    Function to retrieve memory from a hosted memory platform.
 
-    ![Icon](https://cdn.simpleicons.org/redis/DC382D)
+    ## Details
+    Name: Get Memory Tool
+    Icon: ![Icon](https://cdn.simpleicons.org/redis/DC382D)
     """
 
     description: str = Field(default=("Tool to retrieve a memory about a user's "

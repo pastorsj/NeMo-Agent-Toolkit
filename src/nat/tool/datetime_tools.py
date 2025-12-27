@@ -32,7 +32,9 @@ class CurrentTimeToolConfig(FunctionBaseConfig, name="current_datetime"):
     the timezone is in Etc/UTC. If the user provides a timezone in the header, we will use it. Timezone will be
     provided in IANA zone name format. For example, "America/New_York" or "Etc/UTC".
 
-    ![Icon](https://cdn.simpleicons.org/clockify/03A9F4)
+    ## Details
+    Name: Current Date/Time Tool
+    Icon: ![Icon](https://cdn.simpleicons.org/clockify/03A9F4)
     """
     pass
 

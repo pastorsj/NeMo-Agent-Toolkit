@@ -73,5 +73,5 @@ workflow:
   tool_names: [user_report]
   llm_name: nim_llm
   verbose: true
-  handle_parsing_errors: true
+  retry_parsing_errors: true
   max_retries: 2

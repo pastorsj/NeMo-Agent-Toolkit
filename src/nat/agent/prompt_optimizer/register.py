@@ -28,7 +28,9 @@ class PromptOptimizerConfig(FunctionBaseConfig, name="prompt_init"):
     """
     Prompt optimizer function that uses an LLM to optimize prompts.
 
-    ![Icon](https://cdn.simpleicons.org/openai/00A67E)
+    ## Details
+    Name: Prompt Optimizer
+    Icon: ![Icon](https://cdn.simpleicons.org/openai/00A67E)
     """
 
     optimizer_llm: LLMRef = Field(description="LLM to use for prompt optimization")
@@ -97,7 +99,9 @@ class PromptRecombinerConfig(FunctionBaseConfig, name="prompt_recombiner"):
     """
     Prompt recombiner function that combines two prompts using an LLM.
 
-    ![Icon](https://cdn.simpleicons.org/openai/00A67E)
+    ## Details
+    Name: Prompt Recombiner
+    Icon: ![Icon](https://cdn.simpleicons.org/openai/00A67E)
     """
 
     optimizer_llm: LLMRef = Field(description="LLM to use for prompt recombination")

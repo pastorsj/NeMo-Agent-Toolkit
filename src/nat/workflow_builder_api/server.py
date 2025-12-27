@@ -66,6 +66,10 @@ def main():
         print("Error: uvicorn is required. Install it with: pip install uvicorn")
         sys.exit(1)
 
+    # Pre-warm caches before uvloop starts (some libraries can't be imported under uvloop)
+    from nat.workflow_builder_api.utils.startup import prewarm_caches
+    prewarm_caches()
+
     print(f"Starting NAT Workflow Builder API on http://{args.host}:{args.port}")
     print(f"API Documentation: http://{args.host}:{args.port}/docs")
     print(f"Registry Endpoint: http://{args.host}:{args.port}/api/v1/registry")

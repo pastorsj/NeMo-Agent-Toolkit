@@ -96,6 +96,10 @@ class NatFinetuner(BaseModel):
     Components MUST be passed as objects. The name fields are automatically
     populated from the objects when converting to FinetuneConfig.
 
+    ## Details
+    Name: Finetuning Configuration
+    Icon: N/A
+
     Required fields:
         - trainer: Trainer object (NatTrainer subclass)
         - trajectory_builder: TrajectoryBuilder object (NatTrajectoryBuilder subclass)

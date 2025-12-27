@@ -26,7 +26,11 @@ from nat.utils.sdk.nat_ttc_strategy import NatTTCStrategy
 
 class LLMBasedPlanSelectionConfig(TTCStrategyBaseConfig, name="llm_based_plan_selection"):
     """
-    Configuration for LLMBasedSelection.
+    Configuration for LLM-based plan selection strategy.
+
+    ## Details
+    Name: LLM Plan Selection
+    Icon: ![Icon](N/A)
     """
     selection_llm: LLMRef | typing.Any | None = Field(
         default=None,
@@ -83,7 +87,11 @@ class LLMBasedPlanSelection(LLMBasedPlanSelectionConfig, NatTTCStrategy):
 
 class LLMBasedAgentOutputSelectionConfig(TTCStrategyBaseConfig, name="llm_based_agent_output_selection"):
     """
-    Configuration for LLMBasedSelection.
+    Configuration for LLM-based agent output selection strategy.
+
+    ## Details
+    Name: LLM Agent Output Selection
+    Icon: ![Icon](N/A)
     """
     selection_llm: LLMRef | typing.Any | None = Field(
         default=None,
@@ -144,7 +152,11 @@ class LLMBasedAgentOutputSelection(LLMBasedAgentOutputSelectionConfig, NatTTCStr
 
 class LLMBasedOutputMergingConfig(TTCStrategyBaseConfig, name="llm_based_agent_output_merging"):
     """
-    Configuration for LLMBasedSelection.
+    Configuration for LLM-based agent output merging strategy.
+
+    ## Details
+    Name: LLM Agent Output Merging
+    Icon: ![Icon](N/A)
     """
     selection_llm: LLMRef | typing.Any | None = Field(
         default=None,
@@ -202,6 +214,10 @@ class ThresholdSelectionConfig(TTCStrategyBaseConfig, name="threshold_selection"
     """
     Configuration for a selection strategy that keeps only the items
     whose scores exceed a specified threshold.
+
+    ## Details
+    Name: Threshold Selection
+    Icon: ![Icon](N/A)
     """
     threshold: float = Field(default=5.0, description="Only keep TTCItems with score >= this value.")
 
@@ -213,7 +229,11 @@ class ThresholdSelection(ThresholdSelectionConfig, NatTTCStrategy):
 
 class BestOfNSelectionConfig(TTCStrategyBaseConfig, name="best_of_n_selection"):
     """
-    Configuration for Best of N Selection
+    Configuration for Best of N Selection strategy.
+
+    ## Details
+    Name: Best of N Selection
+    Icon: ![Icon](N/A)
     """
     pass
 
@@ -226,6 +246,10 @@ class BestOfNSelection(BestOfNSelectionConfig, NatTTCStrategy):
 class LLMJudgeSelectionConfig(TTCStrategyBaseConfig, name="llm_judge_selection"):
     """
     Configuration for a judge-based selection strategy.
+
+    ## Details
+    Name: LLM Judge Selection
+    Icon: ![Icon](N/A)
     """
     judge_llm: LLMRef | typing.Any = Field(description="The LLM to use for the selection (judge) strategy.")
 

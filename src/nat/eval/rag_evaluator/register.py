@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import logging
+from typing import ClassVar
 
 from pydantic import BaseModel
 from pydantic import Field
@@ -23,6 +24,7 @@ from nat.builder.builder import EvalBuilder
 from nat.builder.evaluator import EvaluatorInfo
 from nat.builder.framework_enum import LLMFrameworkEnum
 from nat.cli.register_workflow import register_evaluator
+from nat.data_models.component_ref import LLMRef
 from nat.data_models.evaluator import EvaluatorBaseConfig
 from nat.eval.evaluator.evaluator_model import EvalInput
 from nat.eval.evaluator.evaluator_model import EvalOutput
@@ -43,12 +45,15 @@ class RagasMetricConfig(BaseModel):
 
 
 class RagasEvaluatorConfig(EvaluatorBaseConfig, name="ragas"):
-    """Evaluation using RAGAS metrics.
+    """
+    Evaluation using RAGAS metrics for RAG pipeline assessment.
 
-    ![Icon](https://cdn.simpleicons.org/pytest/0A9EDC)
+    ## Details
+    Name: RAGAS Evaluator
+    Icon: ![Icon](https://cdn.simpleicons.org/pytest/0A9EDC)
     """
 
-    llm_name: str = Field(description="LLM as a judge.")
+    llm_name: LLMRef = Field(description="LLM to use as a judge for evaluation.")
     # Ragas metric
     metric: str | dict[str, RagasMetricConfig] = Field(default="AnswerAccuracy",
                                                        description="RAGAS metric callable with optional 'kwargs:'")
@@ -60,6 +65,10 @@ class RagasEvaluatorConfig(EvaluatorBaseConfig, name="ragas"):
     def validate_metric(cls, values):
         """Ensures metric is either a string or a single-item dictionary."""
         metric = values.get("metric")
+
+        # Allow None/missing - will use the default value
+        if metric is None:
+            return values
 
         if isinstance(metric, dict):
             if len(metric) != 1:
@@ -90,18 +99,59 @@ class RagasEvaluatorConfig(EvaluatorBaseConfig, name="ragas"):
             return next(iter(self.metric.values()))
         return RagasMetricConfig()  # Default config when an invalid type is provided
 
+    # Cache for RAGAS metrics - populated at import time before uvloop starts
+    _cached_metric_options: ClassVar[list[str] | None] = None
+
+    @classmethod
+    def _load_ragas_metrics(cls) -> list[str]:
+        """Load RAGAS metric names from the library."""
+        try:
+            import ragas.metrics as ragas_metrics
+
+            metrics = []
+            for name in dir(ragas_metrics):
+                if name.startswith("_"):
+                    continue
+                obj = getattr(ragas_metrics, name, None)
+                if obj is not None and hasattr(obj, "__class__"):
+                    if hasattr(obj, "name") or name[0].isupper():
+                        metrics.append(name)
+
+            return sorted(metrics)
+        except (ImportError, ValueError):
+            return []
+
+    @classmethod
+    def get_metric_options(cls) -> list[str]:
+        """
+        Get all available RAGAS metric names.
+
+        This method is automatically discovered by TypedBaseModel.get_field_options()
+        and used by the UI to show a dropdown for the 'metric' field.
+
+        Returns:
+            List of available RAGAS metric names, or empty list if ragas is not installed.
+        """
+        # Return cached metrics if available
+        if cls._cached_metric_options is not None:
+            return cls._cached_metric_options
+
+        # Try to load metrics (may fail in uvloop environment)
+        cls._cached_metric_options = cls._load_ragas_metrics()
+        return cls._cached_metric_options
+
 
 class RagasEvaluator(RagasEvaluatorConfig, NatEvaluator):
     """RAGAS Evaluator"""
 
     llm: NatLLM = Field(exclude=True)
-    llm_name: str = Field(description="", default="", init=False)
+    llm_name: LLMRef = Field(description="", default="", init=False)  # type: ignore[assignment]
 
     @model_validator(mode='after')
     def set_references(self):
         """Set llm_name from llm object if llm is provided."""
         if self.llm:
-            self.llm_name = self.llm.computed_name
+            self.llm_name = LLMRef(self.llm.computed_name)
         return self
 
 
@@ -160,3 +210,8 @@ async def register_ragas_evaluator(config: RagasEvaluatorConfig, builder: EvalBu
                               input_obj_field=config.input_obj_field) if metrics else None
 
     yield EvaluatorInfo(config=config, evaluate_fn=evaluate_fn, description="Evaluator for RAGAS metrics")
+
+
+# Try to pre-populate the cache at module load time (works when not under uvloop)
+# The server.py also pre-loads before uvloop starts to ensure it's available
+RagasEvaluatorConfig._cached_metric_options = RagasEvaluatorConfig._load_ragas_metrics()

@@ -35,7 +35,9 @@ class NIMModelConfig(LLMBaseConfig, RetryMixin, OptimizableMixin, ThinkingMixin,
     """
     An NVIDIA Inference Microservice (NIM) llm provider to be used with an LLM client.
 
-    ![Icon](https://cdn.simpleicons.org/nvidia/76B900)
+    ## Details
+    Name: NIM LLM
+    Icon: ![Icon](https://cdn.simpleicons.org/nvidia/76B900)
     """
 
     model_config = ConfigDict(protected_namespaces=(), extra="allow")

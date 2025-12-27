@@ -37,7 +37,9 @@ class OpenAIModelConfig(LLMBaseConfig, RetryMixin, OptimizableMixin, ThinkingMix
     """
     An OpenAI LLM provider to be used with an LLM client.
 
-    ![Icon](https://cdn.simpleicons.org/openai/00A67E)
+    ## Details
+    Name: OpenAI LLM
+    Icon: ![Icon](https://cdn.simpleicons.org/openai/00A67E)
     """
 
     model_config = ConfigDict(protected_namespaces=(), extra="allow")

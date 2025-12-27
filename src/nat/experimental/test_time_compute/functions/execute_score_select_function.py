@@ -35,6 +35,14 @@ logger = logging.getLogger(__name__)
 
 
 class ExecuteScoreSelectFunctionConfig(FunctionBaseConfig, name="execute_score_select_function"):
+    """
+    Configuration for a function that executes, scores, and selects the best output.
+
+    ## Details
+    Name: Execute-Score-Select Function
+    Icon: ![Icon](N/A)
+    """
+
     scorer: TTCStrategyRef | None = Field(description="Strategy to score the output of the function", default=None)
     selector: TTCStrategyRef = Field(description="Strategy to select the best output of the function")
     augmented_fn: FunctionRef = Field(description="Function that will be executed")

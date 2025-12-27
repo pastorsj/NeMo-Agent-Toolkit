@@ -33,6 +33,10 @@ log = logging.getLogger(__name__)
 class CodeGenerationToolConfig(FunctionBaseConfig, name="code_generation"):
     """
     Tool for generating code using the configured LLM.
+
+    ## Details
+    Name: Code Generation Tool
+    Icon: N/A
     """
     llm_name: LLMRef = Field(description="LLM to use for code generation.")
     verbose: bool = False
