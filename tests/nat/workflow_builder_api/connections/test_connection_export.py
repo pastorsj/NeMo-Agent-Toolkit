@@ -20,17 +20,17 @@ references (llm_name, tool_names, etc.) in the output YAML.
 
 import yaml
 
+from nat.workflow_builder_api.models import ExportComponent
+from nat.workflow_builder_api.models import ExportConnection
+from nat.workflow_builder_api.models import ExportWorkflowRequest
+from nat.workflow_builder_api.utils.config_exporter import export_workflow_to_yaml
+
 
 class TestExportSingleReferenceConnections:
     """Tests for exporting single-reference connections (e.g., llm_name)."""
 
     def test_llm_connection_exports_as_llm_name(self, set_test_env_vars):
         """Verify that LLM connection is exported as llm_name field."""
-        from nat.workflow_builder_api.models import ExportComponent
-        from nat.workflow_builder_api.models import ExportConnection
-        from nat.workflow_builder_api.models import ExportWorkflowRequest
-        from nat.workflow_builder_api.utils.config_exporter import export_workflow_to_yaml
-
         llm = ExportComponent(
             id="my_llm",
             component_type="llm",
@@ -69,11 +69,6 @@ class TestExportSingleReferenceConnections:
 
     def test_embedder_connection_exports_as_embedding_model(self, set_test_env_vars):
         """Verify that embedder connection is exported as embedding_model field."""
-        from nat.workflow_builder_api.models import ExportComponent
-        from nat.workflow_builder_api.models import ExportConnection
-        from nat.workflow_builder_api.models import ExportWorkflowRequest
-        from nat.workflow_builder_api.utils.config_exporter import export_workflow_to_yaml
-
         embedder = ExportComponent(
             id="my_embedder",
             component_type="embedder",
@@ -114,11 +109,6 @@ class TestExportListReferenceConnections:
 
     def test_tool_connections_export_as_tool_names_list(self, set_test_env_vars):
         """Verify that multiple tool connections are exported as tool_names list."""
-        from nat.workflow_builder_api.models import ExportComponent
-        from nat.workflow_builder_api.models import ExportConnection
-        from nat.workflow_builder_api.models import ExportWorkflowRequest
-        from nat.workflow_builder_api.utils.config_exporter import export_workflow_to_yaml
-
         llm = ExportComponent(
             id="llm",
             component_type="llm",
@@ -170,11 +160,6 @@ class TestExportListReferenceConnections:
 
     def test_tool_names_list_preserves_all_connections(self, set_test_env_vars):
         """Verify that all tool connections are preserved in the exported list."""
-        from nat.workflow_builder_api.models import ExportComponent
-        from nat.workflow_builder_api.models import ExportConnection
-        from nat.workflow_builder_api.models import ExportWorkflowRequest
-        from nat.workflow_builder_api.utils.config_exporter import export_workflow_to_yaml
-
         llm = ExportComponent(id="llm", component_type="llm", full_type="nim", config={"model_name": "test"})
         agent = ExportComponent(id="agent",
                                 component_type="agent",
@@ -213,11 +198,6 @@ class TestExportConnectionPreservesValues:
 
     def test_llm_model_name_preserved_with_connection(self, set_test_env_vars):
         """Verify that LLM model_name is preserved when exported with connections."""
-        from nat.workflow_builder_api.models import ExportComponent
-        from nat.workflow_builder_api.models import ExportConnection
-        from nat.workflow_builder_api.models import ExportWorkflowRequest
-        from nat.workflow_builder_api.utils.config_exporter import export_workflow_to_yaml
-
         model_name = "meta/llama-3.1-405b-instruct"
         llm = ExportComponent(
             id="big_llm",

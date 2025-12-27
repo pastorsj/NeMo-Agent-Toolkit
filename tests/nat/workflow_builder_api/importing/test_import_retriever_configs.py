@@ -22,6 +22,8 @@ from pathlib import Path
 
 import yaml
 
+from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
+
 
 def load_config_dict(config_path: Path) -> dict:
     """Load YAML config from a file as a dict."""
@@ -37,8 +39,6 @@ class TestImportRetrieversFromRAGConfig:
 
     def test_retriever_components_are_created(self, rag_config: Path, set_test_env_vars):
         """Verify that retriever components are created during import."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(rag_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -50,8 +50,6 @@ class TestImportRetrieversFromRAGConfig:
 
     def test_retriever_ids_match_original_names(self, rag_config: Path, set_test_env_vars):
         """Verify retriever IDs match the key names from the original config."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(rag_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -63,8 +61,6 @@ class TestImportRetrieversFromRAGConfig:
 
     def test_retriever_type_is_preserved(self, rag_config: Path, set_test_env_vars):
         """Verify retriever _type is preserved in full_type."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(rag_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -82,8 +78,6 @@ class TestImportRetrieversFromRAGConfig:
 
     def test_retriever_uri_is_preserved(self, rag_config: Path, set_test_env_vars):
         """Verify retriever URI field is exactly preserved."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(rag_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -102,8 +96,6 @@ class TestImportRetrieversFromRAGConfig:
 
     def test_retriever_collection_name_is_preserved(self, rag_config: Path, set_test_env_vars):
         """Verify retriever collection_name field is exactly preserved."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(rag_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -122,8 +114,6 @@ class TestImportRetrieversFromRAGConfig:
 
     def test_retriever_top_k_is_preserved(self, rag_config: Path, set_test_env_vars):
         """Verify retriever top_k field is exactly preserved."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(rag_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -142,8 +132,6 @@ class TestImportRetrieversFromRAGConfig:
 
     def test_retriever_embedder_connection_is_created(self, rag_config: Path, set_test_env_vars):
         """Verify that retriever's embedding_model creates a connection."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(rag_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 

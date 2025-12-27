@@ -22,6 +22,8 @@ from pathlib import Path
 
 import yaml
 
+from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
+
 
 def load_config_dict(config_path: Path) -> dict:
     """Load YAML config from a file as a dict."""
@@ -34,8 +36,6 @@ class TestImportAuthenticationFromConfig:
 
     def test_authentication_components_are_created(self, auth_config: Path, set_test_env_vars):
         """Verify that authentication components are created during import."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(auth_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -50,8 +50,6 @@ class TestImportAuthenticationFromConfig:
 
     def test_authentication_type_is_preserved(self, auth_config: Path, set_test_env_vars):
         """Verify authentication _type is preserved in full_type."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(auth_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -73,8 +71,6 @@ class TestImportFrontEndFromConfig:
 
     def test_front_end_component_is_created(self, auth_config: Path, set_test_env_vars):
         """Verify that front_end components are created during import."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(auth_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -86,8 +82,6 @@ class TestImportFrontEndFromConfig:
 
     def test_front_end_type_is_preserved(self, auth_config: Path, set_test_env_vars):
         """Verify front_end _type is preserved in full_type."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(auth_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -110,8 +104,6 @@ class TestImportFrontEndFromConfig:
 
     def test_front_end_auth_connection_is_created(self, auth_config: Path, set_test_env_vars):
         """Verify that front_end's auth reference creates a connection."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(auth_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 

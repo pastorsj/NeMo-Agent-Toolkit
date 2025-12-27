@@ -22,6 +22,8 @@ from pathlib import Path
 
 import yaml
 
+from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
+
 
 def load_config_dict(config_path: Path) -> dict:
     """Load YAML config from a file as a dict."""
@@ -38,8 +40,6 @@ class TestImportReactAgent:
 
     def test_react_agent_is_identified_correctly(self, react_agent_config: Path, set_test_env_vars):
         """Verify ReAct agent is identified with component_type='agent'."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -52,8 +52,6 @@ class TestImportReactAgent:
 
     def test_agent_full_type_matches_original(self, react_agent_config: Path, set_test_env_vars):
         """Verify agent full_type matches the original _type from config."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -74,8 +72,6 @@ class TestImportReactAgent:
 
     def test_agent_id_matches_original_name(self, react_agent_config: Path, set_test_env_vars):
         """Verify agent ID matches the key name from the original config."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -88,8 +84,6 @@ class TestImportReactAgent:
 
     def test_agent_llm_reference_creates_connection(self, react_agent_config: Path, set_test_env_vars):
         """Verify that agent's llm_name creates a connection to the LLM."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -119,8 +113,6 @@ class TestImportReWOOAgent:
 
     def test_rewoo_agent_is_identified_correctly(self, rewoo_agent_config: Path, set_test_env_vars):
         """Verify ReWOO agent is identified with component_type='agent'."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(rewoo_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -137,8 +129,6 @@ class TestImportToolCallingAgent:
 
     def test_tool_calling_agent_is_identified(self, tool_calling_agent_config: Path, set_test_env_vars):
         """Verify tool-calling agent is identified with component_type='agent'."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(tool_calling_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 

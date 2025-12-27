@@ -22,6 +22,8 @@ from pathlib import Path
 
 import yaml
 
+from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
+
 
 def load_config_dict(config_path: Path) -> dict:
     """Load YAML config from a file as a dict."""
@@ -37,8 +39,6 @@ class TestImportMemoryFromRedisConfig:
 
     def test_memory_components_are_created(self, memory_config: Path, set_test_env_vars):
         """Verify that memory components are created during import."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(memory_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -49,8 +49,6 @@ class TestImportMemoryFromRedisConfig:
 
     def test_memory_ids_match_original_names(self, memory_config: Path, set_test_env_vars):
         """Verify memory IDs match the key names from the original config."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(memory_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -62,8 +60,6 @@ class TestImportMemoryFromRedisConfig:
 
     def test_memory_type_is_preserved(self, memory_config: Path, set_test_env_vars):
         """Verify memory _type is preserved in full_type."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(memory_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 

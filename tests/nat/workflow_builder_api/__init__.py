@@ -13,3 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for the workflow builder API."""
+
+import sys
+from pathlib import Path
+
+# Ensure src is in path for NAT imports
+# Go up: workflow_builder_api -> nat -> tests -> project_root -> src
+_SRC_DIR = Path(__file__).resolve().parent.parent.parent.parent / "src"
+if str(_SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(_SRC_DIR))

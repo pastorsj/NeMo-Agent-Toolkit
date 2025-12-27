@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { useState, useRef, useCallback } from 'react';
-import { Upload, Download, X, CheckCircle, AlertCircle, Loader2, Play } from 'lucide-react';
+import { Upload, Download, X, CheckCircle, AlertCircle, Loader2, Play, Trash2 } from 'lucide-react';
 import { FlowSidebar } from '@/components/Sidebar/FlowSidebar';
 import { ChatSlideOver } from '@/components/Chat';
 import { registryAPI, ImportedWorkflowState, ExportComponent, ExportConnection, CreateSessionRequest, ValidateWorkflowRequest } from '@/lib/api';
@@ -286,12 +286,12 @@ export default function Home() {
                 NAT Workflow Builder
               </h1>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-400 hidden lg:block">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400 hidden lg:block mr-2">
                 Drag components • Double-click to configure • Connect outputs → inputs
               </span>
-              
-              {/* Upload Config Button */}
+
+              {/* Hidden file input for import */}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -299,47 +299,62 @@ export default function Home() {
                 onChange={handleFileChange}
                 className="hidden"
               />
+
+              {/* Import Button */}
               <button
                 onClick={handleUploadClick}
                 disabled={isImporting}
-                className="flex items-center gap-2 px-4 py-2 bg-accent/10 hover:bg-accent/20 border border-accent/30 rounded-lg text-accent text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2.5 bg-gray-700/50 hover:bg-gray-600 border border-gray-600 rounded-lg text-gray-300 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Import YAML config"
               >
                 {isImporting ? (
-                  <Loader2 size={16} className="animate-spin" />
+                  <Loader2 size={18} className="animate-spin" />
                 ) : (
-                  <Upload size={16} />
+                  <Upload size={18} />
                 )}
-                <span>{isImporting ? 'Importing...' : 'Import Config'}</span>
               </button>
 
-              {/* Export Config Button */}
+              {/* Export Button */}
               <button
                 onClick={handleExportClick}
                 disabled={isExporting || components.length === 0}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-400 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title={components.length === 0 ? 'Add components to export' : 'Export workflow to YAML'}
+                className="p-2.5 bg-gray-700/50 hover:bg-gray-600 border border-gray-600 rounded-lg text-gray-300 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={components.length === 0 ? 'Add components to export' : 'Export to YAML'}
               >
                 {isExporting ? (
-                  <Loader2 size={16} className="animate-spin" />
+                  <Loader2 size={18} className="animate-spin" />
                 ) : (
-                  <Download size={16} />
+                  <Download size={18} />
                 )}
-                <span>{isExporting ? 'Exporting...' : 'Export Config'}</span>
               </button>
 
-              {/* Run Workflow Button */}
+              {/* Run Button */}
               <button
                 onClick={handleRunClick}
                 disabled={isValidating || components.length === 0}
-                className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent/90 rounded-lg text-black text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title={components.length === 0 ? 'Add components to run' : 'Run your workflow'}
+                className="p-2.5 bg-accent hover:bg-accent/80 rounded-lg text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={components.length === 0 ? 'Add components to run' : 'Run workflow'}
               >
                 {isValidating ? (
-                  <Loader2 size={16} className="animate-spin" />
+                  <Loader2 size={18} className="animate-spin" />
                 ) : (
-                  <Play size={16} fill="currentColor" />
+                  <Play size={18} fill="currentColor" />
                 )}
-                <span>{isValidating ? 'Validating...' : 'Run'}</span>
+              </button>
+
+              {/* Clear/Delete Button */}
+              <button
+                onClick={() => {
+                  if (components.length === 0) return;
+                  if (confirm('Clear all components and connections?')) {
+                    clearWorkflow();
+                  }
+                }}
+                disabled={components.length === 0}
+                className="p-2.5 bg-gray-700/50 hover:bg-red-500/20 border border-gray-600 hover:border-red-500/50 rounded-lg text-gray-300 hover:text-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={components.length === 0 ? 'No components to clear' : 'Clear workflow'}
+              >
+                <Trash2 size={18} />
               </button>
             </div>
           </header>

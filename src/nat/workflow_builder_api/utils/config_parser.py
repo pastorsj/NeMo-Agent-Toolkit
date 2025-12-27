@@ -697,9 +697,12 @@ def parse_components_from_config(config: Config) -> list[ImportedComponent]:
         )
         components.append(general_config_component)
 
-    # Check if evaluation config has any evaluators or general settings
+    # Check if evaluation config has any evaluators or explicitly set general settings
+    # Note: Pydantic creates default EvalGeneralConfig even when no eval section exists,
+    # so we must check if any fields were actually set by the user
     has_evaluators = hasattr(config.eval, "evaluators") and len(config.eval.evaluators) > 0
-    has_eval_general = hasattr(config.eval, "general") and config.eval.general is not None
+    has_eval_general = (hasattr(config.eval, "general") and config.eval.general is not None
+                        and len(config.eval.general.model_dump(exclude_unset=True)) > 0)
 
     # Evaluation Config container component (if has evaluators or general settings)
     if has_evaluators or has_eval_general:
@@ -1226,14 +1229,34 @@ def calculate_layout(
     connections: list[ImportedConnection],
 ) -> None:
     """
-    Calculate layout positions for components.
+    Calculate layout positions for components using longest-path layering.
 
-    Layout strategy:
-    - Column 0: NatWorkflow (far left, top)
-    - Column 1: Workflow entrypoint function/agent (right of workflow)
-                Config containers stacked vertically below (general, eval, optimizer, finetuner)
-    - Columns 2+: All other components flow left-to-right based on dependencies
-                  Leaf components (LLMs, embedders) on left, dependents to right
+    Layout strategy (Sugiyama-style layered graph):
+    - Layer 0 (Column 0): NatWorkflow (far left, the workflow container)
+    - Layer 1 (Column 1): Workflow entrypoint function/agent + config containers
+    - Layer 2+: Components flow left-to-right based on reference chains
+
+    Connection semantics:
+    - Connection(source_id=X, target_id=Y, target_field=F) means:
+      "Y has field F whose value references X" i.e., Y references X.
+    - In visual terms: Y --F--> X (Y points to X)
+    - For layout: X should be to the RIGHT of Y (referenced after referencer)
+
+    The layer of each component is determined by the longest path from the
+    referencers to the referenced. This ensures that shared dependencies
+    (e.g., an LLM used by both an agent and a function) are placed at the
+    appropriate depth.
+
+    Example (from react agent config):
+        workflow (react_agent) references: [functions, llm]
+        code_generation (function) references: [llm]
+        evaluators reference: [llm]
+
+        Results in:
+        - Layer 0: nat_workflow
+        - Layer 1: workflow, evaluation_config
+        - Layer 2: functions (wikipedia_search, current_datetime, code_generation), evaluators
+        - Layer 3: llm (longest path through code_generation or evaluators)
     """
     if not components:
         return
@@ -1248,41 +1271,73 @@ def calculate_layout(
     # Separate special components from regular ones
     special_ids = {workflow_id, entrypoint_id} | set(config_containers)
     regular_components = [c for c in components if c.id not in special_ids]
+    regular_ids = {c.id for c in regular_components}
 
-    # Build dependency graph for regular components (who depends on whom)
-    dependents: dict[str, set[str]] = {c.id: set() for c in regular_components}
+    # Build reference graph based on connection semantics:
+    # Connection(source_id=X, target_id=Y) means Y references X
+    # So X "is referenced by" Y
+    #
+    # For layout: layer[X] = max(layer[all Ys that reference X]) + 1
+    # We need to find: for each component X, who references it (all Ys where source_id=X)
+    is_referenced_by: dict[str, set[str]] = {c.id: set() for c in regular_components}
 
     for conn in connections:
-        if conn.target_id in dependents and conn.source_id in dependents:
-            # target depends on source
-            dependents[conn.target_id].add(conn.source_id)
+        if conn.source_id in is_referenced_by:
+            # source_id is being referenced BY target_id
+            # target_id has a field that points to source_id
+            referencer = conn.target_id
+            # Include both special IDs (entrypoint, config containers) and regular components
+            if referencer in regular_ids or referencer in special_ids:
+                is_referenced_by[conn.source_id].add(referencer)
 
-    # Calculate depth for regular components (0 = no dependencies = leaf)
-    depths: dict[str, int] = {}
+    # Calculate layers using longest path from referencers
+    # A component's layer = max(layer of all components that reference it) + 1
+    layers: dict[str, int] = {}
 
-    def calculate_depth(component_id: str, visited: set[str]) -> int:
-        if component_id in depths:
-            return depths[component_id]
+    def calculate_layer(component_id: str, visited: set[str]) -> int:
+        """Calculate layer based on who references this component."""
+        if component_id in layers:
+            return layers[component_id]
 
-        if component_id in visited or component_id not in dependents:
-            return 0  # Cycle detected or not in regular components
+        if component_id in visited:
+            # Cycle detected - return a default
+            return 2
 
         visited.add(component_id)
 
-        deps = dependents.get(component_id, set())
-        if not deps:
-            depths[component_id] = 0
+        # Find all components that reference this one
+        referencers = is_referenced_by.get(component_id, set())
+
+        if not referencers:
+            # No one references this - orphan component, default to Layer 2
+            layers[component_id] = 2
         else:
-            max_dep_depth = 0
-            for dep_id in deps:
-                dep_depth = calculate_depth(dep_id, visited.copy())
-                max_dep_depth = max(max_dep_depth, dep_depth + 1)
-            depths[component_id] = max_dep_depth
+            max_referencer_layer = 0
+            for referencer_id in referencers:
+                if referencer_id == entrypoint_id:
+                    # Entrypoint is at Layer 1
+                    referencer_layer = 1
+                elif referencer_id in config_containers:
+                    # Config containers are also at Layer 1
+                    referencer_layer = 1
+                elif referencer_id == workflow_id:
+                    # nat_workflow is at Layer 0
+                    referencer_layer = 0
+                elif referencer_id in regular_ids:
+                    # Recursively calculate layer of this referencer
+                    referencer_layer = calculate_layer(referencer_id, visited.copy())
+                else:
+                    # Unknown referencer, skip
+                    continue
+                max_referencer_layer = max(max_referencer_layer, referencer_layer)
 
-        return depths[component_id]
+            layers[component_id] = max_referencer_layer + 1
 
+        return layers[component_id]
+
+    # Calculate layers for all regular components
     for component in regular_components:
-        calculate_depth(component.id, set())
+        calculate_layer(component.id, set())
 
     # Pre-calculate heights for all components
     component_heights: dict[str, int] = {}
@@ -1317,30 +1372,34 @@ def calculate_layout(
             )
             col1_y += component_heights.get(container_id, COMPONENT_MIN_HEIGHT) + VERTICAL_GAP
 
-    # Group regular components by depth
+    # Group regular components by layer
     columns: dict[int, list[ImportedComponent]] = {}
     for component in regular_components:
-        depth = depths.get(component.id, 0)
-        if depth not in columns:
-            columns[depth] = []
-        columns[depth].append(component)
+        layer = layers.get(component.id, 2)
+        if layer not in columns:
+            columns[layer] = []
+        columns[layer].append(component)
 
     # Sort within columns by component type for visual consistency
+    # Place agents/functions first (they're the "main" components), then dependencies
     type_order = [
+        "agent",
+        "function",
+        "function_group",
+        "retriever",
+        "memory",
         "llm",
         "embedder",
-        "memory",
-        "retriever",
         "object_store",
-        "function",
-        "agent",
         "front_end",
+        "authentication",
         "logger",
         "telemetry_exporter",
         "evaluator",
         "trainer",
         "trajectory_builder",
         "trainer_adapter",
+        "ttc_strategy",
     ]
 
     def sort_key(c: ImportedComponent) -> tuple[int, str]:
@@ -1354,12 +1413,12 @@ def calculate_layout(
         col_components.sort(key=sort_key)
 
     # Assign positions for regular components starting at column 2
-    # (column 0 = workflow, column 1 = entrypoint + containers)
-    sorted_depths = sorted(columns.keys())
-    for col_offset, depth in enumerate(sorted_depths):
-        col_components = columns[depth]
-        # Start at column 2 (after workflow and entrypoint/containers)
-        col_x = CANVAS_MARGIN + (col_offset + 2) * (COMPONENT_WIDTH + HORIZONTAL_GAP)
+    # (column 0 = nat_workflow, column 1 = entrypoint + containers, column 2+ = layers)
+    sorted_layers = sorted(columns.keys())
+    for layer in sorted_layers:
+        col_components = columns[layer]
+        # Layer 2 goes to column 2, layer 3 to column 3, etc.
+        col_x = CANVAS_MARGIN + layer * (COMPONENT_WIDTH + HORIZONTAL_GAP)
 
         # Stack components vertically with dynamic heights
         col_y = CANVAS_MARGIN

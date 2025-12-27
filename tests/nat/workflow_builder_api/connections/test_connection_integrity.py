@@ -24,6 +24,8 @@ from pathlib import Path
 
 import yaml
 
+from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
+
 
 def load_config_dict(config_path: Path) -> dict:
     """Load YAML config from a file as a dict."""
@@ -36,8 +38,6 @@ class TestConnectionReferentialIntegrity:
 
     def test_all_connection_sources_exist(self, react_agent_config: Path, set_test_env_vars):
         """Verify that all connection source IDs refer to existing components."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -50,8 +50,6 @@ class TestConnectionReferentialIntegrity:
 
     def test_all_connection_targets_exist(self, react_agent_config: Path, set_test_env_vars):
         """Verify that all connection target IDs refer to existing components."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -64,8 +62,6 @@ class TestConnectionReferentialIntegrity:
 
     def test_all_connections_have_non_empty_target_field(self, react_agent_config: Path, set_test_env_vars):
         """Verify that all connections have a non-empty target_field."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -81,8 +77,6 @@ class TestConnectionIntegrityAcrossConfigs:
 
     def test_rag_config_connections_are_valid(self, rag_config: Path, set_test_env_vars):
         """Verify all connections in RAG config are valid."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(rag_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -95,8 +89,6 @@ class TestConnectionIntegrityAcrossConfigs:
 
     def test_memory_config_connections_are_valid(self, memory_config: Path, set_test_env_vars):
         """Verify all connections in memory config are valid."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(memory_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -108,8 +100,6 @@ class TestConnectionIntegrityAcrossConfigs:
 
     def test_auth_config_connections_are_valid(self, auth_config: Path, set_test_env_vars):
         """Verify all connections in auth config are valid."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(auth_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -125,8 +115,6 @@ class TestConnectionTypeConsistency:
 
     def test_llm_connections_target_llm_components(self, react_agent_config: Path, set_test_env_vars):
         """Verify that llm_name connections always target LLM components."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -139,8 +127,6 @@ class TestConnectionTypeConsistency:
 
     def test_embedder_connections_target_embedder_components(self, rag_config: Path, set_test_env_vars):
         """Verify that embedding_model connections always target embedder components."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(rag_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -154,8 +140,6 @@ class TestConnectionTypeConsistency:
 
     def test_memory_connections_target_memory_components(self, memory_config: Path, set_test_env_vars):
         """Verify that memory connections always target memory components."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(memory_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 

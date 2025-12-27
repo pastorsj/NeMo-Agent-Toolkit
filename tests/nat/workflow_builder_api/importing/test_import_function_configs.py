@@ -22,6 +22,8 @@ from pathlib import Path
 
 import yaml
 
+from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
+
 
 def load_config_dict(config_path: Path) -> dict:
     """Load YAML config from a file as a dict."""
@@ -38,8 +40,6 @@ class TestImportFunctionsFromReactConfig:
 
     def test_functions_are_created(self, react_agent_config: Path, set_test_env_vars):
         """Verify that function components are created during import."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -48,8 +48,6 @@ class TestImportFunctionsFromReactConfig:
 
     def test_function_count_matches_non_agent_functions(self, react_agent_config: Path, set_test_env_vars):
         """Verify the count of imported functions matches non-agent functions in config."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -63,8 +61,6 @@ class TestImportFunctionsFromReactConfig:
 
     def test_function_ids_match_original_names(self, react_agent_config: Path, set_test_env_vars):
         """Verify function IDs match the key names from the original config."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -82,8 +78,6 @@ class TestImportFunctionsFromReactConfig:
 
     def test_function_types_are_preserved(self, react_agent_config: Path, set_test_env_vars):
         """Verify function _type is preserved in full_type."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -107,8 +101,6 @@ class TestImportFunctionGroups:
 
     def test_function_groups_are_created(self, function_groups_config: Path, set_test_env_vars):
         """Verify that function_group components are created during import."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(function_groups_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 

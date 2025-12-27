@@ -23,6 +23,12 @@ from typing import Any
 
 import yaml
 
+from nat.workflow_builder_api.models import ExportComponent
+from nat.workflow_builder_api.models import ExportConnection
+from nat.workflow_builder_api.models import ExportWorkflowRequest
+from nat.workflow_builder_api.utils.config_exporter import export_workflow_to_yaml
+from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
+
 
 def load_config_dict(config_path: Path) -> dict:
     """Load YAML config from a file as a dict."""
@@ -36,12 +42,6 @@ def do_round_trip(config_path: Path) -> tuple[dict, dict]:
 
     Returns (original_config, exported_config).
     """
-    from nat.workflow_builder_api.models import ExportComponent
-    from nat.workflow_builder_api.models import ExportConnection
-    from nat.workflow_builder_api.models import ExportWorkflowRequest
-    from nat.workflow_builder_api.utils.config_exporter import export_workflow_to_yaml
-    from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
     original_config = load_config_dict(config_path)
     workflow_state = parse_config_to_workflow_state(original_config)
 

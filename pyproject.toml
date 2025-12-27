@@ -318,6 +318,7 @@ include-package-data = true
 # List any markers that users would reasonably want to filter by.
 # These show up when querying `pytest --markers`
 [tool.pytest.ini_options]
+pythonpath = ["src"]
 markers = [
   "benchmark: Benchmarks",
   "integration: Integration tests which do not use mocks and may require external services",

@@ -22,6 +22,8 @@ from pathlib import Path
 
 import yaml
 
+from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
+
 
 def load_config_dict(config_path: Path) -> dict:
     """Load YAML config from a file as a dict."""
@@ -38,8 +40,6 @@ class TestImportLLMFromSimpleCalculator:
 
     def test_llm_component_is_created(self, simple_calculator_config: Path, set_test_env_vars):
         """Verify that LLM components are created during import."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(simple_calculator_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -48,8 +48,6 @@ class TestImportLLMFromSimpleCalculator:
 
     def test_llm_has_correct_full_type(self, simple_calculator_config: Path, set_test_env_vars):
         """Verify LLM full_type matches the original _type from config."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(simple_calculator_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -70,8 +68,6 @@ class TestImportLLMFromSimpleCalculator:
 
     def test_llm_model_name_is_preserved(self, simple_calculator_config: Path, set_test_env_vars):
         """Verify LLM model_name field is exactly preserved."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(simple_calculator_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -90,8 +86,6 @@ class TestImportLLMFromSimpleCalculator:
 
     def test_llm_temperature_is_preserved(self, simple_calculator_config: Path, set_test_env_vars):
         """Verify LLM temperature field is exactly preserved."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(simple_calculator_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -110,8 +104,6 @@ class TestImportLLMFromSimpleCalculator:
 
     def test_llm_max_tokens_is_preserved(self, simple_calculator_config: Path, set_test_env_vars):
         """Verify LLM max_tokens field is exactly preserved."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(simple_calculator_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -137,8 +129,6 @@ class TestImportLLMFromReactAgent:
 
     def test_llm_count_matches_original(self, react_agent_config: Path, set_test_env_vars):
         """Verify the number of imported LLMs matches the original config."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -150,8 +140,6 @@ class TestImportLLMFromReactAgent:
 
     def test_all_llm_names_are_preserved(self, react_agent_config: Path, set_test_env_vars):
         """Verify all LLM names from config are preserved as component IDs."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 

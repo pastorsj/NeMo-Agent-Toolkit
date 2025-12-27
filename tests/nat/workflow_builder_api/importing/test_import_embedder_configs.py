@@ -22,6 +22,8 @@ from pathlib import Path
 
 import yaml
 
+from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
+
 
 def load_config_dict(config_path: Path) -> dict:
     """Load YAML config from a file as a dict."""
@@ -37,8 +39,6 @@ class TestImportEmbeddersFromRAGConfig:
 
     def test_embedder_components_are_created(self, rag_config: Path, set_test_env_vars):
         """Verify that embedder components are created during import."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(rag_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -50,8 +50,6 @@ class TestImportEmbeddersFromRAGConfig:
 
     def test_embedder_ids_match_original_names(self, rag_config: Path, set_test_env_vars):
         """Verify embedder IDs match the key names from the original config."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(rag_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -63,8 +61,6 @@ class TestImportEmbeddersFromRAGConfig:
 
     def test_embedder_model_name_is_preserved(self, rag_config: Path, set_test_env_vars):
         """Verify embedder model_name field is exactly preserved."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(rag_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -83,8 +79,6 @@ class TestImportEmbeddersFromRAGConfig:
 
     def test_embedder_type_is_preserved(self, rag_config: Path, set_test_env_vars):
         """Verify embedder _type is preserved in full_type."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(rag_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 

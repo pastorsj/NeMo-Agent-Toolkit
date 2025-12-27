@@ -22,6 +22,8 @@ from pathlib import Path
 
 import yaml
 
+from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
+
 
 def load_config_dict(config_path: Path) -> dict:
     """Load YAML config from a file as a dict."""
@@ -37,8 +39,6 @@ class TestImportTelemetryExporters:
 
     def test_telemetry_exporter_components_are_created(self, observability_config: Path, set_test_env_vars):
         """Verify that telemetry_exporter components are created during import."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(observability_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -53,8 +53,6 @@ class TestImportTelemetryExporters:
 
     def test_telemetry_exporter_ids_match_original_names(self, observability_config: Path, set_test_env_vars):
         """Verify telemetry exporter IDs match the key names from config."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(observability_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -67,8 +65,6 @@ class TestImportTelemetryExporters:
 
     def test_telemetry_exporter_type_is_preserved(self, observability_config: Path, set_test_env_vars):
         """Verify telemetry exporter _type is preserved in full_type."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(observability_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -98,8 +94,6 @@ class TestImportLoggers:
 
     def test_logger_components_are_created(self, observability_config: Path, set_test_env_vars):
         """Verify that logger components are created during import."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(observability_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 

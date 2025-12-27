@@ -23,6 +23,8 @@ from pathlib import Path
 
 import yaml
 
+from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
+
 
 def load_config_dict(config_path: Path) -> dict:
     """Load YAML config from a file as a dict."""
@@ -35,8 +37,6 @@ class TestImportTrainersFromConfig:
 
     def test_trainer_components_are_created(self, finetuning_config: Path, set_test_env_vars):
         """Verify that trainer components are created during import."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(finetuning_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -48,8 +48,6 @@ class TestImportTrainersFromConfig:
 
     def test_trainer_ids_match_original_names(self, finetuning_config: Path, set_test_env_vars):
         """Verify trainer IDs match the key names from the original config."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(finetuning_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -61,8 +59,6 @@ class TestImportTrainersFromConfig:
 
     def test_trainer_type_is_preserved(self, finetuning_config: Path, set_test_env_vars):
         """Verify trainer _type is preserved in full_type."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(finetuning_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -84,8 +80,6 @@ class TestImportTrajectoryBuildersFromConfig:
 
     def test_trajectory_builder_components_are_created(self, finetuning_config: Path, set_test_env_vars):
         """Verify that trajectory_builder components are created during import."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(finetuning_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -97,8 +91,6 @@ class TestImportTrajectoryBuildersFromConfig:
 
     def test_trajectory_builder_ids_match_original_names(self, finetuning_config: Path, set_test_env_vars):
         """Verify trajectory builder IDs match the key names from the original config."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(finetuning_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -114,8 +106,6 @@ class TestImportTrainerAdaptersFromConfig:
 
     def test_trainer_adapter_components_are_created(self, finetuning_config: Path, set_test_env_vars):
         """Verify that trainer_adapter components are created during import."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(finetuning_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -127,8 +117,6 @@ class TestImportTrainerAdaptersFromConfig:
 
     def test_trainer_adapter_ids_match_original_names(self, finetuning_config: Path, set_test_env_vars):
         """Verify trainer adapter IDs match the key names from the original config."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(finetuning_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -144,8 +132,6 @@ class TestImportTTCStrategiesFromConfig:
 
     def test_ttc_strategy_components_are_created(self, ttc_strategy_config: Path, set_test_env_vars):
         """Verify that ttc_strategy components are created during import."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(ttc_strategy_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -156,8 +142,6 @@ class TestImportTTCStrategiesFromConfig:
 
     def test_ttc_strategy_ids_match_original_names(self, ttc_strategy_config: Path, set_test_env_vars):
         """Verify TTC strategy IDs match the key names from the original config."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(ttc_strategy_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 

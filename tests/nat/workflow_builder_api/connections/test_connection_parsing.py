@@ -23,6 +23,8 @@ from pathlib import Path
 
 import yaml
 
+from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
+
 
 def load_config_dict(config_path: Path) -> dict:
     """Load YAML config from a file as a dict."""
@@ -35,8 +37,6 @@ class TestParseLLMConnections:
 
     def test_agent_llm_connection_is_parsed(self, react_agent_config: Path, set_test_env_vars):
         """Verify that agent's llm_name field creates a connection."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -46,8 +46,6 @@ class TestParseLLMConnections:
 
     def test_llm_connection_source_is_agent(self, react_agent_config: Path, set_test_env_vars):
         """Verify that LLM connection source is a valid agent/function component."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -59,8 +57,6 @@ class TestParseLLMConnections:
 
     def test_llm_connection_target_is_llm(self, react_agent_config: Path, set_test_env_vars):
         """Verify that LLM connection target is a valid LLM component."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -72,8 +68,6 @@ class TestParseLLMConnections:
 
     def test_llm_connection_matches_config_reference(self, react_agent_config: Path, set_test_env_vars):
         """Verify that connection target matches the llm_name value in config."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(react_agent_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -97,8 +91,6 @@ class TestParseEmbedderConnections:
 
     def test_retriever_embedder_connection_is_parsed(self, rag_config: Path, set_test_env_vars):
         """Verify that retriever's embedding_model field creates a connection."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(rag_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -107,8 +99,6 @@ class TestParseEmbedderConnections:
 
     def test_embedder_connection_target_is_embedder(self, rag_config: Path, set_test_env_vars):
         """Verify that embedder connection target is a valid embedder component."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(rag_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -121,8 +111,6 @@ class TestParseEmbedderConnections:
 
     def test_embedder_connection_matches_config_reference(self, rag_config: Path, set_test_env_vars):
         """Verify that connection target matches the embedding_model value in config."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(rag_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -145,8 +133,6 @@ class TestParseMemoryConnections:
 
     def test_memory_connection_is_parsed(self, memory_config: Path, set_test_env_vars):
         """Verify that memory references create connections."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(memory_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -155,8 +141,6 @@ class TestParseMemoryConnections:
 
     def test_memory_connection_target_is_memory(self, memory_config: Path, set_test_env_vars):
         """Verify that memory connection target is a valid memory component."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(memory_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -172,8 +156,6 @@ class TestParseAuthConnections:
 
     def test_auth_connection_is_parsed(self, auth_config: Path, set_test_env_vars):
         """Verify that authentication references create connections."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(auth_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
@@ -182,8 +164,6 @@ class TestParseAuthConnections:
 
     def test_auth_connection_target_is_auth(self, auth_config: Path, set_test_env_vars):
         """Verify that auth connection target is a valid authentication component."""
-        from nat.workflow_builder_api.utils.config_parser import parse_config_to_workflow_state
-
         config_dict = load_config_dict(auth_config)
         workflow_state = parse_config_to_workflow_state(config_dict)
 
