@@ -27,7 +27,12 @@ logger = logging.getLogger(__name__)
 
 
 class WeaveTelemetryExporterConfig(TelemetryExporterBaseConfig, name="weave"):
-    """A telemetry exporter to transmit traces to Weights & Biases Weave using OpenTelemetry."""
+    """A telemetry exporter to transmit traces to Weights & Biases Weave using OpenTelemetry.
+
+    ## Details
+    Name: Weave (W&B)
+    Icon: ![Icon](https://cdn.simpleicons.org/weightsandbiases/FFBE00)
+    """
     project: str = Field(description="The W&B project name.")
     entity: str | None = Field(default=None,
                                description="The W&B username or team name.",

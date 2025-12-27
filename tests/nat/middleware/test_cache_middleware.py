@@ -25,7 +25,7 @@ from pydantic import BaseModel
 from nat.builder.context import Context  # noqa: F401
 from nat.builder.context import ContextState  # noqa: F401
 from nat.data_models.runtime_enum import RuntimeTypeEnum
-from nat.middleware.cache_middleware import CacheMiddleware
+from nat.middleware.cache_middleware import CacheMiddlewareImpl
 from nat.middleware.middleware import FunctionMiddlewareContext
 
 
@@ -56,7 +56,7 @@ class TestCacheMiddlewareInitialization:
 
     def test_default_initialization(self):
         """Test default initialization with required parameters."""
-        middleware = CacheMiddleware(enabled_mode="eval", similarity_threshold=1.0)
+        middleware = CacheMiddlewareImpl(enabled_mode="eval", similarity_threshold=1.0)
         # Check internal attributes
         assert hasattr(middleware, '_enabled_mode')
         assert hasattr(middleware, '_similarity_threshold')
@@ -64,7 +64,7 @@ class TestCacheMiddlewareInitialization:
 
     def test_custom_initialization(self):
         """Test custom initialization."""
-        middleware = CacheMiddleware(enabled_mode="always", similarity_threshold=0.8)
+        middleware = CacheMiddlewareImpl(enabled_mode="always", similarity_threshold=0.8)
         # Check attributes are set
         assert hasattr(middleware, '_enabled_mode')
         assert hasattr(middleware, '_similarity_threshold')
@@ -75,7 +75,7 @@ class TestCacheMiddlewareCaching:
 
     async def test_exact_match_caching(self, middleware_context):
         """Test exact match caching with similarity_threshold=1.0."""
-        middleware = CacheMiddleware(enabled_mode="always", similarity_threshold=1.0)
+        middleware = CacheMiddlewareImpl(enabled_mode="always", similarity_threshold=1.0)
 
         # Mock the next call
         call_count = 0
@@ -104,7 +104,7 @@ class TestCacheMiddlewareCaching:
 
     async def test_fuzzy_match_caching(self, middleware_context):
         """Test fuzzy matching with similarity_threshold < 1.0."""
-        middleware = CacheMiddleware(enabled_mode="always", similarity_threshold=0.8)
+        middleware = CacheMiddlewareImpl(enabled_mode="always", similarity_threshold=0.8)
 
         call_count = 0
 
@@ -133,7 +133,7 @@ class TestCacheMiddlewareCaching:
 
     async def test_eval_mode_caching(self, middleware_context):
         """Test caching only works in eval mode when configured."""
-        middleware = CacheMiddleware(enabled_mode="eval", similarity_threshold=1.0)
+        middleware = CacheMiddlewareImpl(enabled_mode="eval", similarity_threshold=1.0)
 
         call_count = 0
 
@@ -172,7 +172,7 @@ class TestCacheMiddlewareCaching:
 
     async def test_serialization_failure(self, middleware_context):
         """Test behavior when input serialization fails."""
-        middleware = CacheMiddleware(enabled_mode="always", similarity_threshold=1.0)
+        middleware = CacheMiddlewareImpl(enabled_mode="always", similarity_threshold=1.0)
 
         call_count = 0
 
@@ -203,7 +203,7 @@ class TestCacheMiddlewareStreaming:
 
     async def test_streaming_bypass(self, middleware_context):
         """Test that streaming always bypasses cache."""
-        middleware = CacheMiddleware(enabled_mode="always", similarity_threshold=1.0)
+        middleware = CacheMiddlewareImpl(enabled_mode="always", similarity_threshold=1.0)
 
         call_count = 0
 
@@ -234,7 +234,7 @@ class TestCacheMiddlewareEdgeCases:
 
     async def test_context_retrieval_failure(self, middleware_context):
         """Test behavior when context retrieval fails in eval mode."""
-        middleware = CacheMiddleware(enabled_mode="eval", similarity_threshold=1.0)
+        middleware = CacheMiddlewareImpl(enabled_mode="eval", similarity_threshold=1.0)
 
         call_count = 0
 
@@ -253,7 +253,7 @@ class TestCacheMiddlewareEdgeCases:
     def test_similarity_computation_for_different_thresholds(self):
         """Test similarity computation for different thresholds."""
         # This is more of a unit test for the similarity logic
-        middleware = CacheMiddleware(enabled_mode="always", similarity_threshold=0.5)
+        middleware = CacheMiddlewareImpl(enabled_mode="always", similarity_threshold=0.5)
 
         # Directly test internal methods
         # Add a cached entry
@@ -270,7 +270,7 @@ class TestCacheMiddlewareEdgeCases:
 
     async def test_multiple_similar_entries(self, middleware_context):
         """Test behavior with multiple similar cached entries."""
-        middleware = CacheMiddleware(enabled_mode="always", similarity_threshold=0.7)
+        middleware = CacheMiddlewareImpl(enabled_mode="always", similarity_threshold=0.7)
 
         # Pre-populate cache with similar entries
         key1 = middleware._serialize_input(  # noqa

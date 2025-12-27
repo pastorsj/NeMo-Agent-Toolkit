@@ -279,7 +279,7 @@ class TestCacheMiddlewareComponent:
 
     async def test_cache_middleware_from_yaml(self):
         """Test building cache middleware from YAML."""
-        from nat.middleware.cache_middleware import CacheMiddleware
+        from nat.middleware.cache_middleware import CacheMiddlewareImpl
 
         config_dict = {
             "middleware": {
@@ -295,12 +295,12 @@ class TestCacheMiddlewareComponent:
         async with WorkflowBuilder() as builder:
             middleware = await builder.add_middleware("my_cache", config.middleware["my_cache"])
 
-            assert isinstance(middleware, CacheMiddleware)
+            assert isinstance(middleware, CacheMiddlewareImpl)
             assert middleware.is_final is True
 
     async def test_cache_middleware_with_different_configs(self):
         """Test cache middleware with various configurations."""
-        from nat.middleware.cache_middleware import CacheMiddleware
+        from nat.middleware.cache_middleware import CacheMiddlewareImpl
 
         configs = [
             {
@@ -318,7 +318,7 @@ class TestCacheMiddlewareComponent:
 
                 middleware = await builder.add_middleware(f"cache_{i}", config.middleware[f"cache_{i}"])
 
-                assert isinstance(middleware, CacheMiddleware)
+                assert isinstance(middleware, CacheMiddlewareImpl)
 
 
 class TestMiddlewareErrorHandling:

@@ -21,18 +21,19 @@ from pydantic import model_validator
 
 from .common import BaseModelRegistryTag
 from .common import TypedBaseModel
+from .component_ref import MiddlewareRef
 
 
 class FunctionBaseConfig(TypedBaseModel, BaseModelRegistryTag):
     """Base configuration for functions.
 
     Attributes:
-        middleware: List of function middleware names to apply to this function.
+        middleware: List of function middleware references to apply to this function.
             These must match names defined in the `middleware` section of the YAML configuration.
     """
-    middleware: list[str] = Field(
+    middleware: list[MiddlewareRef] = Field(
         default_factory=list,
-        description="List of function middleware names to apply to this function in order",
+        description="List of function middleware to apply to this function in order",
     )
 
 
@@ -49,9 +50,9 @@ class FunctionGroupBaseConfig(TypedBaseModel, BaseModelRegistryTag):
         default_factory=list,
         description="The list of function names which should be excluded from default access to the group",
     )
-    middleware: list[str] = Field(
+    middleware: list[MiddlewareRef] = Field(
         default_factory=list,
-        description="List of function middleware names to apply to all functions in this group",
+        description="List of function middleware to apply to all functions in this group",
     )
 
     @field_validator("include", "exclude")

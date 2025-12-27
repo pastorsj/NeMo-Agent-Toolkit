@@ -25,6 +25,15 @@ from nat.utils.sdk.nat_function_group import NatFunctionGroup
 
 
 class CalculatorToolConfig(FunctionGroupBaseConfig, name="calculator"):
+    """Simple calculator function group for basic arithmetic operations.
+
+    Provides add, subtract, multiply, divide, and compare operations.
+
+    ## Details
+    Name: Calculator
+    Icon: ![Icon](https://cdn.simpleicons.org/calculator/3b82f6)
+    """
+
     include: list[str] = Field(default_factory=lambda: ["add", "subtract", "multiply", "divide", "compare"],
                                description="The list of functions to include in the calculator function group.")
 

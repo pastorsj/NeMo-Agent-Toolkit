@@ -22,12 +22,17 @@ Provides endpoints for:
 - Configuration validation
 """
 
+import asyncio
 import logging
+import os
+import subprocess
+import tempfile
+import uuid
+from typing import ClassVar
 
+import httpx
 from fastapi import APIRouter
 from fastapi import HTTPException
-from fastapi import WebSocket
-from fastapi import WebSocketDisconnect
 from pydantic import BaseModel
 from pydantic import Field
 
@@ -41,15 +46,10 @@ from nat.workflow_builder_api.models import ExportConfigResponse
 from nat.workflow_builder_api.models import ExportWorkflowRequest
 from nat.workflow_builder_api.models import HealthResponse
 from nat.workflow_builder_api.models import ImportedWorkflowState
-from nat.workflow_builder_api.session_registry import WorkflowSessionRegistry
 from nat.workflow_builder_api.utils import export_workflow_to_yaml
 from nat.workflow_builder_api.utils import get_category_types
 from nat.workflow_builder_api.utils import parse_config_to_workflow_state
 from nat.workflow_builder_api.utils import validate_yaml_config
-from nat.workflow_builder_api.utils.config_builder import ConfigBuildError
-from nat.workflow_builder_api.utils.config_builder import build_config_from_request
-from nat.workflow_builder_api.utils.config_builder import validate_workflow_for_execution
-from nat.workflow_builder_api.websocket_handler import WorkflowBuilderWebSocketHandler
 
 logger = logging.getLogger(__name__)
 
@@ -201,177 +201,278 @@ async def export_config(request: ExportWorkflowRequest) -> ExportConfigResponse:
 
 
 # =============================================================================
-# WORKFLOW SESSION MANAGEMENT
+# WORKFLOW START/STOP - Run workflows using nat serve
 # =============================================================================
 
 
-class CreateSessionRequest(BaseModel):
-    """Request to create a workflow session."""
+class StartWorkflowResponse(BaseModel):
+    """Response from starting a workflow."""
 
-    components: list = Field(default_factory=list, description="Components from the UI canvas")
-    connections: list = Field(default_factory=list, description="Connections between components")
-
-
-class CreateSessionResponse(BaseModel):
-    """Response from creating a workflow session."""
-
-    session_id: str = Field(description="Unique session identifier")
-    websocket_path: str = Field(description="Path to WebSocket endpoint for this session")
+    success: bool = Field(description="Whether the workflow started successfully")
+    url: str = Field(default="", description="URL where the workflow UI is running")
+    process_id: str = Field(default="", description="Process ID for tracking/stopping")
+    config_path: str = Field(default="", description="Path to the temporary config file")
+    error_message: str | None = Field(default=None, description="Error message if failed")
 
 
-class ValidateWorkflowRequest(BaseModel):
-    """Request to validate a workflow for execution."""
+class WorkflowProcessManager:
+    """Manages running nat serve processes and their associated UIs."""
 
-    components: list = Field(default_factory=list, description="Components from the UI canvas")
-    connections: list = Field(default_factory=list, description="Connections between components")
+    _instance: ClassVar["WorkflowProcessManager | None"] = None
+    _processes: ClassVar[dict[str, dict]] = {}
+    _next_backend_port: ClassVar[int] = 8101
+    _next_ui_port: ClassVar[int] = 3101
 
+    @classmethod
+    def get(cls) -> "WorkflowProcessManager":
+        """Get the singleton instance."""
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
 
-class ValidateWorkflowResponse(BaseModel):
-    """Response from workflow validation."""
+    def get_next_ports(self) -> tuple[int, int]:
+        """Get the next available backend and UI ports."""
+        backend_port = WorkflowProcessManager._next_backend_port
+        ui_port = WorkflowProcessManager._next_ui_port
+        WorkflowProcessManager._next_backend_port += 1
+        WorkflowProcessManager._next_ui_port += 1
+        return backend_port, ui_port
 
-    valid: bool = Field(description="Whether the workflow is valid for execution")
-    errors: list[str] = Field(default_factory=list, description="List of validation errors")
+    async def start_workflow(self, yaml_content: str) -> StartWorkflowResponse:
+        """Start nat serve and nat-ui processes with the given config."""
+        process_id = str(uuid.uuid4())
 
+        # Write config to temp file
+        temp_dir = tempfile.mkdtemp(prefix="nat_workflow_")
+        config_path = os.path.join(temp_dir, "config.yml")
+        with open(config_path, "w") as f:
+            f.write(yaml_content)
 
-@router.post("/workflow/validate", response_model=ValidateWorkflowResponse)
-async def validate_workflow(request: ValidateWorkflowRequest) -> ValidateWorkflowResponse:
-    """
-    Validate that a workflow is ready for execution.
+        # Find available ports for backend and UI
+        backend_port, ui_port = self.get_next_ports()
+        backend_url = f"http://localhost:{backend_port}"
+        ui_url = f"http://localhost:{ui_port}"
 
-    Checks that:
-    - A Workflow component exists
-    - The Workflow has an entrypoint connected
-    - The entrypoint is properly configured
-    """
-    from nat.workflow_builder_api.models import ExportComponent
-    from nat.workflow_builder_api.models import ExportConnection
+        # Get the nat-ui directory path
+        # __file__ is src/nat/workflow_builder_api/routes.py
+        # We need to go up 4 levels to get to the project root
+        project_root = os.path.dirname(  # nat-fork/
+            os.path.dirname(  # src/
+                os.path.dirname(  # nat/
+                    os.path.dirname(__file__)  # workflow_builder_api/
+                )))
+        nat_ui_dir = os.path.join(project_root, "external", "nat-ui")
 
-    try:
-        components = [ExportComponent(**c) for c in request.components]
-        connections = [ExportConnection(**c) for c in request.connections]
-
-        errors = validate_workflow_for_execution(components, connections)
-
-        return ValidateWorkflowResponse(
-            valid=len(errors) == 0,
-            errors=errors,
-        )
-    except Exception as e:
-        logger.exception("Error validating workflow: %s", e)
-        return ValidateWorkflowResponse(
-            valid=False,
-            errors=[f"Validation error: {e!s}"],
-        )
-
-
-@router.post("/workflow/session/create", response_model=CreateSessionResponse)
-async def create_workflow_session(request: CreateSessionRequest) -> CreateSessionResponse:
-    """
-    Create a new workflow session for the chat interface.
-
-    This endpoint:
-    1. Validates the workflow components and connections
-    2. Builds a Config object from the workflow
-    3. Creates a SessionManager for running the workflow
-    4. Returns a session ID for WebSocket connection
-    """
-    from nat.workflow_builder_api.models import ExportComponent
-    from nat.workflow_builder_api.models import ExportConnection
-
-    try:
-        # Parse components and connections
-        components = [ExportComponent(**c) for c in request.components]
-        connections = [ExportConnection(**c) for c in request.connections]
-
-        # Validate the workflow
-        errors = validate_workflow_for_execution(components, connections)
-        if errors:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "message": "Workflow validation failed", "errors": errors
-                },
+        try:
+            # Start nat serve process (backend)
+            backend_process = subprocess.Popen(
+                [
+                    "nat",
+                    "serve",
+                    "--config_file",
+                    config_path,
+                    "--port",
+                    str(backend_port),
+                    "--host",
+                    "0.0.0.0",
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
             )
 
-        # Build the Export request
-        export_request = ExportWorkflowRequest(
-            components=components,
-            connections=connections,
-            workflow_name="runtime_workflow",
-        )
+            logger.info("Started backend process %s on port %d", process_id, backend_port)
 
-        # Build and validate the config
-        config = build_config_from_request(export_request)
+            # Wait for the backend to be ready (FastAPI - check /openapi.json)
+            ready = await self._wait_for_server_ready(backend_url, timeout=60, check_path="/openapi.json")
 
-        # Log the config for debugging
-        logger.info("Built config for session:")
-        logger.info("  LLMs: %s", list(config.llms.keys()) if config.llms else [])
-        logger.info("  Functions: %s", list(config.functions.keys()) if config.functions else [])
-        logger.info("  Workflow type: %s", type(config.workflow).__name__ if config.workflow else None)
+            if not ready:
+                # Check if process is still running
+                if backend_process.poll() is not None:
+                    # Process exited - get error output
+                    _, stderr = backend_process.communicate()
+                    return StartWorkflowResponse(
+                        success=False,
+                        error_message=f"Backend failed to start: {stderr[:500] if stderr else 'Unknown error'}",
+                    )
+                else:
+                    # Still starting - continue anyway but warn
+                    logger.warning("Backend not ready after timeout, continuing anyway")
 
-        # Create the session
-        registry = WorkflowSessionRegistry.get()
-        session = await registry.create_session(config)
+            # Start the nat-ui (proxy + Next.js dev server)
+            ui_env = os.environ.copy()
+            ui_env["NAT_BACKEND_URL"] = backend_url
+            ui_env["PORT"] = str(ui_port)
+            ui_env["NEXT_TELEMETRY_DISABLED"] = "1"
 
-        return CreateSessionResponse(
-            session_id=session.session_id,
-            websocket_path=f"/api/v1/workflow/session/{session.session_id}/ws",
-        )
+            ui_process = subprocess.Popen(
+                ["npm", "run", "dev"],
+                cwd=nat_ui_dir,
+                env=ui_env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
 
-    except ConfigBuildError as e:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "message": e.message, "errors": e.details
-            },
-        ) from e
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception("Error creating workflow session: %s", e)
-        raise HTTPException(
-            status_code=500,
-            detail={"message": f"Failed to create session: {e!s}"},
-        ) from e
+            logger.info("Started UI (npm run dev) on port %d pointing to %s", ui_port, backend_url)
 
+            # Wait for the UI to be ready (Next.js compilation can take a while)
+            # Check root path "/" for Next.js apps
+            ui_ready = await self._wait_for_server_ready(ui_url, timeout=120, check_path="/")
+            if not ui_ready:
+                logger.warning("UI not ready after timeout, returning URL anyway - it may still be compiling")
 
-@router.delete("/workflow/session/{session_id}")
-async def destroy_workflow_session(session_id: str) -> dict:
-    """
-    Destroy a workflow session and clean up resources.
-    """
-    registry = WorkflowSessionRegistry.get()
-    destroyed = await registry.destroy_session(session_id)
+            # Store process info
+            WorkflowProcessManager._processes[process_id] = {
+                "backend_process": backend_process,
+                "ui_process": ui_process,
+                "config_path": config_path,
+                "temp_dir": temp_dir,
+                "backend_port": backend_port,
+                "ui_port": ui_port,
+                "backend_url": backend_url,
+                "url": ui_url,
+            }
 
-    if not destroyed:
-        raise HTTPException(status_code=404, detail="Session not found")
+            return StartWorkflowResponse(
+                success=True,
+                url=ui_url,
+                process_id=process_id,
+                config_path=config_path,
+            )
 
-    return {"status": "destroyed", "session_id": session_id}
+        except Exception as e:
+            logger.exception("Failed to start workflow: %s", e)
+            # Clean up temp file on error
+            try:
+                os.remove(config_path)
+                os.rmdir(temp_dir)
+            except Exception:
+                pass
 
+            return StartWorkflowResponse(
+                success=False,
+                error_message=str(e),
+            )
 
-@router.websocket("/workflow/session/{session_id}/ws")
-async def workflow_session_websocket(websocket: WebSocket, session_id: str):
-    """
-    WebSocket endpoint for chatting with a workflow session.
+    async def _wait_for_server_ready(self, url: str, timeout: int = 60, check_path: str = "/openapi.json") -> bool:
+        """Poll the server until it's ready or timeout.
 
-    Connect to this endpoint after creating a session to send messages
-    and receive streaming responses.
-    """
-    registry = WorkflowSessionRegistry.get()
-    session = await registry.get_session(session_id)
+        Args:
+            url: Base URL to check
+            timeout: Maximum seconds to wait
+            check_path: Path to check for readiness (default: /openapi.json for FastAPI)
+        """
+        check_url = f"{url}{check_path}"
+        start_time = asyncio.get_event_loop().time()
 
-    if not session:
-        await websocket.close(code=4004, reason="Session not found")
-        return
+        async with httpx.AsyncClient() as client:
+            while (asyncio.get_event_loop().time() - start_time) < timeout:
+                try:
+                    response = await client.get(check_url, timeout=2.0)
+                    if response.status_code == 200:
+                        logger.info("Server is ready at %s", url)
+                        return True
+                except (httpx.ConnectError, httpx.TimeoutException):
+                    pass
+                except Exception as e:
+                    logger.debug("Server check error: %s", e)
 
-    try:
-        async with WorkflowBuilderWebSocketHandler(websocket, session) as handler:
-            await handler.run()
-    except WebSocketDisconnect:
-        logger.info("WebSocket disconnected for session %s", session_id)
-    except Exception as e:
-        logger.exception("WebSocket error for session %s: %s", session_id, e)
+                # Wait before retrying
+                await asyncio.sleep(1.0)
+
+        logger.warning("Server not ready after %d seconds", timeout)
+        return False
+
+    def stop_workflow(self, process_id: str) -> bool:
+        """Stop running workflow processes (backend and UI)."""
+        if process_id not in WorkflowProcessManager._processes:
+            return False
+
+        info = WorkflowProcessManager._processes.pop(process_id)
+
+        # Stop backend process
+        backend_process = info.get("backend_process") or info.get("process")
+        if backend_process:
+            try:
+                backend_process.terminate()
+                backend_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                backend_process.kill()
+            except Exception as e:
+                logger.error("Error stopping backend process %s: %s", process_id, e)
+
+        # Stop UI process
+        ui_process = info.get("ui_process")
+        if ui_process:
+            try:
+                ui_process.terminate()
+                ui_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                ui_process.kill()
+            except Exception as e:
+                logger.error("Error stopping UI process %s: %s", process_id, e)
+
+        # Clean up temp files
         try:
-            await websocket.close(code=1011, reason=str(e))
+            os.remove(info["config_path"])
+            os.rmdir(info["temp_dir"])
         except Exception:
             pass
+
+        logger.info("Stopped workflow processes %s", process_id)
+        return True
+
+    def cleanup_all(self) -> None:
+        """Stop all running workflows."""
+        for process_id in list(WorkflowProcessManager._processes.keys()):
+            self.stop_workflow(process_id)
+
+
+@router.post("/workflow/start", response_model=StartWorkflowResponse)
+async def start_workflow_endpoint(request: ExportWorkflowRequest) -> StartWorkflowResponse:
+    """
+    Start a workflow using nat serve.
+
+    This endpoint:
+    1. Exports the workflow to a temporary YAML config file
+    2. Starts `nat serve` with that config on an available port
+    3. Waits for the server to be ready (health check)
+    4. Returns the URL where the workflow UI is running
+
+    The UI can then open this URL in a new browser tab.
+    """
+    try:
+        # Export workflow to YAML
+        export_result = export_workflow_to_yaml(request)
+
+        if not export_result.success or not export_result.yaml_content:
+            return StartWorkflowResponse(
+                success=False,
+                error_message=export_result.error_message or "Failed to export workflow",
+            )
+
+        # Start the workflow and wait for it to be ready
+        manager = WorkflowProcessManager.get()
+        return await manager.start_workflow(export_result.yaml_content)
+
+    except Exception as e:
+        logger.exception("Error starting workflow: %s", e)
+        return StartWorkflowResponse(
+            success=False,
+            error_message=str(e),
+        )
+
+
+@router.delete("/workflow/stop/{process_id}")
+async def stop_workflow(process_id: str) -> dict:
+    """
+    Stop a running workflow process.
+    """
+    manager = WorkflowProcessManager.get()
+    stopped = manager.stop_workflow(process_id)
+
+    if not stopped:
+        raise HTTPException(status_code=404, detail="Process not found")
+
+    return {"status": "stopped", "process_id": process_id}

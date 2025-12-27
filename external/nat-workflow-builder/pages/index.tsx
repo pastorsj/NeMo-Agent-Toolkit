@@ -1,10 +1,9 @@
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { useState, useRef, useCallback } from 'react';
-import { Upload, Download, X, CheckCircle, AlertCircle, Loader2, Play, Trash2 } from 'lucide-react';
+import { Upload, Download, X, CheckCircle, AlertCircle, Loader2, Play, Trash2, ExternalLink, Square, RefreshCw } from 'lucide-react';
 import { FlowSidebar } from '@/components/Sidebar/FlowSidebar';
-import { ChatSlideOver } from '@/components/Chat';
-import { registryAPI, ImportedWorkflowState, ExportComponent, ExportConnection, CreateSessionRequest, ValidateWorkflowRequest } from '@/lib/api';
+import { registryAPI, ImportedWorkflowState, ExportComponent, ExportConnection } from '@/lib/api';
 import { useWorkflow } from '@/contexts/WorkflowContext';
 
 // Dynamically import FlowCanvas to avoid SSR issues with React Flow
@@ -41,7 +40,6 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [isValidating, setIsValidating] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [exportResult, setExportResult] = useState<ExportResult | null>(null);
   const [showResultModal, setShowResultModal] = useState(false);
@@ -49,10 +47,11 @@ export default function Home() {
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
   const { loadImportedState, clearWorkflow, components, connections } = useWorkflow();
 
-  // Chat panel state
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatSessionRequest, setChatSessionRequest] = useState<CreateSessionRequest | null>(null);
+  // Run workflow state
+  const [isStarting, setIsStarting] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
+  const [runningWorkflow, setRunningWorkflow] = useState<{ url: string; processId: string } | null>(null);
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -202,65 +201,96 @@ export default function Home() {
     }
   };
 
-  // Run workflow - validate and open chat panel
+  // Run workflow - export and start nat serve
   const handleRunClick = useCallback(async () => {
     if (components.length === 0) {
       setRunError('Add some components to run the workflow');
       return;
     }
 
-    setIsValidating(true);
+    setIsStarting(true);
     setRunError(null);
 
     try {
-      // Build the request
-      const workflowComponents = components.map((comp) => ({
+      // Convert components to export format
+      const exportComponents: ExportComponent[] = components.map((comp) => ({
         id: comp.id,
         component_type: comp.type,
         full_type: comp.registeredType?.full_type || '',
         config: comp.config || {},
       }));
 
-      const workflowConnections = connections.map((conn) => ({
-        id: conn.id,
+      // Convert connections to export format
+      const exportConnections: ExportConnection[] = connections.map((conn) => ({
         source_id: conn.sourceId,
         target_id: conn.targetId,
         target_field: conn.targetField,
       }));
 
-      // Validate the workflow first
-      const validationRequest: ValidateWorkflowRequest = {
-        components: workflowComponents,
-        connections: workflowConnections,
-      };
+      // Start the workflow using nat serve
+      const result = await registryAPI.startWorkflow({
+        components: exportComponents,
+        connections: exportConnections,
+        workflow_name: 'workflow_builder_runtime',
+      });
 
-      const validationResult = await registryAPI.validateWorkflow(validationRequest);
-
-      if (!validationResult.valid) {
-        setRunError(validationResult.errors.join('\n'));
+      if (!result.success) {
+        setRunError(result.error_message || 'Failed to start workflow');
         return;
       }
 
-      // Create session request
-      const sessionRequest: CreateSessionRequest = {
-        components: workflowComponents,
-        connections: workflowConnections,
-      };
+      // Store the running workflow info
+      setRunningWorkflow({
+        url: result.url,
+        processId: result.process_id,
+      });
 
-      setChatSessionRequest(sessionRequest);
-      setIsChatOpen(true);
+      // Open the nat-ui in a new tab
+      window.open(result.url, '_blank');
     } catch (error) {
       console.error('Run error:', error);
       setRunError(error instanceof Error ? error.message : 'Failed to start workflow');
     } finally {
-      setIsValidating(false);
+      setIsStarting(false);
     }
   }, [components, connections]);
 
-  const handleChatClose = useCallback(() => {
-    setIsChatOpen(false);
-    setChatSessionRequest(null);
-  }, []);
+  // Stop running workflow
+  const handleStopClick = useCallback(async () => {
+    if (!runningWorkflow) return;
+
+    setIsStopping(true);
+    setRunError(null);
+
+    try {
+      await registryAPI.stopWorkflow(runningWorkflow.processId);
+      setRunningWorkflow(null);
+    } catch (error) {
+      console.error('Stop error:', error);
+      setRunError(error instanceof Error ? error.message : 'Failed to stop workflow');
+    } finally {
+      setIsStopping(false);
+    }
+  }, [runningWorkflow]);
+
+  // Restart workflow with current config
+  const handleRestartClick = useCallback(async () => {
+    if (!runningWorkflow) return;
+
+    // Stop the current workflow first
+    setIsStopping(true);
+    try {
+      await registryAPI.stopWorkflow(runningWorkflow.processId);
+      setRunningWorkflow(null);
+    } catch (error) {
+      console.error('Stop error during restart:', error);
+    } finally {
+      setIsStopping(false);
+    }
+
+    // Start a new workflow
+    await handleRunClick();
+  }, [runningWorkflow, handleRunClick]);
 
   return (
     <>
@@ -328,19 +358,70 @@ export default function Home() {
                 )}
               </button>
 
-              {/* Run Button */}
+              {/* Run Button - disabled when workflow is already running */}
               <button
                 onClick={handleRunClick}
-                disabled={isValidating || components.length === 0}
-                className="p-2.5 bg-accent hover:bg-accent/80 rounded-lg text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title={components.length === 0 ? 'Add components to run' : 'Run workflow'}
+                disabled={isStarting || components.length === 0 || runningWorkflow !== null}
+                className="p-2.5 bg-accent hover:bg-accent/80 rounded-lg text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                title={
+                  runningWorkflow
+                    ? 'Workflow already running - use Restart or Stop'
+                    : components.length === 0
+                    ? 'Add components to run'
+                    : 'Run workflow (opens nat-ui)'
+                }
               >
-                {isValidating ? (
-                  <Loader2 size={18} className="animate-spin" />
+                {isStarting ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    <span className="text-xs font-medium hidden sm:inline">Starting...</span>
+                  </>
                 ) : (
                   <Play size={18} fill="currentColor" />
                 )}
               </button>
+
+              {/* Running Workflow Controls */}
+              {runningWorkflow && (
+                <>
+                  {/* Open in Browser */}
+                  <button
+                    onClick={() => window.open(runningWorkflow.url, '_blank')}
+                    className="p-2.5 bg-green-600 hover:bg-green-500 rounded-lg text-white transition-colors"
+                    title={`Open running workflow at ${runningWorkflow.url}`}
+                  >
+                    <ExternalLink size={18} />
+                  </button>
+
+                  {/* Restart with new config */}
+                  <button
+                    onClick={handleRestartClick}
+                    disabled={isStarting || isStopping}
+                    className="p-2.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Restart workflow with current config"
+                  >
+                    {isStarting ? (
+                      <Loader2 size={18} className="animate-spin" />
+                    ) : (
+                      <RefreshCw size={18} />
+                    )}
+                  </button>
+
+                  {/* Stop */}
+                  <button
+                    onClick={handleStopClick}
+                    disabled={isStopping}
+                    className="p-2.5 bg-red-600 hover:bg-red-500 rounded-lg text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Stop running workflow"
+                  >
+                    {isStopping ? (
+                      <Loader2 size={18} className="animate-spin" />
+                    ) : (
+                      <Square size={18} fill="currentColor" />
+                    )}
+                  </button>
+                </>
+              )}
 
               {/* Clear/Delete Button */}
               <button
@@ -359,8 +440,31 @@ export default function Home() {
             </div>
           </header>
 
+          {/* Starting Workflow Banner */}
+          {isStarting && (
+            <div className="bg-accent/10 border-b border-accent/30 px-6 py-3 flex items-center gap-3">
+              <Loader2 size={18} className="text-accent animate-spin flex-shrink-0" />
+              <p className="text-sm text-accent flex-1">
+                Starting workflow... This may take 1-2 minutes (backend initialization + UI compilation).
+              </p>
+            </div>
+          )}
+
+          {/* Running Workflow Banner */}
+          {runningWorkflow && !isStarting && (
+            <div className="bg-green-500/10 border-b border-green-500/30 px-6 py-3 flex items-center gap-3">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse flex-shrink-0" />
+              <p className="text-sm text-green-400 flex-1">
+                Workflow running at <a href={runningWorkflow.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-green-300">{runningWorkflow.url}</a>
+              </p>
+              <span className="text-xs text-green-500/70">
+                Use the buttons above to open, restart, or stop
+              </span>
+            </div>
+          )}
+
           {/* Run Error Banner */}
-          {runError && (
+          {runError && !isStarting && (
             <div className="bg-red-500/10 border-b border-red-500/30 px-6 py-3 flex items-center gap-3">
               <AlertCircle size={18} className="text-red-400 flex-shrink-0" />
               <p className="text-sm text-red-400 flex-1 whitespace-pre-line">{runError}</p>
@@ -583,12 +687,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Chat Slide-Over Panel */}
-      <ChatSlideOver
-        isOpen={isChatOpen}
-        onClose={handleChatClose}
-        sessionRequest={chatSessionRequest}
-      />
     </>
   );
 }

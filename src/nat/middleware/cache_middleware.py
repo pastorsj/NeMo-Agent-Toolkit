@@ -48,7 +48,7 @@ from nat.utils.sdk.nat_middleware import NatMiddleware
 logger = logging.getLogger(__name__)
 
 
-class CacheMiddleware(FunctionMiddleware):
+class CacheMiddlewareImpl(FunctionMiddleware):
     """Cache middleware that memoizes function outputs based on input similarity.
 
     This middleware demonstrates the four-phase middleware pattern:
@@ -259,8 +259,8 @@ class CacheMiddlewareConfig(FunctionMiddlewareBaseConfig, name="cache"):
                                         description="Similarity threshold between 0 and 1. Use 1.0 for exact matching")
 
 
-class CacheMiddlewareWrapper(CacheMiddlewareConfig, NatMiddleware):
+class CacheMiddleware(CacheMiddlewareConfig, NatMiddleware):
     """Cache Middleware Provider"""
 
 
-__all__ = ["CacheMiddleware", "CacheMiddlewareConfig", "CacheMiddlewareWrapper"]
+__all__ = ["CacheMiddlewareImpl", "CacheMiddlewareConfig", "CacheMiddleware"]

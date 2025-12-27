@@ -89,7 +89,8 @@ For hands-on learning, explore the [SDK tutorial notebooks](../../../examples/no
 | `03_agents.ipynb` | Different agent types |
 | `04_tools.ipynb` | Working with tools |
 | `05_llms.ipynb` | Configuring LLMs |
-| `09_evaluation.ipynb` | Evaluating workflows |
-| `14_finetuning.ipynb` | Finetuning with reinforcement learning |
-| `15_multiturn_chatbot.ipynb` | Multi-turn chatbot with long-term memory |
+| `08_middleware.ipynb` | Using middleware for caching and more |
+| `10_evaluation.ipynb` | Evaluating workflows |
+| `15_finetuning.ipynb` | Finetuning with reinforcement learning |
+| `16_multiturn_chatbot.ipynb` | Multi-turn chatbot with long-term memory |
 

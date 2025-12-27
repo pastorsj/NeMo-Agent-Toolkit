@@ -25,6 +25,15 @@ from nat.data_models.function import FunctionGroupBaseConfig
 
 
 class LogicEvaluatorConfig(FunctionGroupBaseConfig, name="logic_evaluator"):
+    """Logic evaluator function group for conditional operations.
+
+    Provides if-then-else and condition evaluation functions.
+
+    ## Details
+    Name: Logic Evaluator
+    Icon: ![Icon](https://cdn.simpleicons.org/codepen/000000)
+    """
+
     # Using a lambda so that each config instance receives a unique include list
     include: list[str] = Field(default_factory=lambda: ["if_then_else", "evaluate_condition"],
                                description="The list of functions to include in the logic evaluator function group.")

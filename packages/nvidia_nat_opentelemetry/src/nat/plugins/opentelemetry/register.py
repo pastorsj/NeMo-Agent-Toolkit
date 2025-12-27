@@ -32,7 +32,12 @@ logger = logging.getLogger(__name__)
 
 
 class LangfuseTelemetryExporter(BatchConfigMixin, TelemetryExporterBaseConfig, name="langfuse"):
-    """A telemetry exporter to transmit traces to externally hosted langfuse service."""
+    """A telemetry exporter to transmit traces to externally hosted langfuse service.
+
+    ## Details
+    Name: Langfuse
+    Icon: ![Icon](https://cdn.simpleicons.org/langfuse/000000)
+    """
 
     endpoint: str = Field(description="The langfuse OTEL endpoint (/api/public/otel/v1/traces)")
     public_key: SerializableSecretStr = Field(description="The Langfuse public key", default="")
@@ -71,7 +76,12 @@ async def langfuse_telemetry_exporter(config: LangfuseTelemetryExporter, builder
 
 
 class LangsmithTelemetryExporter(BatchConfigMixin, CollectorConfigMixin, TelemetryExporterBaseConfig, name="langsmith"):
-    """A telemetry exporter to transmit traces to externally hosted langsmith service."""
+    """A telemetry exporter to transmit traces to externally hosted langsmith service.
+
+    ## Details
+    Name: LangSmith
+    Icon: ![Icon](https://cdn.simpleicons.org/langchain/1C3C3C)
+    """
 
     endpoint: str = Field(
         description="The langsmith OTEL endpoint",
@@ -110,7 +120,12 @@ class OtelCollectorTelemetryExporter(BatchConfigMixin,
                                      CollectorConfigMixin,
                                      TelemetryExporterBaseConfig,
                                      name="otelcollector"):
-    """A telemetry exporter to transmit traces to externally hosted otel collector service."""
+    """A telemetry exporter to transmit traces to externally hosted otel collector service.
+
+    ## Details
+    Name: OpenTelemetry Collector
+    Icon: ![Icon](https://cdn.simpleicons.org/opentelemetry/000000)
+    """
 
     resource_attributes: dict[str, str] = Field(default_factory=dict,
                                                 description="The resource attributes to add to the span")
@@ -148,7 +163,12 @@ async def otel_telemetry_exporter(config: OtelCollectorTelemetryExporter, builde
 
 
 class PatronusTelemetryExporter(BatchConfigMixin, CollectorConfigMixin, TelemetryExporterBaseConfig, name="patronus"):
-    """A telemetry exporter to transmit traces to Patronus service."""
+    """A telemetry exporter to transmit traces to Patronus service.
+
+    ## Details
+    Name: Patronus
+    Icon: ![Icon](https://cdn.simpleicons.org/shield/6366f1)
+    """
 
     api_key: SerializableSecretStr = Field(description="The Patronus API key", default="")
     resource_attributes: dict[str, str] = Field(default_factory=dict,
@@ -184,7 +204,12 @@ async def patronus_telemetry_exporter(config: PatronusTelemetryExporter, builder
 
 
 class GalileoTelemetryExporter(BatchConfigMixin, CollectorConfigMixin, TelemetryExporterBaseConfig, name="galileo"):
-    """A telemetry exporter to transmit traces to externally hosted galileo service."""
+    """A telemetry exporter to transmit traces to externally hosted galileo service.
+
+    ## Details
+    Name: Galileo
+    Icon: ![Icon](https://cdn.simpleicons.org/telescope/f59e0b)
+    """
 
     endpoint: str = Field(description="The galileo endpoint to export telemetry traces.",
                           default="https://app.galileo.ai/api/galileo/otel/traces")
@@ -220,7 +245,12 @@ async def galileo_telemetry_exporter(config: GalileoTelemetryExporter, builder: 
 
 
 class DBNLTelemetryExporter(BatchConfigMixin, TelemetryExporterBaseConfig, name="dbnl"):
-    """A telemetry exporter to transmit traces to DBNL."""
+    """A telemetry exporter to transmit traces to DBNL.
+
+    ## Details
+    Name: DBNL
+    Icon: ![Icon](https://cdn.simpleicons.org/databricks/FF3621)
+    """
 
     api_url: str | None = Field(description="The DBNL API URL.", default=None)
     api_token: OptionalSecretStr = Field(description="The DBNL API token.", default=None)

@@ -13,10 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 from typing import ClassVar
 
+from pydantic import Field
+from pydantic import model_validator
+
+from nat.data_models.component_ref import MiddlewareRef
 from nat.data_models.function import FunctionGroupBaseConfig
 from nat.utils.sdk.nat_base import NatBase
+from nat.utils.sdk.nat_middleware import NatMiddleware
 
 
 class NatFunctionGroup(NatBase[FunctionGroupBaseConfig]):
@@ -35,8 +42,36 @@ class NatFunctionGroup(NatBase[FunctionGroupBaseConfig]):
        group = NatFunctionGroup(config=config, name="my_group")
        ```
 
+    Middleware can be attached to function groups (applies to all functions in the group):
+       ```python
+       middleware = MyMiddleware(...)
+       group = MCPFunctionGroup(..., mw=[middleware])
+       ```
+
     The factory pattern is useful when you want to use an existing config
     without creating a custom class.
     """
 
     _marker_class: ClassVar[type] = FunctionGroupBaseConfig
+
+    # SDK field for middleware - accepts NatMiddleware objects
+    # Named 'mw' to avoid conflict with inherited 'middleware: list[str]' field
+    mw: list[NatMiddleware] = Field(
+        default_factory=list,
+        exclude=True,
+        description="List of middleware to apply to all functions in this group",
+    )
+
+    @model_validator(mode="after")
+    def _set_middleware_refs(self) -> NatFunctionGroup:
+        """Convert NatMiddleware objects to MiddlewareRef references."""
+        if self.mw:
+            middleware_refs = [MiddlewareRef(value=m.computed_name) for m in self.mw if isinstance(m, NatMiddleware)]
+
+            # For subclass pattern: set on self.middleware (inherited from config)
+            # For factory pattern: set on the wrapped config
+            if hasattr(self, "middleware") and "middleware" in self.model_fields:
+                self.middleware = middleware_refs
+            elif self.config is not None and hasattr(self.config, "middleware"):
+                self.config.middleware = middleware_refs
+        return self

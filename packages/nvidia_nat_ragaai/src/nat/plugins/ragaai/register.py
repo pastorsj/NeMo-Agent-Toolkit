@@ -30,7 +30,12 @@ logger = logging.getLogger(__name__)
 
 
 class CatalystTelemetryExporter(BatchConfigMixin, CollectorConfigMixin, TelemetryExporterBaseConfig, name="catalyst"):
-    """A telemetry exporter to transmit traces to RagaAI catalyst."""
+    """A telemetry exporter to transmit traces to RagaAI catalyst.
+
+    ## Details
+    Name: RagaAI Catalyst
+    Icon: ![Icon](https://cdn.simpleicons.org/rocket/ef4444)
+    """
     endpoint: str = Field(description="The RagaAI Catalyst endpoint", default="https://catalyst.raga.ai/api")
     access_key: SerializableSecretStr = Field(description="The RagaAI Catalyst API access key", default="")
     secret_key: SerializableSecretStr = Field(description="The RagaAI Catalyst API secret key", default="")

@@ -60,7 +60,7 @@ response = await workflow.prompt(
 )
 ```
 
-The `conversation_id` is passed to memory backends (such as Zep or Mem0) to store and retrieve conversation history and user context. See the [Multi-Turn Chatbot notebook](../../../examples/notebooks/sdk/15_multiturn_chatbot.ipynb) for a complete example.
+The `conversation_id` is passed to memory backends (such as Zep or Mem0) to store and retrieve conversation history and user context. See the [Multi-Turn Chatbot notebook](../../../examples/notebooks/sdk/16_multiturn_chatbot.ipynb) for a complete example.
 
 ### Accessing the Configuration
 

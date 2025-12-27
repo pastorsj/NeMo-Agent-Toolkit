@@ -17,8 +17,8 @@
 from __future__ import annotations
 
 from nat.cli.register_workflow import register_middleware
-from nat.middleware.cache_middleware import CacheMiddleware
 from nat.middleware.cache_middleware import CacheMiddlewareConfig
+from nat.middleware.cache_middleware import CacheMiddlewareImpl
 
 
 @register_middleware(config_type=CacheMiddlewareConfig)
@@ -32,4 +32,4 @@ async def cache_middleware(config: CacheMiddlewareConfig, builder):
     Yields:
         A configured cache middleware instance
     """
-    yield CacheMiddleware(enabled_mode=config.enabled_mode, similarity_threshold=config.similarity_threshold)
+    yield CacheMiddlewareImpl(enabled_mode=config.enabled_mode, similarity_threshold=config.similarity_threshold)

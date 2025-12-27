@@ -193,11 +193,11 @@ export const REF_TYPE_COLORS: Record<RefType, string> = {
   embedder: '#3b82f6', // blue-500
   function: '#a855f7', // purple-500
   function_group: '#8b5cf6', // violet-500
-  retriever: '#06b6d4', // cyan-500
+  retriever: '#14b8a6', // teal-500 (matches retriever component styling)
   memory: '#f97316', // orange-500
   object_store: '#eab308', // yellow-500
   authentication: '#ef4444', // red-500
-  middleware: '#ec4899', // pink-500
+  middleware: '#06b6d4', // cyan-500 (matches middleware component styling)
   // Front-end and observability
   front_end: '#10b981', // emerald-500
   logger: '#64748b', // slate-500

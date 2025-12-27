@@ -6,7 +6,7 @@ export default function Document() {
       <Head>
         <meta charSet="utf-8" />
         <meta name="description" content="NAT Workflow Builder - Visual agent workflow designer" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/nvidia.jpg" type="image/jpeg" />
       </Head>
       <body className="bg-canvas text-gray-100">
         <Main />

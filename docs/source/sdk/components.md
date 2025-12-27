@@ -273,6 +273,81 @@ For more details on agent types, see:
 - [Tool Calling Agent](../components/agents/tool-calling-agent/index.md)
 - [Router Agent](../components/agents/router-agent/index.md)
 
+## Middleware
+
+Middleware provides a mechanism for adding cross-cutting concerns to functions without modifying their implementation. You can use middleware for caching, logging, rate limiting, and more.
+
+### Cache Middleware
+
+The cache middleware memoizes function outputs based on input similarity:
+
+```python
+from nat.middleware.cache_middleware import CacheMiddleware
+
+cache_middleware = CacheMiddleware(
+    enabled_mode="always",       # "always" or "eval" (only during evaluation)
+    similarity_threshold=1.0,    # 1.0 = exact matching, < 1.0 = fuzzy matching
+    name="my_cache",
+)
+```
+
+**Key Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `enabled_mode` | str | When caching is active: `"always"` or `"eval"` |
+| `similarity_threshold` | float | Input matching threshold (0.0–1.0) |
+
+### Applying Middleware to Functions
+
+Use the `mw` parameter to attach middleware to any function:
+
+```python
+from nat.tool.datetime_tools import CurrentTimeTool
+
+# Create a function with middleware attached
+time_tool = CurrentTimeTool(
+    name="cached_time_tool",
+    mw=[cache_middleware],  # Attach middleware using 'mw' parameter
+)
+
+print(time_tool.middleware)  # ['my_cache']
+```
+
+### Applying Middleware to Function Groups
+
+Middleware can also be applied to function groups, which applies the middleware to all functions in the group:
+
+```python
+from nat.plugins.mcp.mcp_client.register import NatMCPClient
+
+mcp_client = NatMCPClient(
+    server_url="http://localhost:8000",
+    name="my_mcp_client",
+    mw=[cache_middleware],  # Applied to all functions in the group
+)
+```
+
+### Multiple Middleware
+
+You can attach multiple middleware components. They execute in order (first to last for preprocessing, last to first for postprocessing):
+
+```python
+# Create additional middleware
+eval_cache = CacheMiddleware(
+    enabled_mode="eval",  # Only cache during evaluation
+    name="eval_cache",
+)
+
+# Attach multiple middleware
+tool = CurrentTimeTool(
+    name="multi_mw_tool",
+    mw=[cache_middleware, eval_cache],  # Order matters
+)
+```
+
+For more details on middleware concepts and custom middleware development, see the [Middleware documentation](../build-workflows/advanced/middleware.md).
+
 ## Embedders
 
 Embedders create vector embeddings for retrieval:
@@ -330,7 +405,7 @@ agent = NatReActAgent(
 )
 ```
 
-See the [Multi-Turn Chatbot notebook](../../../examples/notebooks/sdk/15_multiturn_chatbot.ipynb) for a complete example with Zep Cloud.
+See the [Multi-Turn Chatbot notebook](../../../examples/notebooks/sdk/16_multiturn_chatbot.ipynb) for a complete example with Zep Cloud.
 
 ## Putting It Together
 

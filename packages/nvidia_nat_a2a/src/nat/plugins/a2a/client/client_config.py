@@ -35,6 +35,10 @@ class A2AClientConfig(FunctionGroupBaseConfig, name="a2a_client"):
         include_skills_in_description: Include skill details in high-level function description (default: True)
         streaming: Whether to enable streaming support for the A2A client (default: False)
         auth_provider: Optional reference to NAT auth provider for authentication
+
+    ## Details
+    Name: A2A Client
+    Icon: ![Icon](https://cdn.simpleicons.org/google/4285F4)
     """
 
     url: HttpUrl = Field(

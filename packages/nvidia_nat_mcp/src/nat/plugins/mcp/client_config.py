@@ -21,9 +21,9 @@ from pydantic import Field
 from pydantic import HttpUrl
 from pydantic import model_validator
 
-from nat.authentication.interfaces import AuthProviderBaseConfig
 from nat.data_models.component_ref import AuthenticationRef
 from nat.data_models.function import FunctionGroupBaseConfig
+from nat.utils.sdk.nat_auth_provider import NatAuthProvider
 from nat.utils.sdk.nat_function_group import NatFunctionGroup
 
 
@@ -31,6 +31,7 @@ class MCPToolOverrideConfig(BaseModel):
     """
     Configuration for overriding tool properties when exposing from MCP server.
     """
+
     alias: str | None = Field(default=None, description="Override the tool name (function name in the workflow)")
     description: str | None = Field(default=None, description="Override the tool description")
 
@@ -41,6 +42,7 @@ class MCPServerConfig(BaseModel):
     Supports stdio, sse, and streamable-http transports.
     streamable-http is the recommended default for HTTP-based connections.
     """
+
     transport: Literal["stdio", "sse", "streamable-http"] = Field(
         ..., description="Transport type to connect to the MCP server (stdio, sse, or streamable-http)")
     url: HttpUrl | None = Field(default=None,
@@ -85,7 +87,12 @@ class MCPServerConfig(BaseModel):
 class MCPClientConfig(FunctionGroupBaseConfig, name="mcp_client"):
     """
     Configuration for connecting to an MCP server as a client and exposing selected tools.
+
+    ## Details
+    Name: MCP Client
+    Icon: ![Icon](https://cdn.simpleicons.org/anthropic/191919)
     """
+
     server: MCPServerConfig = Field(..., description="Server connection details (transport, url/command, etc.)")
     tool_call_timeout: timedelta = Field(
         default=timedelta(seconds=60),
@@ -93,11 +100,13 @@ class MCPClientConfig(FunctionGroupBaseConfig, name="mcp_client"):
     auth_flow_timeout: timedelta = Field(
         default=timedelta(seconds=300),
         description="Timeout (in seconds) for the MCP auth flow. When the tool call requires interactive \
-        authentication, this timeout is used. Defaults to 300 seconds.")
+        authentication, this timeout is used. Defaults to 300 seconds.",
+    )
     reconnect_enabled: bool = Field(
         default=True,
         description="Whether to enable reconnecting to the MCP server if the connection is lost. \
-        Defaults to True.")
+        Defaults to True.",
+    )
     reconnect_max_attempts: int = Field(default=2,
                                         ge=0,
                                         description="Maximum number of reconnect attempts. Defaults to 2.")
@@ -115,7 +124,8 @@ class MCPClientConfig(FunctionGroupBaseConfig, name="mcp_client"):
               description: "Add two numbers together"
             calculator_multiply:
               description: "Multiply two numbers"  # alias defaults to original name
-        """)
+        """,
+    )
     session_aware_tools: bool = Field(default=True,
                                       description="Session-aware tools are created if True. Defaults to True.")
     max_sessions: int = Field(default=100, ge=0, description="Maximum number of concurrent sessions. Defaults to 100.")
@@ -123,20 +133,10 @@ class MCPClientConfig(FunctionGroupBaseConfig, name="mcp_client"):
 
 class MCPClient(MCPClientConfig, NatFunctionGroup):
     """MCP Client Function Group"""
-    session_idle_timeout: timedelta = Field(
-        default=timedelta(hours=1),
-        description="Time after which inactive sessions are cleaned up. Defaults to 1 hour.")
 
-    auth_provider_obj: AuthProviderBaseConfig | None = Field(default=None, exclude=True)
+    auth_provider_obj: NatAuthProvider | None = Field(default=None, exclude=True)
 
     @model_validator(mode="after")
-    def _validate_reconnect_backoff(self) -> "MCPClientConfig":
-        """Validate reconnect backoff values."""
-        if self.reconnect_max_backoff < self.reconnect_initial_backoff:
-            raise ValueError("reconnect_max_backoff must be greater than or equal to reconnect_initial_backoff")
-        return self
-
-    @model_validator(mode='after')
     def set_references(self):
         """Set auth provider reference from object if provided."""
         if self.auth_provider_obj:

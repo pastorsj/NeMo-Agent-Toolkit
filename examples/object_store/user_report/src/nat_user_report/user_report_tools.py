@@ -36,6 +36,10 @@ class UserReportConfig(FunctionGroupBaseConfig, name="user_report"):
 
     This function group provides CRUD operations for user reports stored in an object store.
     All functions share the same object store reference and configuration.
+
+    ## Details
+    Name: User Report Tools
+    Icon: ![Icon](https://cdn.simpleicons.org/files/22c55e)
     """
     object_store: ObjectStoreRef = Field(description="The object store to use for storing user reports")
 
