@@ -18,7 +18,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from nat.builder.workflow_builder import WorkflowBuilder
-from nat.plugins.a2a.client.client_config import A2AClientConfig
+from nat.plugins.a2a.sdk import A2AClientConfig
 
 
 class TestA2AClientFunctionality:

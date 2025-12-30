@@ -22,17 +22,12 @@ from nat.builder.framework_enum import LLMFrameworkEnum
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
 
 class TextProcessorFunctionConfig(FunctionBaseConfig, name="text_processor"):
     """Configuration for the text processor function."""
-    pass
-
-
-class TextProcessorTool(TextProcessorFunctionConfig, NatFunction):
     pass
 
 
@@ -87,10 +82,6 @@ async def text_processor_function(config: TextProcessorFunctionConfig, builder: 
 
 class DataAnalyzerFunctionConfig(FunctionBaseConfig, name="data_analyzer"):
     """Configuration for the data analyzer function."""
-    pass
-
-
-class DataAnalyzerTool(DataAnalyzerFunctionConfig, NatFunction):
     pass
 
 
@@ -174,10 +165,6 @@ async def data_analyzer_function(config: DataAnalyzerFunctionConfig, builder: Bu
 
 class ReportGeneratorFunctionConfig(FunctionBaseConfig, name="report_generator"):
     """Configuration for the report generator function."""
-    pass
-
-
-class ReportGeneratorTool(ReportGeneratorFunctionConfig, NatFunction):
     pass
 
 

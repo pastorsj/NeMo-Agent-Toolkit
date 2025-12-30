@@ -31,7 +31,7 @@ from nat.control_flow.router_agent.agent import RouterAgentGraphState
 from nat.control_flow.router_agent.agent import create_router_agent_prompt
 from nat.control_flow.router_agent.prompt import SYSTEM_PROMPT
 from nat.control_flow.router_agent.prompt import USER_PROMPT
-from nat.control_flow.router_agent.register import RouterAgentWorkflowConfig
+from nat.control_flow.sdk import RouterAgentWorkflowConfig
 
 
 class MockTool(BaseTool):

@@ -27,7 +27,6 @@ from nat.data_models.optimizable import OptimizableField
 from nat.data_models.optimizable import SearchSpace
 from nat.data_models.retry_mixin import RetryMixin
 from nat.data_models.thinking_mixin import ThinkingMixin
-from nat.utils.sdk.nat_llm import NatLLM
 
 
 class AzureOpenAIModelConfig(
@@ -74,10 +73,6 @@ class AzureOpenAIModelConfig(
         Returns the model name for compatibility with other parts of the code base which expect a model_name attribute.
         """
         return self.azure_deployment
-
-
-class AzureOpenAILLM(AzureOpenAIModelConfig, NatLLM):
-    """Azure OpenAI Model LLM Provider"""
 
 
 @register_llm_provider(config_type=AzureOpenAIModelConfig)

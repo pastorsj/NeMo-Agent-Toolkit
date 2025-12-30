@@ -23,8 +23,8 @@ from pytest import fixture
 
 from nat.data_models.config import Config
 from nat.data_models.config import GeneralConfig
-from nat.front_ends.mcp.mcp_front_end_config import MCPFrontEndConfig
 from nat.front_ends.mcp.mcp_front_end_plugin_worker import MCPFrontEndPluginWorker
+from nat.front_ends.sdk import MCPFrontEndConfig
 from nat.utils.type_utils import override
 
 

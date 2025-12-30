@@ -73,7 +73,7 @@ Each test case requires:
 Evaluators measure different aspects of performance:
 
 ```python
-from nat.eval.rag_evaluator.register import RagasEvaluator
+from nat.eval.sdk import RagasEvaluator
 
 # Create an accuracy evaluator
 accuracy_evaluator = RagasEvaluator(
@@ -158,10 +158,10 @@ await workflow.evaluate(
 import asyncio
 import json
 from pathlib import Path
-from nat.llm.nim_llm import NimLLM
-from nat.agent.react_agent.register import NatReActAgent
-from nat.tool.datetime_tools import CurrentTimeTool
-from nat.eval.rag_evaluator.register import RagasEvaluator
+from nat.llm.sdk import NimLLM
+from nat.agent.sdk import NatReActAgent
+from nat.tool.sdk import CurrentTimeTool
+from nat.eval.sdk import RagasEvaluator
 from nat.utils.sdk.nat_evaluation import NatEvaluation, EvalDatasetJsonConfig
 from nat.utils.sdk.nat_workflow import NatWorkflow
 

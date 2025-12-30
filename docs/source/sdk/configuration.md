@@ -57,9 +57,9 @@ nat run --config_file workflow.yaml --input "Hello!"
 When exporting for production, provide explicit names for stable configuration:
 
 ```python
-from nat.llm.nim_llm import NimLLM
-from nat.agent.react_agent.register import NatReActAgent
-from nat.tool.datetime_tools import CurrentTimeTool
+from nat.llm.sdk import NimLLM
+from nat.agent.sdk import NatReActAgent
+from nat.tool.sdk import CurrentTimeTool
 from nat.utils.sdk.nat_workflow import NatWorkflow
 
 # Use explicit names for production export
@@ -126,7 +126,7 @@ If you've added an evaluator, it will be included:
 
 ```python
 from nat.utils.sdk.nat_evaluation import NatEvaluation, EvalDatasetJsonConfig
-from nat.eval.rag_evaluator.register import RagasEvaluator
+from nat.eval.sdk import RagasEvaluator
 
 evaluator = RagasEvaluator(llm=llm, metric="AnswerAccuracy", name="accuracy")
 evaluation = NatEvaluation(

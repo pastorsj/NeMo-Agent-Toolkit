@@ -20,7 +20,6 @@ from nat.cli.register_workflow import register_object_store
 from nat.data_models.object_store import KeyAlreadyExistsError
 from nat.data_models.object_store import NoSuchKeyError
 from nat.data_models.object_store import ObjectStoreBaseConfig
-from nat.utils.sdk.nat_object_store import NatObjectStore
 from nat.utils.type_utils import override
 
 from .interfaces import ObjectStore
@@ -36,10 +35,6 @@ class InMemoryObjectStoreConfig(ObjectStoreBaseConfig, name="in_memory"):
     Icon: ![Icon](https://cdn.simpleicons.org/redis/DC382D)
     """
     pass
-
-
-class InMemoryObjectStoreWrapper(InMemoryObjectStoreConfig, NatObjectStore):
-    """In-Memory Object Store Provider"""
 
 
 class InMemoryObjectStore(ObjectStore):

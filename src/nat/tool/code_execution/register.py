@@ -24,7 +24,6 @@ from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
@@ -42,10 +41,6 @@ class CodeExecutionToolConfig(FunctionBaseConfig, name="code_execution"):
     sandbox_type: Literal["local", "piston"] = Field(default="local", description="The type of code execution sandbox")
     timeout: float = Field(default=10.0, description="Number of seconds to wait for a code execution request")
     max_output_characters: int = Field(default=1000, description="Maximum number of characters that can be returned")
-
-
-class CodeExecutionTool(CodeExecutionToolConfig, NatFunction):
-    """Code Execution Tool"""
 
 
 @register_function(config_type=CodeExecutionToolConfig)

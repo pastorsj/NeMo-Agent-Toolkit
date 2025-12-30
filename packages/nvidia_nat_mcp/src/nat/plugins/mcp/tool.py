@@ -27,7 +27,6 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
 from nat.plugins.mcp.client_base import MCPToolClient
 from nat.utils.decorators import deprecated
-from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
@@ -69,10 +68,6 @@ class MCPToolConfig(FunctionBaseConfig, name="mcp_tool_wrapper"):
             if not self.url:
                 raise ValueError("url is required when using streamable-http or sse client type")
         return self
-
-
-class MCPTool(MCPToolConfig, NatFunction):
-    """MCP Tool Wrapper"""
 
 
 def mcp_tool_function(tool: MCPToolClient) -> FunctionInfo:

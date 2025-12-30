@@ -23,7 +23,6 @@ from nat.cli.register_workflow import register_embedder_provider
 from nat.data_models.common import OptionalSecretStr
 from nat.data_models.embedder import EmbedderBaseConfig
 from nat.data_models.retry_mixin import RetryMixin
-from nat.utils.sdk.nat_embedder import NatEmbedder
 
 
 class AzureOpenAIEmbedderModelConfig(EmbedderBaseConfig, RetryMixin, name="azure_openai"):
@@ -46,10 +45,6 @@ class AzureOpenAIEmbedderModelConfig(EmbedderBaseConfig, RetryMixin, name="azure
     azure_deployment: str = Field(validation_alias=AliasChoices("azure_deployment", "model_name", "model"),
                                   serialization_alias="azure_deployment",
                                   description="The Azure OpenAI hosted model/deployment name.")
-
-
-class AzureOpenAIEmbedder(AzureOpenAIEmbedderModelConfig, NatEmbedder):
-    """Azure OpenAI Model Embedder Provider"""
 
 
 @register_embedder_provider(config_type=AzureOpenAIEmbedderModelConfig)

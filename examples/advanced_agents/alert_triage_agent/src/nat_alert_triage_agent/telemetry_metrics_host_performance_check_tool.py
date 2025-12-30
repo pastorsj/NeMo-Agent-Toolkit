@@ -21,15 +21,12 @@ from datetime import timedelta
 
 import requests
 from pydantic import Field
-from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
-from nat.utils.sdk.nat_llm import NatLLM
 
 from . import utils
 from .prompts import TelemetryMetricsHostPerformanceCheckPrompts
@@ -46,20 +43,6 @@ class TelemetryMetricsHostPerformanceCheckToolConfig(FunctionBaseConfig,
     )
     offline_mode: bool = Field(default=True, description="Whether to run in offline model")
     metrics_url: str = Field(default="", description="URL of the monitoring system")
-
-
-class TelemetryMetricsHostPerformanceCheckTool(TelemetryMetricsHostPerformanceCheckToolConfig, NatFunction):
-    """Telemetry Metrics Host Performance Check Tool"""
-    llm_name: LLMRef = Field(description="", default=LLMRef(value=""), init=False)
-
-    llm: NatLLM = Field(exclude=True)
-
-    @model_validator(mode="after")
-    def set_references(self):
-        """Set llm name from llm object if llm is provided."""
-        if self.llm:
-            self.llm_name = LLMRef(value=self.llm.computed_name)
-        return self
 
 
 def _timeseries_stats(ts):

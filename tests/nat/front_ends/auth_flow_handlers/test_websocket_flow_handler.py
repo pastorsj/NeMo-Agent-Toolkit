@@ -27,7 +27,7 @@ from nat.data_models.authentication import AuthFlowType
 from nat.data_models.config import Config
 from nat.front_ends.fastapi.auth_flow_handlers.websocket_flow_handler import WebSocketAuthenticationFlowHandler
 from nat.front_ends.fastapi.fastapi_front_end_plugin_worker import FastApiFrontEndPluginWorker
-from nat.test.functions import EchoFunctionConfig
+from nat.test.sdk import EchoFunctionConfig
 
 
 # --------------------------------------------------------------------------- #

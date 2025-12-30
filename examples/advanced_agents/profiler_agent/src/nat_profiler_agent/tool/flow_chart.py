@@ -29,7 +29,6 @@ from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
 from nat_profiler_agent.data_models import TraceFlowInfo
 
 logger = logging.getLogger(__name__)
@@ -38,10 +37,6 @@ logger = logging.getLogger(__name__)
 class FlowChartConfig(FunctionBaseConfig, name="flow_chart"):
     """Configuration for the FlowChart tool."""
     pass
-
-
-class FlowChartTool(FlowChartConfig, NatFunction):
-    """Flow Chart Tool"""
 
 
 class FlowChartOutput(BaseModel):

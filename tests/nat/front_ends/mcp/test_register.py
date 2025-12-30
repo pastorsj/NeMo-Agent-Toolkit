@@ -15,10 +15,10 @@
 
 from nat.data_models.config import Config
 from nat.data_models.config import GeneralConfig
-from nat.front_ends.mcp.mcp_front_end_config import MCPFrontEndConfig
 from nat.front_ends.mcp.mcp_front_end_plugin import MCPFrontEndPlugin
 from nat.front_ends.mcp.register import register_mcp_front_end
-from nat.test.functions import EchoFunctionConfig
+from nat.front_ends.sdk import MCPFrontEndConfig
+from nat.test.sdk import EchoFunctionConfig
 
 
 async def test_register_mcp_front_end():

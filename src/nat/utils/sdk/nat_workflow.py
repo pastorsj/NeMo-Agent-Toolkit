@@ -188,8 +188,8 @@ class NatWorkflow(BaseModel):
 
     Example:
         ```python
-        from nat.llm.nim_llm import NimLLM
-        from nat.agent.react_agent.register import NatReActAgent
+        from nat.llm.sdk import NimLLM
+        from nat.agent.sdk import NatReActAgent
         from nat.utils.sdk.nat_workflow import NatWorkflow
 
         llm = NimLLM(model_name="meta/llama-3.3-70b-instruct", name="my_llm")

@@ -29,7 +29,7 @@ from nat.agent.rewoo_agent.agent import ReWOOAgentGraph
 from nat.agent.rewoo_agent.agent import ReWOOEvidence
 from nat.agent.rewoo_agent.agent import ReWOOGraphState
 from nat.agent.rewoo_agent.agent import ReWOOPlanStep
-from nat.agent.rewoo_agent.register import ReWOOAgentWorkflowConfig
+from nat.agent.sdk import ReWOOAgentWorkflowConfig
 
 
 async def test_state_schema():

@@ -35,11 +35,13 @@ from nat.workflow_builder_api.utils.schema import get_model_description
 from nat.workflow_builder_api.utils.schema import get_sdk_excluded_fields
 from nat.workflow_builder_api.utils.type_builder import get_category_types
 from nat.workflow_builder_api.utils.validation import validate_yaml_config
+from nat.workflow_builder_api.utils.validation import validate_yaml_config_with_env_vars
 
 __all__ = [
     # Type builder
     "get_category_types",  # Validation
-    "validate_yaml_config",  # Config parser
+    "validate_yaml_config",
+    "validate_yaml_config_with_env_vars",  # Config parser
     "parse_config_to_workflow_state",  # Config exporter
     "export_workflow_to_yaml",  # Schema
     "extract_json_schema",

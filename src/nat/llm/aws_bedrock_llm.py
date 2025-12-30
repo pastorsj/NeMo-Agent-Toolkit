@@ -26,7 +26,6 @@ from nat.data_models.optimizable import OptimizableMixin
 from nat.data_models.optimizable import SearchSpace
 from nat.data_models.retry_mixin import RetryMixin
 from nat.data_models.thinking_mixin import ThinkingMixin
-from nat.utils.sdk.nat_llm import NatLLM
 
 
 class AWSBedrockModelConfig(LLMBaseConfig, RetryMixin, OptimizableMixin, ThinkingMixin, name="aws_bedrock"):
@@ -70,10 +69,6 @@ class AWSBedrockModelConfig(LLMBaseConfig, RetryMixin, OptimizableMixin, Thinkin
                                            le=1.0,
                                            description="Top-p for distribution sampling.",
                                            space=SearchSpace(high=1.0, low=0.5, step=0.1))
-
-
-class AWSBedrockLLM(AWSBedrockModelConfig, NatLLM):
-    """AWS Bedrock Model LLM Provider"""
 
 
 @register_llm_provider(config_type=AWSBedrockModelConfig)

@@ -21,7 +21,6 @@ from nat.builder.builder import Builder
 from nat.builder.function import FunctionGroup
 from nat.cli.register_workflow import register_function_group
 from nat.data_models.function import FunctionGroupBaseConfig
-from nat.utils.sdk.nat_function_group import NatFunctionGroup
 
 
 class CalculatorToolConfig(FunctionGroupBaseConfig, name="calculator"):
@@ -36,10 +35,6 @@ class CalculatorToolConfig(FunctionGroupBaseConfig, name="calculator"):
 
     include: list[str] = Field(default_factory=lambda: ["add", "subtract", "multiply", "divide", "compare"],
                                description="The list of functions to include in the calculator function group.")
-
-
-class CalculatorToolGroup(CalculatorToolConfig, NatFunctionGroup):
-    """Simple Calculator Function Group"""
 
 
 @register_function_group(config_type=CalculatorToolConfig)

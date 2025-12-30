@@ -28,11 +28,11 @@ from nat.data_models.api_server import ChatResponseChunk
 from nat.data_models.api_server import Message
 from nat.data_models.config import Config
 from nat.data_models.config import GeneralConfig
-from nat.front_ends.fastapi.fastapi_front_end_config import FastApiFrontEndConfig
 from nat.front_ends.fastapi.fastapi_front_end_plugin_worker import FastApiFrontEndPluginWorker
+from nat.front_ends.sdk import FastApiFrontEndConfig
 from nat.object_store.in_memory_object_store import InMemoryObjectStoreConfig
-from nat.test.functions import EchoFunctionConfig
-from nat.test.functions import StreamingEchoFunctionConfig
+from nat.test.sdk import EchoFunctionConfig
+from nat.test.sdk import StreamingEchoFunctionConfig
 from nat.test.utils import build_nat_client
 from nat.utils.type_utils import override
 

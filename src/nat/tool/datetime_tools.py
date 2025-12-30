@@ -23,7 +23,6 @@ from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
 from nat.settings.global_settings import GlobalSettings
-from nat.utils.sdk.nat_function import NatFunction
 
 
 class CurrentTimeToolConfig(FunctionBaseConfig, name="current_datetime"):
@@ -37,10 +36,6 @@ class CurrentTimeToolConfig(FunctionBaseConfig, name="current_datetime"):
     Icon: ![Icon](https://cdn.simpleicons.org/clockify/03A9F4)
     """
     pass
-
-
-class CurrentTimeTool(CurrentTimeToolConfig, NatFunction):
-    """Current Time Tool"""
 
 
 def _get_timezone_obj(headers: Headers | None) -> zoneinfo.ZoneInfo | datetime.tzinfo:

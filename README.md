@@ -158,12 +158,12 @@ You can also build workflows entirely in Python using the SDK, without any YAML 
 
 ```python
 import asyncio
-from nat.llm.nim_llm import NimLLM
-from nat.agent.react_agent.register import NatReActAgent
+from nat.llm.sdk import NimLLM
+from nat.agent.sdk import NatReActAgent
 from nat.utils.sdk.nat_workflow import NatWorkflow
 
 # Import a tool - install with: pip install "nvidia-nat[langchain]"
-from nat.plugins.langchain.tools.wikipedia_search import WikipediaSearchTool
+from nat.plugins.langchain.sdk import WikiSearchTool
 
 # Create the LLM
 llm = NimLLM(
@@ -172,7 +172,7 @@ llm = NimLLM(
 )
 
 # Create a tool
-wiki_tool = WikipediaSearchTool(max_results=2)
+wiki_tool = WikiSearchTool(max_results=2)
 
 # Create the agent
 agent = NatReActAgent(

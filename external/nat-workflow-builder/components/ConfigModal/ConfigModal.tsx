@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { X, ChevronDown, Save, AlertCircle, Link2, Search } from 'lucide-react';
 import { PlacedComponent, NAT_COMPONENTS, NATComponentType } from '@/types';
 import { useRegistry } from '@/contexts/RegistryContext';
-import { useWorkflow } from '@/contexts/WorkflowContext';
+import { useWorkflow, EnvironmentVariable } from '@/contexts/WorkflowContext';
 import { RegisteredTypeInfo, ComponentCategory, REF_TYPE_LABELS, REF_TYPE_COLORS } from '@/types/registry';
 import { ComponentIcon } from '@/components/NATComponents/ComponentIcon';
 import { ProviderIcon } from '@/components/ProviderIcon';
@@ -61,12 +61,39 @@ interface ConfigModalProps {
 
 export function ConfigModal({ component, onClose, onSave }: ConfigModalProps) {
   const { getTypesForCategory, loading, error, connected } = useRegistry();
-  const { updateComponentRegisteredType } = useWorkflow();
+  const { updateComponentRegisteredType, environmentVariables, setEnvVarValue } = useWorkflow();
   const [selectedType, setSelectedType] = useState<RegisteredTypeInfo | null>(null);
   const [formData, setFormData] = useState<Record<string, unknown>>(component.config || {});
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Create a map of env var names to their values for quick lookup
+  const envVarValues = useMemo(() => {
+    const map = new Map<string, string | null>();
+    environmentVariables.forEach((envVar) => {
+      map.set(envVar.name, envVar.value);
+    });
+    return map;
+  }, [environmentVariables]);
+
+  // Create a map of field names to their associated env var names (for this component)
+  const fieldToEnvVar = useMemo(() => {
+    const map = new Map<string, string>();
+    environmentVariables.forEach((envVar) => {
+      envVar.locations.forEach((loc) => {
+        if (loc.component_id === component.id && loc.field_name) {
+          map.set(loc.field_name, envVar.name);
+        }
+      });
+    });
+    return map;
+  }, [environmentVariables, component.id]);
+
+  // Callback to update env var value (syncs to the side panel)
+  const handleEnvVarChange = useCallback((varName: string, value: string) => {
+    setEnvVarValue(varName, value);
+  }, [setEnvVarValue]);
 
   const config = NAT_COMPONENTS[component.type];
   const category = TYPE_TO_CATEGORY[component.type];
@@ -457,6 +484,10 @@ export function ConfigModal({ component, onClose, onSave }: ConfigModalProps) {
                         field={field}
                         value={formData[field.name]}
                         onChange={(value) => handleFieldChange(field.name, value)}
+                        componentId={component.id}
+                        envVarValues={envVarValues}
+                        onEnvVarChange={handleEnvVarChange}
+                        associatedEnvVar={fieldToEnvVar.get(field.name)}
                       />
                     ))}
                   </div>

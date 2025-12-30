@@ -12,13 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for the workflow builder API."""
+"""SDK classes for this example package."""
 
-import sys
-from pathlib import Path
+from nat.utils.sdk.nat_function_group import NatFunctionGroup
 
-# Ensure src is in path for NAT imports
-# Go up: workflow_builder_api -> nat -> tests -> project_root -> src
-_SRC_DIR = Path(__file__).resolve().parent.parent.parent.parent / "src"
-if str(_SRC_DIR) not in sys.path:
-    sys.path.insert(0, str(_SRC_DIR))
+from .register import CalculatorToolConfig
+
+
+class CalculatorToolGroup(CalculatorToolConfig, NatFunctionGroup):
+    """Simple Calculator Function Group"""

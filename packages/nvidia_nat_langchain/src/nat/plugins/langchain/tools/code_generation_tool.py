@@ -16,7 +16,6 @@
 import logging
 
 from pydantic import Field
-from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
@@ -24,8 +23,6 @@ from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
-from nat.utils.sdk.nat_llm import NatLLM
 
 log = logging.getLogger(__name__)
 
@@ -43,20 +40,6 @@ class CodeGenerationToolConfig(FunctionBaseConfig, name="code_generation"):
     programming_language: str = "Python"
     description: str = ("Useful to generate Python code. For any questions about code generation, you must only use "
                         "this tool!")
-
-
-class CodeGenerationTool(CodeGenerationToolConfig, NatFunction):
-    """Code Generation Tool"""
-
-    llm_name: LLMRef = Field(description="LLM to use for code generation.", default=LLMRef(value=""), init=False)
-    llm: NatLLM = Field(exclude=True)
-
-    @model_validator(mode='after')
-    def set_references(self):
-        """Set llm_name from llm object if llm is provided."""
-        if self.llm:
-            self.llm_name = LLMRef(value=self.llm.computed_name)
-        return self
 
 
 @register_function(config_type=CodeGenerationToolConfig)

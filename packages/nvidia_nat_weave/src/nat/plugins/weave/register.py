@@ -21,7 +21,6 @@ from pydantic import Field
 from nat.builder.builder import Builder
 from nat.cli.register_workflow import register_telemetry_exporter
 from nat.data_models.telemetry_exporter import TelemetryExporterBaseConfig
-from nat.utils.sdk.nat_telemetry_exporter import NatTelemetryExporter
 
 logger = logging.getLogger(__name__)
 
@@ -50,10 +49,6 @@ class WeaveTelemetryExporterConfig(TelemetryExporterBaseConfig, name="weave"):
     verbose: bool = Field(default=False, description="Whether to enable verbose logging.")
     attributes: dict[str, typing.Any] | None = Field(default=None,
                                                      description="Custom attributes to include in the traces.")
-
-
-class WeaveTelemetryExporter(WeaveTelemetryExporterConfig, NatTelemetryExporter):
-    """A telemetry exporter to transmit traces to Weights & Biases Weave using OpenTelemetry."""
 
 
 @register_telemetry_exporter(config_type=WeaveTelemetryExporterConfig)

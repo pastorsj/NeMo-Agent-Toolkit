@@ -17,7 +17,6 @@ import logging
 
 from nat.cli.register_workflow import register_registry_handler
 from nat.data_models.registry_handler import RegistryHandlerBaseConfig
-from nat.utils.sdk.nat_registry_handler import NatRegistryHandler
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +31,6 @@ class LocalRegistryHandlerConfig(RegistryHandlerBaseConfig, name="local"):
     """
 
     pass
-
-
-class LocalRegistryHandler(LocalRegistryHandlerConfig, NatRegistryHandler):
-    """Local Registry Handler"""
 
 
 @register_registry_handler(config_type=LocalRegistryHandlerConfig)

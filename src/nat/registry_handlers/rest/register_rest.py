@@ -21,7 +21,6 @@ from nat.cli.register_workflow import register_registry_handler
 from nat.data_models.common import OptionalSecretStr
 from nat.data_models.common import get_secret_value
 from nat.data_models.registry_handler import RegistryHandlerBaseConfig
-from nat.utils.sdk.nat_registry_handler import NatRegistryHandler
 
 
 class RestRegistryHandlerConfig(RegistryHandlerBaseConfig, name="rest"):
@@ -40,10 +39,6 @@ class RestRegistryHandlerConfig(RegistryHandlerBaseConfig, name="rest"):
     pull_route: str = Field(default="", description="The route to the NAT pull service.")
     search_route: str = Field(default="", description="The route to the NAT search service")
     remove_route: str = Field(default="", description="The route to the NAT remove service")
-
-
-class RestRegistryHandler(RestRegistryHandlerConfig, NatRegistryHandler):
-    """Rest Registry Handler"""
 
 
 @register_registry_handler(config_type=RestRegistryHandlerConfig)

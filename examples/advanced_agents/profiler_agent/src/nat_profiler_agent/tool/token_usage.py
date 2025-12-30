@@ -28,7 +28,6 @@ from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
 from nat_profiler_agent.data_models import TokenUsageInfo
 
 logger = logging.getLogger(__name__)
@@ -38,10 +37,6 @@ class TokenUsageConfig(FunctionBaseConfig, name="token_usage"):
     """Configuration for the TokenUsage tool."""
 
     pass
-
-
-class TokenUsageTool(TokenUsageConfig, NatFunction):
-    """Token Usage Tool"""
 
 
 class TokenUsageOutput(BaseModel):

@@ -15,8 +15,8 @@
 
 import pytest
 
-from nat.retriever.milvus.register import MilvusRetrieverConfig
-from nat.retriever.nemo_retriever.register import NemoRetrieverConfig
+from nat.retriever.sdk import MilvusRetrieverConfig
+from nat.retriever.sdk import NemoRetrieverConfig
 
 
 def test_milvus_config():

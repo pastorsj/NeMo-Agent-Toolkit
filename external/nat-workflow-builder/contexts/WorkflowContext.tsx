@@ -62,9 +62,37 @@ export interface ImportedConnection {
   ref_type: string;
 }
 
+// Environment variable types
+export interface EnvVarLocation {
+  path: string;
+  component_type: string | null;
+  component_id: string | null;
+  field_name: string;
+  is_list_field?: boolean;
+}
+
+export interface EnvironmentVariable {
+  name: string;
+  locations: EnvVarLocation[];
+  value: string | null;
+  is_sensitive: boolean;
+  export_as_variable: boolean;
+  original_reference: string;
+  warning?: string | null;
+  has_secret_field_usage?: boolean;
+  has_non_secret_field_usage?: boolean;
+  is_list_field?: boolean;
+}
+
 export interface ImportedWorkflowState {
   components: ImportedComponent[];
   connections: ImportedConnection[];
+  environment_variables?: EnvironmentVariable[];
+}
+
+// Extended workflow state that includes environment variables
+interface ExtendedWorkflowState extends WorkflowState {
+  environmentVariables: EnvironmentVariable[];
 }
 
 // Action types
@@ -82,7 +110,10 @@ type WorkflowAction =
   | { type: 'REMOVE_CONNECTION'; payload: { id: string } }
   | { type: 'REMOVE_CONNECTIONS_FOR_FIELD'; payload: { componentId: string; fieldName: string } }
   | { type: 'CLEAR_WORKFLOW'; payload?: undefined }
-  | { type: 'LOAD_IMPORTED_STATE'; payload: { importedState: ImportedWorkflowState } };
+  | { type: 'LOAD_IMPORTED_STATE'; payload: { importedState: ImportedWorkflowState } }
+  | { type: 'SET_ENV_VAR_VALUE'; payload: { name: string; value: string } }
+  | { type: 'SET_ENV_VAR_EXPORT_MODE'; payload: { name: string; exportAsVariable: boolean } }
+  | { type: 'SET_ENV_VARS'; payload: { envVars: EnvironmentVariable[] } };
 
 // Helper function to convert PascalCase/camelCase/snake_case to human-readable format
 function toHumanReadable(name: string): string {
@@ -140,16 +171,17 @@ function generateUniqueName(baseName: string, existingNames: string[]): string {
 }
 
 // Initial state
-const initialState: WorkflowState = {
+const initialState: ExtendedWorkflowState = {
   components: [],
   connections: [],
+  environmentVariables: [],
 };
 
 // Track the last added component ID for auto-configuration
 let lastAddedComponentId: string | null = null;
 
 // Reducer
-function workflowReducer(state: WorkflowState, action: WorkflowAction): WorkflowState {
+function workflowReducer(state: ExtendedWorkflowState, action: WorkflowAction): ExtendedWorkflowState {
   switch (action.type) {
     case 'ADD_COMPONENT': {
       const { componentType, position, id } = action.payload;
@@ -313,6 +345,116 @@ function workflowReducer(state: WorkflowState, action: WorkflowAction): Workflow
       return initialState;
     }
 
+    case 'SET_ENV_VAR_VALUE': {
+      const { name, value } = action.payload;
+      const placeholder = `__ENV_VAR__${name}__`;
+
+      // Find the env var to get its locations
+      const envVar = state.environmentVariables.find((v) => v.name === name);
+
+      // Try to parse value as JSON array for list fields
+      let parsedValue: unknown = value;
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          parsedValue = parsed;
+        }
+      } catch {
+        // Not JSON, use as-is
+      }
+
+      // Build a map of component_id -> field_name -> value for direct updates
+      const directUpdates: Map<string, Map<string, unknown>> = new Map();
+      if (envVar) {
+        for (const loc of envVar.locations) {
+          if (loc.component_id && loc.field_name) {
+            if (!directUpdates.has(loc.component_id)) {
+              directUpdates.set(loc.component_id, new Map());
+            }
+            // Use parsed array for list fields, string otherwise
+            const valueToSet = loc.is_list_field && Array.isArray(parsedValue) ? parsedValue : parsedValue;
+            directUpdates.get(loc.component_id)!.set(loc.field_name, valueToSet);
+          }
+        }
+      }
+
+      // Helper to recursively replace placeholder values OR apply direct updates
+      const replaceInObject = (
+        obj: Record<string, unknown>,
+        fieldUpdates?: Map<string, unknown>
+      ): Record<string, unknown> => {
+        const result: Record<string, unknown> = {};
+        for (const [key, val] of Object.entries(obj)) {
+          // Check if this field should be directly updated
+          if (fieldUpdates?.has(key)) {
+            result[key] = fieldUpdates.get(key);
+          } else if (typeof val === 'string') {
+            // Replace the placeholder with the actual value
+            result[key] = val === placeholder ? parsedValue : val;
+          } else if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
+            result[key] = replaceInObject(val as Record<string, unknown>);
+          } else if (Array.isArray(val)) {
+            // Check if the array contains just the placeholder (for list-type env vars)
+            if (val.length === 1 && val[0] === placeholder && Array.isArray(parsedValue)) {
+              // Replace the entire array with the parsed value
+              result[key] = parsedValue;
+            } else {
+              // Replace individual items
+              result[key] = val.map((item) => {
+                if (typeof item === 'string') {
+                  return item === placeholder ? parsedValue : item;
+                }
+                if (typeof item === 'object' && item !== null) {
+                  return replaceInObject(item as Record<string, unknown>);
+                }
+                return item;
+              });
+            }
+          } else {
+            result[key] = val;
+          }
+        }
+        return result;
+      };
+
+      // Update environment variables
+      const updatedEnvVars = state.environmentVariables.map((v) =>
+        v.name === name ? { ...v, value } : v
+      );
+
+      // Update component configs - use direct field updates if available
+      const updatedComponents = state.components.map((comp) => {
+        const fieldUpdates = directUpdates.get(comp.id);
+        return {
+          ...comp,
+          config: replaceInObject(comp.config, fieldUpdates),
+        };
+      });
+
+      return {
+        ...state,
+        environmentVariables: updatedEnvVars,
+        components: updatedComponents,
+      };
+    }
+
+    case 'SET_ENV_VAR_EXPORT_MODE': {
+      const { name, exportAsVariable } = action.payload;
+      return {
+        ...state,
+        environmentVariables: state.environmentVariables.map((v) =>
+          v.name === name ? { ...v, export_as_variable: exportAsVariable } : v
+        ),
+      };
+    }
+
+    case 'SET_ENV_VARS': {
+      return {
+        ...state,
+        environmentVariables: action.payload.envVars,
+      };
+    }
+
     case 'LOAD_IMPORTED_STATE': {
       const { importedState } = action.payload;
 
@@ -389,9 +531,13 @@ function workflowReducer(state: WorkflowState, action: WorkflowAction): Workflow
         refType: ic.ref_type as RefType,
       }));
 
+      // Load environment variables if present
+      const environmentVariables = importedState.environment_variables || [];
+
       return {
         components,
         connections,
+        environmentVariables,
       };
     }
 
@@ -402,10 +548,14 @@ function workflowReducer(state: WorkflowState, action: WorkflowAction): Workflow
 
 // Context type
 interface WorkflowContextType {
-  state: WorkflowState;
+  state: ExtendedWorkflowState;
   // Direct access to state for export
   components: PlacedComponent[];
   connections: ComponentConnection[];
+  environmentVariables: EnvironmentVariable[];
+  // Computed properties for env vars
+  unresolvedEnvVars: EnvironmentVariable[];
+  hasUnresolvedEnvVars: boolean;
   addComponent: (componentType: NATComponentType, position: { x: number; y: number }) => void;
   addComponentWithId: (componentType: NATComponentType, position: { x: number; y: number }) => string;
   removeComponent: (id: string) => void;
@@ -424,6 +574,10 @@ interface WorkflowContextType {
   getAndClearLastAddedComponent: () => PlacedComponent | undefined;
   getPlacedSingleInstanceTypes: () => Set<NATComponentType>;
   isTypeDisabled: (componentType: NATComponentType) => boolean;
+  // Environment variable functions
+  setEnvVarValue: (name: string, value: string) => void;
+  setEnvVarExportMode: (name: string, exportAsVariable: boolean) => void;
+  setEnvVars: (envVars: EnvironmentVariable[]) => void;
 }
 
 const WorkflowContext = createContext<WorkflowContextType | undefined>(undefined);
@@ -489,6 +643,23 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'LOAD_IMPORTED_STATE', payload: { importedState } });
   }, []);
 
+  // Environment variable functions
+  const setEnvVarValue = useCallback((name: string, value: string) => {
+    dispatch({ type: 'SET_ENV_VAR_VALUE', payload: { name, value } });
+  }, []);
+
+  const setEnvVarExportMode = useCallback((name: string, exportAsVariable: boolean) => {
+    dispatch({ type: 'SET_ENV_VAR_EXPORT_MODE', payload: { name, exportAsVariable } });
+  }, []);
+
+  const setEnvVars = useCallback((envVars: EnvironmentVariable[]) => {
+    dispatch({ type: 'SET_ENV_VARS', payload: { envVars } });
+  }, []);
+
+  // Computed values for environment variables
+  const unresolvedEnvVars = state.environmentVariables.filter((v) => v.value === null);
+  const hasUnresolvedEnvVars = unresolvedEnvVars.length > 0;
+
   // Helper to get all connections for a component
   const getConnectionsForComponent = useCallback(
     (componentId: string) => {
@@ -552,6 +723,9 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         // Direct access to state for export
         components: state.components,
         connections: state.connections,
+        environmentVariables: state.environmentVariables,
+        unresolvedEnvVars,
+        hasUnresolvedEnvVars,
         addComponent,
         addComponentWithId,
         removeComponent,
@@ -570,6 +744,9 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         getAndClearLastAddedComponent,
         getPlacedSingleInstanceTypes,
         isTypeDisabled,
+        setEnvVarValue,
+        setEnvVarExportMode,
+        setEnvVars,
       }}
     >
       {children}

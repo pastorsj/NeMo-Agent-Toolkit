@@ -23,17 +23,12 @@ from nat.builder.framework_enum import LLMFrameworkEnum
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
 
 class TimeMCPToolConfig(FunctionBaseConfig, name="get_city_time_tool"):
     """Configuration for the get_city_time tool."""
-
-
-class TimeMCPTool(TimeMCPToolConfig, NatFunction):
-    """Get City Time Tool"""
 
 
 @register_function(config_type=TimeMCPToolConfig, framework_wrappers=[LLMFrameworkEnum.ADK])

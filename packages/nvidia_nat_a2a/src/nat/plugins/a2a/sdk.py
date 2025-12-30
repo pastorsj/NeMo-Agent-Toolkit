@@ -12,14 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+SDK classes for A2A plugin.
+
+This module contains SDK wrapper classes that combine configuration with
+NatBase classes for use in the Python SDK.
+"""
 
 from pydantic import Field
 from pydantic import model_validator
 
 from nat.authentication.interfaces import AuthProviderBaseConfig
 from nat.data_models.component_ref import AuthenticationRef
-from nat.plugins.a2a.client.client_config import A2AClientConfig
 from nat.utils.sdk.nat_function_group import NatFunctionGroup
+
+from .client.client_config import A2AClientConfig
 
 
 class A2AClient(A2AClientConfig, NatFunctionGroup):
@@ -30,7 +37,7 @@ class A2AClient(A2AClientConfig, NatFunctionGroup):
 
     Example:
         ```python
-        from nat.plugins.a2a.client.a2a_client import A2AClient
+        from nat.plugins.a2a.sdk import A2AClient
 
         # Connect to a remote A2A agent
         currency_agent = A2AClient(
@@ -54,7 +61,7 @@ class A2AClient(A2AClientConfig, NatFunctionGroup):
         description="Authentication provider object for SDK usage.",
     )
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def set_references(self):
         """Set auth provider reference from object if provided."""
         if self.auth_provider_obj:

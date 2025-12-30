@@ -67,9 +67,9 @@ Let's build a simple agent that can tell the current time.
 ### Step 1: Import Components
 
 ```python
-from nat.llm.nim_llm import NimLLM
-from nat.agent.react_agent.register import NatReActAgent
-from nat.tool.datetime_tools import CurrentTimeTool
+from nat.llm.sdk import NimLLM
+from nat.agent.sdk import NatReActAgent
+from nat.tool.sdk import CurrentTimeTool
 from nat.utils.sdk.nat_workflow import NatWorkflow
 ```
 
@@ -119,9 +119,9 @@ Here's the full code:
 
 ```python
 import asyncio
-from nat.llm.nim_llm import NimLLM
-from nat.agent.react_agent.register import NatReActAgent
-from nat.tool.datetime_tools import CurrentTimeTool
+from nat.llm.sdk import NimLLM
+from nat.agent.sdk import NatReActAgent
+from nat.tool.sdk import CurrentTimeTool
 from nat.utils.sdk.nat_workflow import NatWorkflow
 
 # Create the LLM

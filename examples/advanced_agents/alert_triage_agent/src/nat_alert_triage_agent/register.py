@@ -17,7 +17,6 @@ import asyncio
 import logging
 import typing
 
-from pydantic import model_validator
 from pydantic.fields import Field
 
 from nat.builder.builder import Builder
@@ -27,8 +26,6 @@ from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
 from nat.data_models.optimizable import OptimizableMixin
 from nat.profiler.decorators.function_tracking import track_function
-from nat.utils.sdk.nat_function import NatFunction
-from nat.utils.sdk.nat_llm import NatLLM
 
 # flake8: noqa
 # Import any tools which need to be automatically registered here
@@ -67,23 +64,6 @@ class AlertTriageAgentWorkflowConfig(FunctionBaseConfig, OptimizableMixin, name=
         description="Path to the JSON file with baseline/normal system behavior data")
     agent_prompt: str = Field(default=ALERT_TRIAGE_AGENT_PROMPT,
                               description="The system prompt to use for the alert triage agent.")
-
-
-class AlertTriageAgentWorkflow(AlertTriageAgentWorkflowConfig, NatFunction):
-    """Alert Triage Agent Workflow"""
-
-    llm_name: LLMRef = Field(description="LLM to use for the alert triage agent workflow.",
-                             default=LLMRef(value=""),
-                             init=False,
-                             exclude=True)
-    llm: NatLLM = Field(exclude=True)
-
-    @model_validator(mode="after")
-    def set_references(self):
-        """Set llm name from llm object if llm is provided."""
-        if self.llm:
-            self.llm_name = LLMRef(value=self.llm.computed_name)
-        return self
 
 
 @register_function(config_type=AlertTriageAgentWorkflowConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])

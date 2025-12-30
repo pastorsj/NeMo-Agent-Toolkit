@@ -27,7 +27,6 @@ from nat.authentication.exceptions.api_key_exceptions import HeaderPrefixFieldEr
 from nat.data_models.authentication import AuthProviderBaseConfig
 from nat.data_models.authentication import HeaderAuthScheme
 from nat.data_models.common import SerializableSecretStr
-from nat.utils.sdk.nat_auth_provider import NatAuthProvider
 
 logger = logging.getLogger(__name__)
 
@@ -145,7 +144,3 @@ class APIKeyAuthProviderConfig(AuthProviderBaseConfig, name="api_key"):
                 raise HeaderPrefixFieldError('value_missing',
                                              'custom_header_prefix is required when auth_scheme is CUSTOM.')
         return self
-
-
-class APIKeyAuth(APIKeyAuthProviderConfig, NatAuthProvider):
-    """API Key Authentication Provider"""

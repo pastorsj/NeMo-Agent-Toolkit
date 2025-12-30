@@ -28,7 +28,6 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.api_server import ResponseIntermediateStep
 from nat.data_models.function import FunctionBaseConfig
 from nat.plugins.vanna.db_utils import RequiredSecretStr
-from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
@@ -82,10 +81,6 @@ class ExecuteDBQueryConfig(FunctionBaseConfig, name="execute_db_query"):
 
     # Query configuration
     max_rows: int = Field(default=100, description="Maximum rows to return")
-
-
-class ExecuteDBQueryTool(ExecuteDBQueryConfig, NatFunction):
-    """Execute DB Query Tool"""
 
 
 @register_function(

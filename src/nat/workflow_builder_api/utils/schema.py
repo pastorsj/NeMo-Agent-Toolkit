@@ -21,9 +21,11 @@ field parsing, and model description extraction.
 
 import logging
 import re
+import typing
 from typing import Any
 
 from pydantic import BaseModel
+from pydantic import SecretStr
 from pydantic.json_schema import GenerateJsonSchema
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import CoreSchema
@@ -38,6 +40,151 @@ logger = logging.getLogger(__name__)
 
 _ICON_PATTERN = re.compile(r'!\[Icon\]\(([^)]+)\)', re.IGNORECASE)
 _NAME_PATTERN = re.compile(r'^Name:\s*(.+?)$', re.MULTILINE)
+
+# =============================================================================
+# SECRET FIELD DETECTION
+# =============================================================================
+
+
+def is_secret_field_type(annotation: Any) -> bool:
+    """
+    Check if a field annotation is SerializableSecretStr or OptionalSecretStr.
+
+    These are Annotated types wrapping SecretStr (or SecretStr | None) with
+    PlainSerializer for serialization. We detect them by:
+    1. Checking if the annotation is an Annotated type
+    2. Checking if the underlying type is SecretStr or Optional[SecretStr]
+
+    Args:
+        annotation: The field annotation to check.
+
+    Returns:
+        True if the field is a secret type, False otherwise.
+    """
+    if annotation is None:
+        return False
+
+    # Get the origin of the type (handles Annotated, Union, Optional, etc.)
+    origin = typing.get_origin(annotation)
+
+    # Handle Annotated types (SerializableSecretStr and OptionalSecretStr are Annotated)
+    if origin is typing.Annotated:
+        args = typing.get_args(annotation)
+        if args:
+            inner_type = args[0]
+            # Check if inner type is SecretStr or Optional[SecretStr]
+            if inner_type is SecretStr:
+                return True
+            # Check if inner type is a Union containing SecretStr
+            inner_origin = typing.get_origin(inner_type)
+            # Handle both typing.Union and types.UnionType (Python 3.10+ | operator)
+            if inner_origin is typing.Union or str(inner_origin) == "<class 'types.UnionType'>":
+                inner_args = typing.get_args(inner_type)
+                # Check if any of the union args is SecretStr
+                for arg in inner_args:
+                    if arg is SecretStr:
+                        return True
+        return False
+
+    # Direct SecretStr
+    if annotation is SecretStr:
+        return True
+
+    # Union containing SecretStr (e.g., SecretStr | None)
+    # Handle both typing.Union and types.UnionType
+    if origin is typing.Union or str(origin) == "<class 'types.UnionType'>":
+        args = typing.get_args(annotation)
+        for arg in args:
+            if arg is SecretStr:
+                return True
+
+    return False
+
+
+def get_secret_fields(config_type: type[BaseModel]) -> set[str]:
+    """
+    Get the names of all secret fields in a Pydantic model.
+
+    A field is considered "secret" if its type is SerializableSecretStr
+    or OptionalSecretStr (or any Annotated[SecretStr, ...]).
+
+    Args:
+        config_type: The Pydantic model class to inspect.
+
+    Returns:
+        Set of field names that are secret types.
+    """
+    secret_fields = set()
+
+    if not hasattr(config_type, "model_fields"):
+        return secret_fields
+
+    for field_name, field_info in config_type.model_fields.items():
+        if is_secret_field_type(field_info.annotation):
+            secret_fields.add(field_name)
+
+    return secret_fields
+
+
+def is_list_field_type(annotation: Any) -> bool:
+    """
+    Check if a type annotation represents a list type.
+
+    Returns True for:
+    - list[str], list[int], list[Any], etc.
+    - Sequence[str], etc.
+    - Optional[list[str]], etc.
+
+    Args:
+        annotation: The type annotation to check.
+
+    Returns:
+        True if the type is a list/sequence type.
+    """
+    if annotation is None:
+        return False
+
+    origin = typing.get_origin(annotation)
+
+    # Direct list or Sequence
+    if origin in (list, typing.Sequence):
+        return True
+
+    # Handle Optional[list[...]] or Union types
+    if origin is typing.Union:
+        args = typing.get_args(annotation)
+        for arg in args:
+            if arg is type(None):
+                continue
+            if is_list_field_type(arg):
+                return True
+
+    return False
+
+
+def get_list_fields(config_type: type[BaseModel]) -> set[str]:
+    """
+    Get the names of all list fields in a Pydantic model.
+
+    A field is considered a "list field" if its type is list[T] or Sequence[T].
+
+    Args:
+        config_type: The Pydantic model class to inspect.
+
+    Returns:
+        Set of field names that are list types.
+    """
+    list_fields = set()
+
+    if not hasattr(config_type, "model_fields"):
+        return list_fields
+
+    for field_name, field_info in config_type.model_fields.items():
+        if is_list_field_type(field_info.annotation):
+            list_fields.add(field_name)
+
+    return list_fields
+
 
 # =============================================================================
 # JSON SCHEMA GENERATION
@@ -171,7 +318,8 @@ EXCLUDED_FIELDS = {"type", "model_config"}
 def parse_field_info(field_name: str,
                      field_schema: dict[str, Any],
                      required_fields: list[str],
-                     definitions: dict[str, Any] | None = None) -> FieldInfo:
+                     definitions: dict[str, Any] | None = None,
+                     secret_fields: set[str] | None = None) -> FieldInfo:
     """Parse a field schema into a FieldInfo object."""
     if "$ref" in field_schema and definitions:
         ref_path = field_schema["$ref"].split("/")[-1]
@@ -193,6 +341,9 @@ def parse_field_info(field_name: str,
     ref_type = RefType(x_component_ref) if x_component_ref and x_component_ref in [r.value for r in RefType] else None
     is_ref_list = field_schema.get("x-is-ref-list", False)
 
+    # Determine if this is a secret field
+    is_secret = field_name in (secret_fields or set())
+
     return FieldInfo(
         name=field_name,
         type=field_type,
@@ -209,6 +360,7 @@ def parse_field_info(field_name: str,
         is_component_ref=is_component_ref,
         ref_type=ref_type,
         is_ref_list=is_ref_list,
+        is_secret=is_secret,
     )
 
 
@@ -259,6 +411,9 @@ def extract_fields(
     # Get field options from config class if available
     field_options_map = _get_field_options_from_config(config_type) if config_type else {}
 
+    # Get secret fields from config class if available
+    secret_fields = get_secret_fields(config_type) if config_type else set()
+
     for field_name, field_schema in properties.items():
         if field_name.startswith("_"):
             continue
@@ -270,7 +425,7 @@ def extract_fields(
             continue
 
         try:
-            field_info = parse_field_info(field_name, field_schema, required_fields, definitions)
+            field_info = parse_field_info(field_name, field_schema, required_fields, definitions, secret_fields)
 
             # Add field options if available
             if field_name in field_options_map:

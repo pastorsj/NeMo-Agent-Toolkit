@@ -43,7 +43,6 @@ from nat.middleware.function_middleware import CallNext
 from nat.middleware.function_middleware import CallNextStream
 from nat.middleware.function_middleware import FunctionMiddleware
 from nat.middleware.function_middleware import FunctionMiddlewareContext
-from nat.utils.sdk.nat_middleware import NatMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -259,8 +258,4 @@ class CacheMiddlewareConfig(FunctionMiddlewareBaseConfig, name="cache"):
                                         description="Similarity threshold between 0 and 1. Use 1.0 for exact matching")
 
 
-class CacheMiddleware(CacheMiddlewareConfig, NatMiddleware):
-    """Cache Middleware Provider"""
-
-
-__all__ = ["CacheMiddlewareImpl", "CacheMiddlewareConfig", "CacheMiddleware"]
+__all__ = ["CacheMiddlewareImpl", "CacheMiddlewareConfig"]

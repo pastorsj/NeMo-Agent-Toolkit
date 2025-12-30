@@ -312,8 +312,8 @@ class TestGetMinimalDictWithTypes:
     def test_returns_dict_with_type_fields(self):
         """Test that the returned dict includes _type fields."""
         # Create a simple config with workflow
-        from nat.agent.react_agent.register import NatReActAgent
-        from nat.llm.nim_llm import NimLLM
+        from nat.agent.sdk import NatReActAgent
+        from nat.llm.sdk import NimLLM
         from nat.utils.sdk.nat_workflow import NatWorkflow
 
         llm = NimLLM(model_name="meta/llama-3.1-70b-instruct", name="test_llm")
@@ -340,8 +340,8 @@ class TestGetMinimalDictWithTypes:
 
     def test_uses_json_mode_for_serialization(self):
         """Test that JSON mode is used (no Python objects)."""
-        from nat.agent.react_agent.register import NatReActAgent
-        from nat.llm.nim_llm import NimLLM
+        from nat.agent.sdk import NatReActAgent
+        from nat.llm.sdk import NimLLM
         from nat.utils.sdk.nat_workflow import NatWorkflow
 
         llm = NimLLM(model_name="meta/llama-3.1-70b-instruct", name="test_llm")

@@ -25,7 +25,7 @@ from a2a.types import AgentSkill
 
 from nat.builder.function import FunctionGroup
 from nat.builder.workflow_builder import WorkflowBuilder
-from nat.plugins.a2a.client.client_config import A2AClientConfig
+from nat.plugins.a2a.sdk import A2AClientConfig
 
 
 @pytest.fixture(name="sample_agent_card")

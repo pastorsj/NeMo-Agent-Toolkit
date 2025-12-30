@@ -24,7 +24,6 @@ from nat.data_models.common import get_secret_value
 from nat.data_models.telemetry_exporter import TelemetryExporterBaseConfig
 from nat.observability.mixin.batch_config_mixin import BatchConfigMixin
 from nat.observability.mixin.collector_config_mixin import CollectorConfigMixin
-from nat.utils.sdk.nat_telemetry_exporter import NatTelemetryExporter
 
 logger = logging.getLogger(__name__)
 
@@ -46,10 +45,6 @@ class CatalystTelemetryExporter(BatchConfigMixin, CollectorConfigMixin, Telemetr
     debug_mode: bool = Field(description="When False (default), creates local rag_agent_traces.json file. "
                              "When True, skips local file creation for cleaner operation.",
                              default=False)
-
-
-class CatalystTelemetry(CatalystTelemetryExporter, NatTelemetryExporter):
-    """Catalyst Telemetry Exporter"""
 
 
 @register_telemetry_exporter(config_type=CatalystTelemetryExporter)

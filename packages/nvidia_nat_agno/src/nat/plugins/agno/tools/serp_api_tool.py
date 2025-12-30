@@ -16,8 +16,6 @@
 import logging
 
 from pydantic import Field
-from pydantic import PrivateAttr
-from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
@@ -27,8 +25,6 @@ from nat.data_models.common import OptionalSecretStr
 from nat.data_models.common import get_secret_value
 from nat.data_models.common import set_secret_from_env
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_env_var import NatEnvironmentVariable
-from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
@@ -40,49 +36,6 @@ class SerpApiToolConfig(FunctionBaseConfig, name="serp_api_tool"):
     """
     api_key: OptionalSecretStr = Field(default=None, description="The API key for the SerpAPI service.")
     max_results: int = Field(default=5, description="The maximum number of results to return.")
-
-
-class SerpApiTool(SerpApiToolConfig, NatFunction):
-    """SerpAPI Search Tool.
-
-    Supports environment variable references for API keys:
-
-    Example:
-        ```python
-        # Using env var reference (recommended for portability):
-        tool = SerpApiTool(
-            api_key_env=NatEnvironmentVariable("SERP_API_KEY"),
-            max_results=5,
-        )
-        ```
-    """
-
-    # Override api_key from parent with init=False to signal users should use api_key_env
-    api_key: OptionalSecretStr = Field(
-        default=None,
-        init=False,
-        description="The API key for SerpAPI - use api_key_env instead for SDK usage.",
-    )
-
-    # Environment variable reference for api_key
-    api_key_env: NatEnvironmentVariable | None = Field(
-        default=None,
-        exclude=True,
-        description="Environment variable name for the API key (e.g., 'SERP_API_KEY').",
-    )
-
-    # Private attribute to track env var references for serialization
-    _env_var_refs: dict[str, str] = PrivateAttr(default_factory=dict)
-
-    @model_validator(mode='after')
-    def resolve_env_vars(self):
-        """Resolve environment variable references to their actual values."""
-        if self.api_key_env is not None:
-            # Store the env var name for later serialization
-            self._env_var_refs["api_key"] = self.api_key_env.name
-            # Resolve the env var to set the api_key field
-            self.api_key = self.api_key_env.to_secret_str()
-        return self
 
 
 @register_function(config_type=SerpApiToolConfig, framework_wrappers=[LLMFrameworkEnum.AGNO])

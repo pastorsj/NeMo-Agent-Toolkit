@@ -16,8 +16,8 @@
 
 import pytest
 
-from nat.agent.responses_api_agent.register import ResponsesAPIAgentWorkflowConfig
 from nat.agent.responses_api_agent.register import responses_api_agent_workflow
+from nat.agent.sdk import ResponsesAPIAgentWorkflowConfig
 from nat.data_models.openai_mcp import OpenAIMCPSchemaTool
 
 

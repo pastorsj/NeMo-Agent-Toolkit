@@ -25,8 +25,8 @@ from fastapi.testclient import TestClient
 
 from _utils.dask_utils import await_job
 from nat.data_models.config import Config
-from nat.front_ends.fastapi.fastapi_front_end_config import FastApiFrontEndConfig
 from nat.front_ends.fastapi.fastapi_front_end_plugin_worker import FastApiFrontEndPluginWorker
+from nat.front_ends.sdk import FastApiFrontEndConfig
 
 
 @pytest.fixture(name="test_config")

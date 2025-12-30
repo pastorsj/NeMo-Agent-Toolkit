@@ -28,8 +28,6 @@ from nat.data_models.component_ref import LLMRef
 from nat.data_models.evaluator import EvaluatorBaseConfig
 from nat.eval.evaluator.evaluator_model import EvalInput
 from nat.eval.evaluator.evaluator_model import EvalOutput
-from nat.utils.sdk.nat_evaluator import NatEvaluator
-from nat.utils.sdk.nat_llm import NatLLM
 
 logger = logging.getLogger(__name__)
 
@@ -139,20 +137,6 @@ class RagasEvaluatorConfig(EvaluatorBaseConfig, name="ragas"):
         # Try to load metrics (may fail in uvloop environment)
         cls._cached_metric_options = cls._load_ragas_metrics()
         return cls._cached_metric_options
-
-
-class RagasEvaluator(RagasEvaluatorConfig, NatEvaluator):
-    """RAGAS Evaluator"""
-
-    llm: NatLLM = Field(exclude=True)
-    llm_name: LLMRef = Field(description="", default="", init=False)  # type: ignore[assignment]
-
-    @model_validator(mode='after')
-    def set_references(self):
-        """Set llm_name from llm object if llm is provided."""
-        if self.llm:
-            self.llm_name = LLMRef(self.llm.computed_name)
-        return self
 
 
 @register_evaluator(config_type=RagasEvaluatorConfig)

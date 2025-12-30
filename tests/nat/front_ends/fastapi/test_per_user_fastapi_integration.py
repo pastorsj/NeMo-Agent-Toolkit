@@ -37,8 +37,8 @@ from nat.cli.register_workflow import register_per_user_function
 from nat.data_models.config import Config
 from nat.data_models.config import GeneralConfig
 from nat.data_models.function import FunctionBaseConfig
-from nat.front_ends.fastapi.fastapi_front_end_config import FastApiFrontEndConfig
 from nat.front_ends.fastapi.fastapi_front_end_plugin_worker import FastApiFrontEndPluginWorker
+from nat.front_ends.sdk import FastApiFrontEndConfig
 
 
 # ============= Test Schemas =============

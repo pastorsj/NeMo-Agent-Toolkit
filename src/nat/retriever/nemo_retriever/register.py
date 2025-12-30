@@ -22,7 +22,6 @@ from nat.cli.register_workflow import register_retriever_client
 from nat.cli.register_workflow import register_retriever_provider
 from nat.data_models.common import OptionalSecretStr
 from nat.data_models.retriever import RetrieverBaseConfig
-from nat.utils.sdk.nat_retriever import NatRetriever
 
 
 class NemoRetrieverConfig(RetrieverBaseConfig, name="nemo_retriever"):
@@ -44,10 +43,6 @@ class NemoRetrieverConfig(RetrieverBaseConfig, name="nemo_retriever"):
         description="API key used to authenticate with the service. If 'None', will use ENV Variable 'NVIDIA_API_KEY'",
         default=None,
     )
-
-
-class NemoRetriever(NemoRetrieverConfig, NatRetriever):
-    """Nemo Retriever Provider"""
 
 
 @register_retriever_provider(config_type=NemoRetrieverConfig)

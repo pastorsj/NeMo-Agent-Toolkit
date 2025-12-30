@@ -18,7 +18,6 @@ from nat.cli.register_workflow import register_memory
 from nat.data_models.memory import MemoryBaseConfig
 from nat.data_models.retry_mixin import RetryMixin
 from nat.utils.exception_handlers.automatic_retries import patch_with_retry
-from nat.utils.sdk.nat_memory import NatMemory
 
 
 class Mem0MemoryClientConfig(MemoryBaseConfig, RetryMixin, name="mem0_memory"):
@@ -27,10 +26,6 @@ class Mem0MemoryClientConfig(MemoryBaseConfig, RetryMixin, name="mem0_memory"):
     project: str | None = None
     org_id: str | None = None
     project_id: str | None = None
-
-
-class Mem0Memory(Mem0MemoryClientConfig, NatMemory):
-    """Mem0 AI Memory Provider"""
 
 
 @register_memory(config_type=Mem0MemoryClientConfig)

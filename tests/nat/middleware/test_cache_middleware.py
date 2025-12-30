@@ -25,8 +25,8 @@ from pydantic import BaseModel
 from nat.builder.context import Context  # noqa: F401
 from nat.builder.context import ContextState  # noqa: F401
 from nat.data_models.runtime_enum import RuntimeTypeEnum
-from nat.middleware.cache_middleware import CacheMiddlewareImpl
 from nat.middleware.middleware import FunctionMiddlewareContext
+from nat.middleware.sdk import CacheMiddlewareImpl
 
 
 class _TestInput(BaseModel):

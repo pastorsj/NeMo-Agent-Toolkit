@@ -22,11 +22,11 @@ from pathlib import Path
 import pytest
 import yaml
 
-from nat.agent.react_agent.register import NatReActAgent
+from nat.agent.sdk import NatReActAgent
 from nat.data_models.config import Config
-from nat.llm.nim_llm import NimLLM
-from nat.observability.register import ConsoleLogger
-from nat.observability.register import FileLogger
+from nat.llm.sdk import NimLLM
+from nat.observability.sdk import ConsoleLogger
+from nat.observability.sdk import FileLogger
 from nat.runtime.loader import PluginTypes
 from nat.runtime.loader import discover_and_register_plugins
 from nat.utils.sdk.nat_general_configuraton import NatGeneralConfiguration

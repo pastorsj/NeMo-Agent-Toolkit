@@ -22,7 +22,6 @@ from nat.builder.builder import Builder
 from nat.cli.register_workflow import register_object_store
 from nat.data_models.common import OptionalSecretStr
 from nat.data_models.object_store import ObjectStoreBaseConfig
-from nat.utils.sdk.nat_object_store import NatObjectStore
 
 
 class MySQLObjectStoreClientConfig(ObjectStoreBaseConfig, name="mysql"):
@@ -57,10 +56,6 @@ class MySQLObjectStoreClientConfig(ObjectStoreBaseConfig, name="mysql"):
         default=os.environ.get(PASSWORD_ENV),
         description="The password used to connect to the MySQL server (uses {PASSWORD_ENV} if unspecifed)",
     )
-
-
-class MySQLObjectStore(MySQLObjectStoreClientConfig, NatObjectStore):
-    """MySQL Object Store Provider"""
 
 
 @register_object_store(config_type=MySQLObjectStoreClientConfig)

@@ -20,7 +20,6 @@ from nat.builder.evaluator import EvaluatorInfo
 from nat.cli.register_workflow import register_evaluator
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.evaluator import EvaluatorBaseConfig
-from nat.utils.sdk.nat_evaluator import NatEvaluator
 
 
 class TrajectoryEvaluatorConfig(EvaluatorBaseConfig, name="trajectory"):
@@ -33,10 +32,6 @@ class TrajectoryEvaluatorConfig(EvaluatorBaseConfig, name="trajectory"):
     """
 
     llm_name: LLMRef = Field(description="LLM to use as a judge for trajectory evaluation.")
-
-
-class TrajectoryEvaluator(TrajectoryEvaluatorConfig, NatEvaluator):
-    """Trajectory Evaluator"""
 
 
 @register_evaluator(config_type=TrajectoryEvaluatorConfig)

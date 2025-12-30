@@ -20,13 +20,13 @@ config casting, and dynamic registration features.
 
 import pytest
 
-from nat.agent.react_agent.register import NatReActAgent
+from nat.agent.sdk import NatReActAgent
 from nat.data_models.function import FunctionBaseConfig
 from nat.data_models.llm import LLMBaseConfig
-from nat.llm.nim_llm import NimLLM
+from nat.llm.sdk import NimLLM
 from nat.runtime.loader import PluginTypes
 from nat.runtime.loader import discover_and_register_plugins
-from nat.tool.datetime_tools import CurrentTimeTool
+from nat.tool.sdk import CurrentTimeTool
 
 
 # Ensure plugins are discovered for tests
@@ -401,7 +401,7 @@ class TestFactoryPatternConfigWrapper:
     def test_nat_function_wraps_config(self):
         """Test that NatFunction can wrap a function config."""
         from nat.data_models.function import FunctionBaseConfig
-        from nat.tool.datetime_tools import CurrentTimeToolConfig
+        from nat.tool.sdk import CurrentTimeToolConfig
         from nat.utils.sdk.nat_function import NatFunction
 
         time_config = CurrentTimeToolConfig()

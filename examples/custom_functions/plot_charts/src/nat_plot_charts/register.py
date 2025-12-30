@@ -17,7 +17,6 @@ import logging
 from pathlib import Path
 
 from pydantic import Field
-from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
@@ -25,8 +24,6 @@ from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
-from nat.utils.sdk.nat_llm import NatLLM
 
 logger = logging.getLogger(__name__)
 
@@ -40,23 +37,6 @@ class PlotChartsWorkflowConfig(FunctionBaseConfig, name="plot_charts"):
                                    default_factory=lambda: ["line", "bar", "scatter"])
     max_data_points: int = Field(description="The maximum number of data points to support.", default=100)
     figure_size: tuple[int, int] = Field(description="The figure size for the chart.", default=(10, 6))
-
-
-class PlotChartsWorkflow(PlotChartsWorkflowConfig, NatFunction):
-    """Plot Charts Workflow"""
-
-    llm_name: LLMRef = Field(description="LLM to use for the plot charts workflow.",
-                             default=LLMRef(value=""),
-                             init=False)
-
-    llm: NatLLM = Field(exclude=True)
-
-    @model_validator(mode='after')
-    def set_references(self):
-        """Set component names from objects if they are provided."""
-        if self.llm:
-            self.llm_name = LLMRef(value=self.llm.computed_name)
-        return self
 
 
 @register_function(config_type=PlotChartsWorkflowConfig)

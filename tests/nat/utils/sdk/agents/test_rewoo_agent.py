@@ -22,12 +22,12 @@ from pathlib import Path
 import pytest
 import yaml
 
-from nat.agent.rewoo_agent.register import ReWOOAgentWorkflow
+from nat.agent.sdk import ReWOOAgentWorkflow
 from nat.data_models.config import Config
-from nat.llm.nim_llm import NimLLM
+from nat.llm.sdk import NimLLM
 from nat.runtime.loader import PluginTypes
 from nat.runtime.loader import discover_and_register_plugins
-from nat.tool.datetime_tools import CurrentTimeTool
+from nat.tool.sdk import CurrentTimeTool
 from nat.utils.sdk.nat_workflow import NatWorkflow
 
 

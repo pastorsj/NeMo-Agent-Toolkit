@@ -18,17 +18,12 @@ from nat.cli.register_workflow import register_memory
 from nat.data_models.memory import MemoryBaseConfig
 from nat.data_models.retry_mixin import RetryMixin
 from nat.utils.exception_handlers.automatic_retries import patch_with_retry
-from nat.utils.sdk.nat_memory import NatMemory
 
 
 class ZepMemoryClientConfig(MemoryBaseConfig, RetryMixin, name="zep_memory"):
     base_url: str | None = None
     timeout: float | None = None
     follow_redirects: bool | None = None
-
-
-class ZepMemory(ZepMemoryClientConfig, NatMemory):
-    """Zep Cloud Memory Provider"""
 
 
 @register_memory(config_type=ZepMemoryClientConfig)

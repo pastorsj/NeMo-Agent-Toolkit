@@ -109,7 +109,7 @@ nat serve --config_file workflow.yaml
 Add evaluators and run evaluation:
 
 ```python
-from nat.eval.rag_evaluator.register import RagasEvaluator
+from nat.eval.sdk import RagasEvaluator
 from nat.utils.sdk.nat_evaluation import NatEvaluation, EvalDatasetJsonConfig
 
 # Create evaluator
@@ -174,9 +174,9 @@ This discovery happens automatically when you access `workflow._config` or call 
 ```python
 import asyncio
 from pathlib import Path
-from nat.llm.nim_llm import NimLLM
-from nat.agent.react_agent.register import NatReActAgent
-from nat.tool.datetime_tools import CurrentTimeTool
+from nat.llm.sdk import NimLLM
+from nat.agent.sdk import NatReActAgent
+from nat.tool.sdk import CurrentTimeTool
 from nat.utils.sdk.nat_workflow import NatWorkflow
 
 # Create components

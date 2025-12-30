@@ -17,7 +17,7 @@ import pytest
 from pydantic import BaseModel
 
 from nat.data_models.step_adaptor import StepAdaptorConfig
-from nat.front_ends.fastapi.fastapi_front_end_config import FastApiFrontEndConfig
+from nat.front_ends.sdk import FastApiFrontEndConfig
 
 ENDPOINT_BASE_ALL_VALUES = {
     "method": "GET",

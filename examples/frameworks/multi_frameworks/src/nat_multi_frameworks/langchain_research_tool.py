@@ -17,7 +17,6 @@ import logging
 import re
 
 from pydantic import Field
-from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
@@ -26,8 +25,6 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import FunctionRef
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
-from nat.utils.sdk.nat_llm import NatLLM
 
 logger = logging.getLogger(__name__)
 
@@ -35,28 +32,6 @@ logger = logging.getLogger(__name__)
 class LangChainResearchConfig(FunctionBaseConfig, name="langchain_researcher_tool"):
     llm_name: LLMRef = Field(description="LLM to use for the research task.")
     web_tool: FunctionRef = Field(description="Web search tool to use for the research task.")
-
-
-class LangChainResearchTool(LangChainResearchConfig, NatFunction):
-    """LangChain Research Tool"""
-
-    llm_name: LLMRef = Field(description="LLM to use for the research task.", default=LLMRef(value=""), init=False)
-
-    web_tool: FunctionRef = Field(description="Web search tool to use for the research task.",
-                                  default=FunctionRef(value=""),
-                                  init=False)
-
-    llm: NatLLM = Field(exclude=True)
-    web_tool_fn: NatFunction = Field(exclude=True)
-
-    @model_validator(mode='after')
-    def set_references(self):
-        """Set component names from objects if they are provided."""
-        if self.llm:
-            self.llm_name = LLMRef(value=self.llm.computed_name)
-        if self.web_tool_fn:
-            self.web_tool = FunctionRef(value=self.web_tool_fn.computed_name)
-        return self
 
 
 @register_function(config_type=LangChainResearchConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])

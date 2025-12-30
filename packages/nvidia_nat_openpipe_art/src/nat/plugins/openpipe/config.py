@@ -20,9 +20,6 @@ from pydantic import Field
 from nat.data_models.finetuning import TrainerAdapterConfig
 from nat.data_models.finetuning import TrainerConfig
 from nat.data_models.finetuning import TrajectoryBuilderConfig
-from nat.utils.sdk.nat_trainer import NatTrainer
-from nat.utils.sdk.nat_trainer import NatTrainerAdapter
-from nat.utils.sdk.nat_trainer import NatTrajectoryBuilder
 
 
 class ARTTrajectoryBuilderConfig(TrajectoryBuilderConfig, name="openpipe_art_traj_builder"):
@@ -78,70 +75,3 @@ class ARTTrainerConfig(TrainerConfig, name="openpipe_art_trainer"):
     Configuration for the ART Trainer run
     """
     pass
-
-
-# =============================================================================
-# SDK Wrapper Classes
-# =============================================================================
-# These classes combine config and SDK base classes to enable:
-# 1. Python SDK usage: `ARTTrajectoryBuilderSDK(num_generations=2)`
-# 2. Registration with the workflow builder UI
-
-
-class ARTTrajectoryBuilder(ARTTrajectoryBuilderConfig, NatTrajectoryBuilder):
-    """OpenPipe ART Trajectory Builder for collecting training data.
-
-    ![Icon](https://cdn.simpleicons.org/pytorch/EE4C2C)
-
-    Collects training trajectories by running evaluations and recording
-    agent interactions.
-
-    Example:
-        ```python
-        from nat.plugins.openpipe.config import ARTTrajectoryBuilder
-
-        trajectory_builder = ARTTrajectoryBuilder(
-            num_generations=2,
-        )
-        ```
-    """
-
-
-class ARTTrainer(ARTTrainerConfig, NatTrainer):
-    """OpenPipe ART Trainer for finetuning.
-
-    ![Icon](https://cdn.simpleicons.org/pytorch/EE4C2C)
-
-    Orchestrates the finetuning loop across epochs using the OpenPipe ART
-    backend.
-
-    Example:
-        ```python
-        from nat.plugins.openpipe.config import ARTTrainer
-
-        trainer = ARTTrainer()
-        ```
-    """
-
-
-class ARTTrainerAdapter(ARTTrainerAdapterConfig, NatTrainerAdapter):
-    """OpenPipe ART Trainer Adapter for submitting training jobs.
-
-    ![Icon](https://cdn.simpleicons.org/pytorch/EE4C2C)
-
-    Handles submission of trajectories to the ART training backend and
-    monitors training progress.
-
-    Example:
-        ```python
-        from nat.plugins.openpipe.config import ARTTrainerAdapter
-
-        adapter = ARTTrainerAdapter(
-            backend=ARTBackendConfig(
-                ip="localhost",
-                port=8080,
-                base_model="Qwen/Qwen2.5-7B-Instruct",
-            ),
-        )
-        ```
-    """

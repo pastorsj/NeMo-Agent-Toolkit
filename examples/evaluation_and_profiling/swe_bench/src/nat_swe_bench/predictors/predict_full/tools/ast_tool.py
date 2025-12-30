@@ -22,7 +22,6 @@ from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +29,6 @@ logger = logging.getLogger(__name__)
 class AstToolConfig(FunctionBaseConfig, name="ast_tool"):
     """Configuration for AST analysis tool."""
     db_dir: str = "./.workspace/ast_dbs"
-
-
-class AstTool(AstToolConfig, NatFunction):
-    """AST Analysis Tool"""
 
 
 def extract_file_from_patch(patch_content: str) -> str | None:

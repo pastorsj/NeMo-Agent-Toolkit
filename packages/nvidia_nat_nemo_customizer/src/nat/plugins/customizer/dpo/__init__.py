@@ -20,12 +20,13 @@ This module provides:
 - NeMo Customizer TrainerAdapter: Submits DPO training jobs to NeMo Customizer
 """
 
+from nat.plugins.customizer.sdk import DPOTrajectoryBuilder
+from nat.plugins.customizer.sdk import NeMoCustomizerTrainer
+from nat.plugins.customizer.sdk import NeMoCustomizerTrainerAdapter
+
 from .config import DPOSpecificHyperparameters
-from .config import DPOTrajectoryBuilder
 from .config import DPOTrajectoryBuilderConfig
 from .config import NeMoCustomizerHyperparameters
-from .config import NeMoCustomizerTrainer
-from .config import NeMoCustomizerTrainerAdapter
 from .config import NeMoCustomizerTrainerAdapterConfig
 from .config import NeMoCustomizerTrainerConfig
 from .config import NIMDeploymentConfig

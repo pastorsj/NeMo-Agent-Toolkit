@@ -17,7 +17,6 @@ from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
 
 
 # Wikipedia Search tool
@@ -26,11 +25,6 @@ class WikiSearchToolConfig(FunctionBaseConfig, name="wiki_search"):
     Tool that retrieves relevant contexts from wikipedia search for the given question.
     """
     max_results: int = 2
-
-
-class WikiSearchTool(WikiSearchToolConfig, NatFunction):
-    """Wikipedia Search Tool"""
-    pass
 
 
 # Wiki search

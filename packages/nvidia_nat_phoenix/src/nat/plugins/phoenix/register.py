@@ -22,7 +22,6 @@ from nat.cli.register_workflow import register_telemetry_exporter
 from nat.data_models.telemetry_exporter import TelemetryExporterBaseConfig
 from nat.observability.mixin.batch_config_mixin import BatchConfigMixin
 from nat.observability.mixin.collector_config_mixin import CollectorConfigMixin
-from nat.utils.sdk.nat_telemetry_exporter import NatTelemetryExporter
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +34,6 @@ class PhoenixTelemetryExporterConfig(BatchConfigMixin,
 
     endpoint: str = Field(
         description="Phoenix server endpoint for trace export (e.g., 'http://localhost:6006/v1/traces'")
-
-
-class PhoenixTelemetryExporter(PhoenixTelemetryExporterConfig, NatTelemetryExporter):
-    """Phoenix OpenTelemetry Exporter"""
 
 
 @register_telemetry_exporter(config_type=PhoenixTelemetryExporterConfig)

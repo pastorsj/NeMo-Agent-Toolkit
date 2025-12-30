@@ -22,10 +22,10 @@ from pathlib import Path
 import pytest
 import yaml
 
-from nat.agent.react_agent.register import NatReActAgent
+from nat.agent.sdk import NatReActAgent
 from nat.data_models.config import Config
-from nat.front_ends.mcp.mcp_front_end_config import MCPFrontEnd
-from nat.llm.nim_llm import NimLLM
+from nat.front_ends.sdk import MCPFrontEnd
+from nat.llm.sdk import NimLLM
 from nat.runtime.loader import PluginTypes
 from nat.runtime.loader import discover_and_register_plugins
 from nat.utils.sdk.nat_general_configuraton import NatGeneralConfiguration

@@ -31,9 +31,9 @@ The NeMo Agent toolkit Python SDK provides a fluent, Pythonic interface for buil
 
 ```python
 import asyncio
-from nat.llm.nim_llm import NimLLM
-from nat.agent.react_agent.register import NatReActAgent
-from nat.tool.datetime_tools import CurrentTimeTool
+from nat.llm.sdk import NimLLM
+from nat.agent.sdk import NatReActAgent
+from nat.tool.sdk import CurrentTimeTool
 from nat.utils.sdk.nat_workflow import NatWorkflow
 
 # Create components

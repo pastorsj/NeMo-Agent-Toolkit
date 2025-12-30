@@ -16,7 +16,6 @@
 import logging
 
 from pydantic import Field
-from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
@@ -24,8 +23,6 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import MemoryRef
 from nat.data_models.function import FunctionBaseConfig
 from nat.memory.models import SearchMemoryInput
-from nat.utils.sdk.nat_function import NatFunction
-from nat.utils.sdk.nat_memory import NatMemory
 
 logger = logging.getLogger(__name__)
 
@@ -45,20 +42,6 @@ class GetToolConfig(FunctionBaseConfig, name="get_memory"):
     memory: MemoryRef = Field(default=MemoryRef("saas_memory"),
                               description=("Instance name of the memory client instance from the workflow "
                                            "configuration object."))
-
-
-class GetMemoryTool(GetToolConfig, NatFunction):
-    """Get Memory Tool"""
-
-    nat_memory: NatMemory = Field(exclude=True)
-    memory: MemoryRef = Field(description="", default=MemoryRef(value=""), init=False)
-
-    @model_validator(mode='after')
-    def set_memory_name_from_memory(self):
-        """Set memory name from memory object if memory is provided."""
-        if self.nat_memory:
-            self.memory = MemoryRef(value=self.nat_memory.computed_name)
-        return self
 
 
 @register_function(config_type=GetToolConfig)

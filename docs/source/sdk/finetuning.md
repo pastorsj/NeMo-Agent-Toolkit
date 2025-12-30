@@ -182,8 +182,8 @@ Here's a complete example using OpenPipe ART for GRPO training:
 
 ```python
 import asyncio
-from nat.llm.openai_llm import OpenAILLM
-from nat.agent.react_agent.register import NatReActAgent
+from nat.llm.sdk import OpenAILLM
+from nat.agent.sdk import NatReActAgent
 from nat.utils.sdk.nat_workflow import NatWorkflow
 from nat.utils.sdk.nat_finetuner import NatFinetuner, CurriculumLearning
 from nat.utils.sdk.nat_evaluation import NatEvaluation, EvalDatasetJsonConfig

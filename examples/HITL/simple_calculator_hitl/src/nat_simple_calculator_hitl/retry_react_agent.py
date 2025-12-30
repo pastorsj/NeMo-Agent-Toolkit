@@ -16,7 +16,6 @@
 import logging
 
 from pydantic import Field
-from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.context import Context
@@ -30,7 +29,6 @@ from nat.data_models.component_ref import FunctionRef
 from nat.data_models.function import FunctionBaseConfig
 from nat.data_models.interactive import HumanPromptText
 from nat.data_models.interactive import InteractionResponse
-from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
@@ -51,29 +49,6 @@ class RetryReactAgentConfig(FunctionBaseConfig, name="retry_react_agent"):
                              description="This agent retries the react agent with an increasing number of iterations.")
     hitl_approval_fn: FunctionRef = Field(..., description="The hitl approval function")
     react_agent_fn: FunctionRef = Field(..., description="The react agent to retry")
-
-
-class RetryReactAgent(RetryReactAgentConfig, NatFunction):
-    """Retry React Agent"""
-
-    hitl_approval_fn: FunctionRef = Field(description="The hitl approval function",
-                                          default=FunctionRef(value=""),
-                                          init=False)
-    react_agent_fn: FunctionRef = Field(description="The react agent to retry",
-                                        default=FunctionRef(value=""),
-                                        init=False)
-
-    hitl_approval_function: NatFunction = Field(exclude=True)
-    react_agent_function: NatFunction = Field(exclude=True)
-
-    @model_validator(mode='after')
-    def set_references(self):
-        """Set component names from objects if they are provided."""
-        if self.hitl_approval_function:
-            self.hitl_approval_fn = FunctionRef(value=self.hitl_approval_function.computed_name)
-        if self.react_agent_function:
-            self.react_agent_fn = FunctionRef(value=self.react_agent_function.computed_name)
-        return self
 
 
 @register_function(config_type=RetryReactAgentConfig)
@@ -253,11 +228,6 @@ async def retry_react_agent(config: RetryReactAgentConfig, builder: Builder):
 
 
 class TimeZonePromptConfig(FunctionBaseConfig, name="time_zone_prompt"):
-    pass
-
-
-class TimeZonePrompt(TimeZonePromptConfig, NatFunction):
-    """Time Zone Prompt"""
     pass
 
 

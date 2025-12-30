@@ -17,7 +17,6 @@ import logging
 from textwrap import dedent
 
 from pydantic import Field
-from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
@@ -26,8 +25,6 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import FunctionRef
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
-from nat.utils.sdk.nat_llm import NatLLM
 
 logger = logging.getLogger(__name__)
 
@@ -36,29 +33,6 @@ class AgnoPersonalFinanceFunctionConfig(FunctionBaseConfig, name="agno_personal_
     llm_name: LLMRef = Field(...,
                              description="The name of the LLM to use for the financial research and planner agents.")
     tools: list[FunctionRef] = Field(..., description="The tools to use for the financial research and planner agents.")
-
-
-class AgnoPersonalFinanceFunction(AgnoPersonalFinanceFunctionConfig, NatFunction):
-    """AGNO Personal Finance Function"""
-
-    llm_name: LLMRef = Field(description="The name of the LLM to use for the financial research and planner agents.",
-                             default=LLMRef(value=""),
-                             init=False)
-    tools: list[FunctionRef] = Field(default_factory=list,
-                                     description="The tools to use for the financial research and planner agents.",
-                                     init=False)
-
-    llm: NatLLM = Field(exclude=True)
-    tool_objects: list[NatFunction] = Field(default_factory=list, exclude=True)
-
-    @model_validator(mode='after')
-    def set_references(self):
-        """Set component names from objects if they are provided."""
-        if self.llm:
-            self.llm_name = LLMRef(value=self.llm.computed_name)
-        if self.tool_objects and len(self.tool_objects) > 0:
-            self.tools = [FunctionRef(value=tool.computed_name) for tool in self.tool_objects]
-        return self
 
 
 @register_function(config_type=AgnoPersonalFinanceFunctionConfig, framework_wrappers=[LLMFrameworkEnum.AGNO])
@@ -94,7 +68,10 @@ async def agno_personal_finance_function(config: AgnoPersonalFinanceFunctionConf
         "based on user preferences",
         model=llm,
         description=dedent("""\
-        You are a world-class financial researcher. Given a user's financial goals and current financial situation,
+        You are a world-
+
+
+class financial researcher. Given a user's financial goals and current financial situation,
         generate a list of search terms for finding relevant financial advice, investment opportunities, and savings
         strategies. Then search the web for each term, analyze the results, and return the 10 most relevant results.
         """),

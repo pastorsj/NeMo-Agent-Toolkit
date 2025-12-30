@@ -22,7 +22,6 @@ from nat.data_models.evaluator import EvaluatorBaseConfig
 from nat.eval.evaluator.base_evaluator import BaseEvaluator
 from nat.eval.evaluator.evaluator_model import EvalInputItem
 from nat.eval.evaluator.evaluator_model import EvalOutputItem
-from nat.utils.sdk.nat_evaluator import NatEvaluator
 
 logger = logging.getLogger(__name__)
 
@@ -34,10 +33,6 @@ class ClassificationEvaluatorConfig(EvaluatorBaseConfig, name="classification_ac
     by comparing them against expected labels.
     """
     pass
-
-
-class ClassificationEvaluator(ClassificationEvaluatorConfig, NatEvaluator):
-    """Classification Evaluator"""
 
 
 @register_evaluator(config_type=ClassificationEvaluatorConfig)

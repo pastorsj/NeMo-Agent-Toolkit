@@ -24,13 +24,13 @@ from pathlib import Path
 import pytest
 import yaml
 
-from nat.agent.react_agent.register import NatReActAgent
+from nat.agent.sdk import NatReActAgent
 from nat.data_models.config import Config
 from nat.data_models.optimizable import SearchSpace
-from nat.llm.nim_llm import NimLLM
+from nat.llm.sdk import NimLLM
 from nat.runtime.loader import PluginTypes
 from nat.runtime.loader import discover_and_register_plugins
-from nat.tool.datetime_tools import CurrentTimeTool
+from nat.tool.sdk import CurrentTimeTool
 from nat.utils.sdk.nat_evaluation import EvalDatasetJsonConfig
 from nat.utils.sdk.nat_evaluation import NatEvaluation
 from nat.utils.sdk.nat_optimizer import NatOptimizer

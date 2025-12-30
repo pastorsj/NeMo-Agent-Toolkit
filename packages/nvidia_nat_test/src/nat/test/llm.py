@@ -31,7 +31,6 @@ from nat.builder.llm import LLMProviderInfo
 from nat.cli.register_workflow import register_llm_client
 from nat.cli.register_workflow import register_llm_provider
 from nat.data_models.llm import LLMBaseConfig
-from nat.utils.sdk.nat_llm import NatLLM
 
 
 class TestLLMConfig(LLMBaseConfig, name="nat_test_llm"):
@@ -42,10 +41,6 @@ class TestLLMConfig(LLMBaseConfig, name="nat_test_llm"):
         description="Returns the next element in order (wraps)",
     )
     delay_ms: int = Field(default=0, ge=0, description="Artificial per-call delay in milliseconds to mimic latency")
-
-
-class TestLLM(TestLLMConfig, NatLLM):
-    """Test LLM Provider"""
 
 
 class _ResponseChooser:

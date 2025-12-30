@@ -17,7 +17,6 @@ import logging
 
 from pydantic import ConfigDict
 from pydantic import Field
-from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
@@ -28,9 +27,6 @@ from nat.data_models.common import set_secret_from_env
 from nat.data_models.component_ref import EmbedderRef
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_embedder import NatEmbedder
-from nat.utils.sdk.nat_function import NatFunction
-from nat.utils.sdk.nat_llm import NatLLM
 
 logger = logging.getLogger(__name__)
 
@@ -44,27 +40,6 @@ class LlamaIndexRAGConfig(FunctionBaseConfig, name="llama_index_rag"):
     data_dir: str
     api_key: OptionalSecretStr = None
     model_name: str
-
-
-class LlamaIndexRAGTool(LlamaIndexRAGConfig, NatFunction):
-    """Llama Index RAG Tool"""
-
-    llm_name: LLMRef = Field(description="LLM to use for the RAG task.", default=LLMRef(value=""), init=False)
-    embedding_name: EmbedderRef = Field(description="Embedder to use for the RAG task.",
-                                        default=EmbedderRef(value=""),
-                                        init=False)
-
-    llm: NatLLM = Field(exclude=True)
-    embedder: NatEmbedder = Field(exclude=True)
-
-    @model_validator(mode='after')
-    def set_references(self):
-        """Set component names from objects if they are provided."""
-        if self.llm:
-            self.llm_name = LLMRef(value=self.llm.computed_name)
-        if self.embedder:
-            self.embedding_name = EmbedderRef(value=self.embedder.computed_name)
-        return self
 
 
 @register_function(config_type=LlamaIndexRAGConfig, framework_wrappers=[LLMFrameworkEnum.LLAMA_INDEX])

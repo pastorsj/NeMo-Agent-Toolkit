@@ -23,15 +23,10 @@ from nat.data_models.api_server import ChatResponse
 from nat.data_models.api_server import ChatResponseChunk
 from nat.data_models.api_server import Usage
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
 
 
 class EchoFunctionConfig(FunctionBaseConfig, name="test_echo"):
     use_openai_api: bool = False
-
-
-class EchoFunction(EchoFunctionConfig, NatFunction):
-    """Echo Function"""
 
 
 @register_function(config_type=EchoFunctionConfig)
@@ -60,10 +55,6 @@ class StreamingEchoFunctionConfig(FunctionBaseConfig, name="test_streaming_echo"
     use_openai_api: bool = False
 
 
-class StreamingEchoFunction(StreamingEchoFunctionConfig, NatFunction):
-    """Streaming Echo Function"""
-
-
 @register_function(config_type=StreamingEchoFunctionConfig)
 async def streaming_function(config: StreamingEchoFunctionConfig, builder: Builder):
 
@@ -85,10 +76,6 @@ class ConstantFunctionConfig(FunctionBaseConfig, name="test_constant"):
     response: str
 
 
-class ConstantFunction(ConstantFunctionConfig, NatFunction):
-    """Constant Function"""
-
-
 @register_function(config_type=ConstantFunctionConfig)
 async def constant_function(config: ConstantFunctionConfig, builder: Builder):
 
@@ -100,10 +87,6 @@ async def constant_function(config: ConstantFunctionConfig, builder: Builder):
 
 class StreamingConstantFunctionConfig(FunctionBaseConfig, name="test_streaming_constant"):
     responses: list[str]
-
-
-class StreamingConstantFunction(StreamingConstantFunctionConfig, NatFunction):
-    """Streaming Constant Function"""
 
 
 @register_function(config_type=StreamingConstantFunctionConfig)

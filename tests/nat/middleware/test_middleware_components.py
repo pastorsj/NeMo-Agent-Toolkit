@@ -279,7 +279,7 @@ class TestCacheMiddlewareComponent:
 
     async def test_cache_middleware_from_yaml(self):
         """Test building cache middleware from YAML."""
-        from nat.middleware.cache_middleware import CacheMiddlewareImpl
+        from nat.middleware.sdk import CacheMiddlewareImpl
 
         config_dict = {
             "middleware": {
@@ -300,7 +300,7 @@ class TestCacheMiddlewareComponent:
 
     async def test_cache_middleware_with_different_configs(self):
         """Test cache middleware with various configurations."""
-        from nat.middleware.cache_middleware import CacheMiddlewareImpl
+        from nat.middleware.sdk import CacheMiddlewareImpl
 
         configs = [
             {

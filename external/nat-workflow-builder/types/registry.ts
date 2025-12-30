@@ -61,6 +61,8 @@ export interface FieldInfo {
   is_ref_list: boolean;
   // Suggested options for dropdown (not strict like enum - allows free text)
   options: string[] | null;
+  // Secret field detection (SerializableSecretStr or OptionalSecretStr)
+  is_secret: boolean;
 }
 
 export interface RegisteredTypeInfo {

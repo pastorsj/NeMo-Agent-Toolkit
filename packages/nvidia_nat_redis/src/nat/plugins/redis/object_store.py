@@ -20,7 +20,6 @@ from nat.builder.builder import Builder
 from nat.cli.register_workflow import register_object_store
 from nat.data_models.common import OptionalSecretStr
 from nat.data_models.object_store import ObjectStoreBaseConfig
-from nat.utils.sdk.nat_object_store import NatObjectStore
 
 
 class RedisObjectStoreClientConfig(ObjectStoreBaseConfig, name="redis"):
@@ -41,10 +40,6 @@ class RedisObjectStoreClientConfig(ObjectStoreBaseConfig, name="redis"):
         if v is not None and v <= 0:
             raise ValueError("TTL must be a positive integer greater than 0")
         return v
-
-
-class RedisObjectStore(RedisObjectStoreClientConfig, NatObjectStore):
-    """Redis Object Store Provider"""
 
 
 @register_object_store(config_type=RedisObjectStoreClientConfig)

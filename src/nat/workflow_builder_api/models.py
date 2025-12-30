@@ -130,6 +130,9 @@ class FieldInfo(BaseModel):
     is_ref_list: bool = Field(default=False, description="Whether this is a list of component references")
     # Suggested options for dropdown (not strict like enum - allows free text)
     options: list[str] | None = Field(default=None, description="Suggested values for dropdown selection")
+    # Secret field detection (SerializableSecretStr or OptionalSecretStr)
+    is_secret: bool = Field(
+        default=False, description="Whether this field is a secret type (SerializableSecretStr or OptionalSecretStr)")
 
 
 class RegisteredTypeInfo(BaseModel):
@@ -231,11 +234,51 @@ class ImportedConnection(BaseModel):
     ref_type: RefType = Field(description="Type of reference for this connection")
 
 
+# =============================================================================
+# ENVIRONMENT VARIABLE MODELS
+# =============================================================================
+
+
+class EnvVarLocation(BaseModel):
+    """Location where an environment variable is used in the config."""
+
+    path: str = Field(description="Dot-separated path to the field (e.g., 'authentication.my_auth.client_id')")
+    component_type: str | None = Field(default=None, description="Type of component (e.g., 'authentication', 'llm')")
+    component_id: str | None = Field(default=None, description="Component identifier (e.g., 'my_auth', 'nim_llm')")
+    field_name: str = Field(description="Name of the field containing the env var")
+    is_secret_field: bool = Field(
+        default=False, description="Whether this field is a secret type (SerializableSecretStr or OptionalSecretStr)")
+    is_list_field: bool = Field(default=False, description="Whether this field is a list type (list[str], etc.)")
+
+
+class EnvironmentVariable(BaseModel):
+    """Represents an environment variable detected in the config."""
+
+    name: str = Field(description="Variable name without ${} (e.g., 'API_KEY')")
+    locations: list[EnvVarLocation] = Field(default_factory=list, description="All locations where this var is used")
+    value: str | None = Field(default=None, description="User-provided value (None = unresolved)")
+    is_sensitive: bool = Field(default=False, description="Whether this appears to be a sensitive value")
+    export_as_variable: bool = Field(default=True, description="Whether to export with ${} notation")
+    original_reference: str = Field(description="Original ${VAR_NAME} reference string")
+    # Type-based secret detection
+    has_secret_field_usage: bool = Field(
+        default=False, description="Whether any location is a SerializableSecretStr/OptionalSecretStr field")
+    has_non_secret_field_usage: bool = Field(default=False,
+                                             description="Whether any location is a non-secret field (str, list, etc.)")
+    is_list_field: bool = Field(default=False,
+                                description="Whether any location expects a list value (list[str], etc.)")
+    warning: str | None = Field(default=None, description="Warning message if env var is used in non-secret fields")
+
+
 class ImportedWorkflowState(BaseModel):
     """Complete workflow state imported from a config file."""
 
     components: list[ImportedComponent] = Field(default_factory=list, description="All components to place")
     connections: list[ImportedConnection] = Field(default_factory=list, description="All connections to create")
+    environment_variables: list[EnvironmentVariable] = Field(default_factory=list,
+                                                             description="Environment variables detected in the config")
+    env_var_warnings: list[str] = Field(default_factory=list,
+                                        description="Warnings about environment variables used in non-secret fields")
 
 
 # =============================================================================
@@ -260,12 +303,32 @@ class ExportConnection(BaseModel):
     target_field: str = Field(description="Field on target that receives the connection")
 
 
+class SecretFieldExportConfig(BaseModel):
+    """Configuration for how to export a specific secret field."""
+
+    component_id: str = Field(description="ID of the component containing the field")
+    field_name: str = Field(description="Name of the field")
+    export_mode: str = Field(default="env_var",
+                             description="Export mode: 'plain' (value in YAML) or 'env_var' (${VAR_NAME} in YAML)")
+    env_var_name: str | None = Field(default=None,
+                                     description="Environment variable name to use when export_mode is 'env_var'")
+    value: str | None = Field(default=None, description="The actual secret value")
+
+
 class ExportWorkflowRequest(BaseModel):
     """Request to export a workflow to YAML configuration."""
 
     components: list[ExportComponent] = Field(description="All components on the canvas")
     connections: list[ExportConnection] = Field(description="All connections between components")
     workflow_name: str = Field(default="my_workflow", description="Name for the workflow")
+    # Environment variable export options (for imported env vars)
+    environment_variables: list[EnvironmentVariable] = Field(
+        default_factory=list, description="Environment variables and their resolved values")
+    export_env_vars_as_placeholders: bool = Field(
+        default=True, description="If True, export env vars as ${VAR_NAME}; if False, use resolved values")
+    # Secret field export configuration (for secret fields that should become env vars)
+    secret_field_configs: list[SecretFieldExportConfig] = Field(
+        default_factory=list, description="Configuration for how to export each secret field")
 
 
 class ExportConfigResponse(BaseModel):
@@ -273,5 +336,6 @@ class ExportConfigResponse(BaseModel):
 
     success: bool = Field(description="Whether the export was successful")
     yaml_content: str | None = Field(default=None, description="Generated YAML configuration")
+    env_file_content: str | None = Field(default=None, description="Generated .env file content with secret values")
     error_message: str | None = Field(default=None, description="Error message if export failed")
     warnings: list[str] = Field(default_factory=list, description="Non-fatal warnings during export")

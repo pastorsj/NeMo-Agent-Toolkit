@@ -22,8 +22,6 @@ from pydantic import model_validator
 
 from nat.authentication.oauth2.oauth2_resource_server_config import OAuth2ResourceServerConfig
 from nat.data_models.front_end import FrontEndBaseConfig
-from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_front_end import NatFrontEnd
 
 logger = logging.getLogger(__name__)
 
@@ -111,21 +109,4 @@ class MCPFrontEndConfig(FrontEndBaseConfig, name="mcp"):
                     "For production deployments, use 'streamable-http' transport with server_auth configured.",
                     self.host)
 
-        return self
-
-
-class MCPFrontEnd(MCPFrontEndConfig, NatFrontEnd):
-
-    tool_names: list[str] = Field(default_factory=list,
-                                  description="The list of tools MCP server will expose (default: all tools)."
-                                  "Tool names can be functions or function groups",
-                                  init=False)
-
-    tools: list[FunctionBaseConfig] | None = Field(default=None, exclude=True)
-
-    @model_validator(mode='after')
-    def set_references(self):
-        """Set tool names from tool objects if provided."""
-        if self.tools:
-            self.tool_names = [tool.computed_name for tool in self.tools]
         return self

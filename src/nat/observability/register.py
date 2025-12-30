@@ -24,8 +24,6 @@ from nat.cli.register_workflow import register_telemetry_exporter
 from nat.data_models.logging import LoggingBaseConfig
 from nat.data_models.telemetry_exporter import TelemetryExporterBaseConfig
 from nat.observability.mixin.file_mode import FileMode
-from nat.utils.sdk.nat_logger import NatLogger
-from nat.utils.sdk.nat_telemetry_exporter import NatTelemetryExporter
 
 logger = logging.getLogger(__name__)
 
@@ -51,10 +49,6 @@ class FileTelemetryExporterConfig(TelemetryExporterBaseConfig, name="file"):
         description="Maximum file size in bytes before rolling to a new file.")
     max_files: int = Field(default=5, description="Maximum number of rolled files to keep.")
     cleanup_on_init: bool = Field(default=False, description="Clean up old files during initialization.")
-
-
-class FileTelemetryExporter(FileTelemetryExporterConfig, NatTelemetryExporter):
-    """A telemetry exporter that writes runtime traces to local files with optional rolling."""
 
 
 @register_telemetry_exporter(config_type=FileTelemetryExporterConfig)
@@ -84,10 +78,6 @@ class ConsoleLoggingMethodConfig(LoggingBaseConfig, name="console"):
     """
 
     level: str = Field(description="The logging level of console logger.")
-
-
-class ConsoleLogger(ConsoleLoggingMethodConfig, NatLogger):
-    """A logger to write runtime logs to the console."""
 
 
 @register_logging_method(config_type=ConsoleLoggingMethodConfig)
@@ -123,10 +113,6 @@ class FileLoggingMethod(LoggingBaseConfig, name="file"):
     path: str = Field(description="The file path to save the logging output.")
     level: str = Field(description="The logging level of file logger.")
     create_if_not_exists: bool = Field(description="Create the file to write to if it does not exist", default=False)
-
-
-class FileLogger(FileLoggingMethod, NatLogger):
-    """A logger to write runtime logs to a file."""
 
 
 @register_logging_method(config_type=FileLoggingMethod)

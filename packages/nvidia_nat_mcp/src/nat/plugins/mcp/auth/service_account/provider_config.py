@@ -23,7 +23,6 @@ from pydantic import model_validator
 from nat.authentication.interfaces import AuthProviderBaseConfig
 from nat.data_models.common import OptionalSecretStr
 from nat.data_models.common import SerializableSecretStr
-from nat.utils.sdk.nat_auth_provider import NatAuthProvider
 
 
 class ServiceTokenConfig(BaseModel):
@@ -101,6 +100,10 @@ class MCPServiceAccountProviderConfig(AuthProviderBaseConfig, name="mcp_service_
 
     All values must be provided via configuration. Use ${ENV_VAR} syntax in YAML
     configs for environment variable substitution.
+
+    ## Details
+    Name: MCP Service Account
+    Icon: ![Icon](https://cdn.simpleicons.org/oauth/000000)
     """
 
     # Required: OAuth2 client credentials
@@ -136,7 +139,3 @@ class MCPServiceAccountProviderConfig(AuthProviderBaseConfig, name="mcp_service_
             # Split space-delimited string into list
             return [scope.strip() for scope in v.split() if scope.strip()]
         return v
-
-
-class MCPServiceAccountProvider(MCPServiceAccountProviderConfig, NatAuthProvider):
-    """MCP Service Account Authentication Provider"""

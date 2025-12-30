@@ -22,10 +22,10 @@ from pathlib import Path
 import pytest
 import yaml
 
-from nat.agent.react_agent.register import NatReActAgent
+from nat.agent.sdk import NatReActAgent
 from nat.data_models.config import Config
-from nat.llm.nim_llm import NimLLM
-from nat.observability.register import FileTelemetryExporter
+from nat.llm.sdk import NimLLM
+from nat.observability.sdk import FileTelemetryExporter
 from nat.runtime.loader import PluginTypes
 from nat.runtime.loader import discover_and_register_plugins
 from nat.utils.sdk.nat_general_configuraton import NatGeneralConfiguration
@@ -209,7 +209,7 @@ class TestCombinedLoggingAndTelemetry:
 
     def test_loggers_and_exporters_save_correctly(self, tmp_path: Path):
         """Test workflow with both loggers and exporters."""
-        from nat.observability.register import ConsoleLogger
+        from nat.observability.sdk import ConsoleLogger
 
         llm = NimLLM(model_name="meta/llama-3.1-70b-instruct", name="test_llm")
         agent = NatReActAgent(llm=llm, tools=[], verbose=True)

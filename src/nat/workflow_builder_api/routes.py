@@ -50,6 +50,7 @@ from nat.workflow_builder_api.utils import export_workflow_to_yaml
 from nat.workflow_builder_api.utils import get_category_types
 from nat.workflow_builder_api.utils import parse_config_to_workflow_state
 from nat.workflow_builder_api.utils import validate_yaml_config
+from nat.workflow_builder_api.utils.validation import validate_yaml_config_with_env_vars
 
 logger = logging.getLogger(__name__)
 
@@ -124,26 +125,31 @@ async def import_config(request: ConfigValidationRequest) -> ImportedWorkflowSta
     Import a YAML configuration file and return a workflow state for the UI.
 
     This endpoint:
-    1. Validates the YAML configuration
-    2. Parses it into components and connections
-    3. Calculates layout positions for each component
-    4. Returns the complete workflow state
+    1. Detects and extracts environment variables (${VAR_NAME} patterns)
+    2. Validates the YAML configuration (with env vars replaced by placeholders)
+    3. Parses it into components and connections
+    4. Calculates layout positions for each component
+    5. Returns the complete workflow state including detected env vars
 
-    The returned state can be loaded directly into the UI canvas.
+    Environment variables in the config will be detected and tracked in the
+    `environment_variables` field of the response. The UI can then prompt
+    the user to provide values for these variables.
     """
-    # First validate the config
-    validation_result = validate_yaml_config(request.yaml_content)
+    # Validate with environment variable awareness
+    validation_result = validate_yaml_config_with_env_vars(request.yaml_content)
 
-    if not validation_result.valid:
+    if not validation_result.response.valid:
         raise HTTPException(
             status_code=400,
             detail={
-                "message": validation_result.error_message,
-                "errors": validation_result.error_details,
+                "message": validation_result.response.error_message,
+                "errors": validation_result.response.error_details,
+                # Include detected env vars even on error so UI can show them
+                "environment_variables": [v.model_dump() for v in validation_result.environment_variables],
             },
         )
 
-    if not validation_result.config_dict:
+    if not validation_result.response.config_dict:
         raise HTTPException(
             status_code=400,
             detail={"message": "Config validation succeeded but config_dict is empty"},
@@ -151,7 +157,11 @@ async def import_config(request: ConfigValidationRequest) -> ImportedWorkflowSta
 
     # Parse the config into workflow state
     try:
-        workflow_state = parse_config_to_workflow_state(validation_result.config_dict)
+        workflow_state = parse_config_to_workflow_state(validation_result.response.config_dict)
+
+        # Add environment variables to the workflow state
+        workflow_state.environment_variables = validation_result.environment_variables
+
         return workflow_state
     except Exception as e:
         logger.error("Error parsing config: %s", e)

@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic';
 import { useState, useRef, useCallback } from 'react';
 import { Upload, Download, X, CheckCircle, AlertCircle, Loader2, Play, Trash2, ExternalLink, Square, RefreshCw } from 'lucide-react';
 import { FlowSidebar } from '@/components/Sidebar/FlowSidebar';
+import { EnvVarPanel, EnvVarBadge } from '@/components/EnvVars/EnvVarPanel';
 import { registryAPI, ImportedWorkflowState, ExportComponent, ExportConnection } from '@/lib/api';
 import { useWorkflow } from '@/contexts/WorkflowContext';
 
@@ -45,7 +46,10 @@ export default function Home() {
   const [showResultModal, setShowResultModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
-  const { loadImportedState, clearWorkflow, components, connections } = useWorkflow();
+  const { loadImportedState, clearWorkflow, components, connections, hasUnresolvedEnvVars, environmentVariables } = useWorkflow();
+
+  // Environment variables panel state
+  const [showEnvVarPanel, setShowEnvVarPanel] = useState(false);
 
   // Run workflow state
   const [isStarting, setIsStarting] = useState(false);
@@ -358,13 +362,15 @@ export default function Home() {
                 )}
               </button>
 
-              {/* Run Button - disabled when workflow is already running */}
+              {/* Run Button - disabled when workflow is already running or has unresolved env vars */}
               <button
                 onClick={handleRunClick}
-                disabled={isStarting || components.length === 0 || runningWorkflow !== null}
+                disabled={isStarting || components.length === 0 || runningWorkflow !== null || hasUnresolvedEnvVars}
                 className="p-2.5 bg-accent hover:bg-accent/80 rounded-lg text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 title={
-                  runningWorkflow
+                  hasUnresolvedEnvVars
+                    ? 'Please provide values for all environment variables first'
+                    : runningWorkflow
                     ? 'Workflow already running - use Restart or Stop'
                     : components.length === 0
                     ? 'Add components to run'
@@ -423,6 +429,11 @@ export default function Home() {
                 </>
               )}
 
+              {/* Environment Variables Badge */}
+              {environmentVariables.length > 0 && (
+                <EnvVarBadge onClick={() => setShowEnvVarPanel(!showEnvVarPanel)} />
+              )}
+
               {/* Clear/Delete Button */}
               <button
                 onClick={() => {
@@ -477,9 +488,18 @@ export default function Home() {
             </div>
           )}
 
-          {/* Canvas */}
-          <div className="flex-1 overflow-hidden">
-            <FlowCanvas />
+          {/* Canvas + Environment Variables Panel */}
+          <div className="flex-1 flex overflow-hidden">
+            {/* Canvas */}
+            <div className="flex-1 overflow-hidden">
+              <FlowCanvas />
+            </div>
+
+            {/* Environment Variables Panel (right side) */}
+            <EnvVarPanel 
+              isOpen={showEnvVarPanel} 
+              onClose={() => setShowEnvVarPanel(false)} 
+            />
           </div>
         </main>
       </div>

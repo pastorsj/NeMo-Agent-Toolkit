@@ -836,6 +836,85 @@ def parse_components_from_config(config: Config) -> list[ImportedComponent]:
 # =============================================================================
 
 
+def _extract_refs_from_model(
+    model_instance: BaseModel,
+    component_lookup: dict[str, ImportedComponent],
+    component_group_lookup: dict[ComponentGroup, dict[str, ImportedComponent]],
+    field_path: str = "",
+) -> list[tuple[str, str, RefType]]:
+    """
+    Recursively extract ComponentRef fields from a model and its nested BaseModels.
+
+    Args:
+        model_instance: The model to scan
+        component_lookup: Map of component_id -> ImportedComponent
+        component_group_lookup: Map of ComponentGroup -> dict of name -> ImportedComponent
+        field_path: Dot-separated path to the current field (for nested models)
+
+    Returns:
+        List of tuples: (source_id, field_name_for_connection, ref_type)
+    """
+    refs: list[tuple[str, str, RefType]] = []
+    model_class = type(model_instance)
+
+    for field_name, field_info in model_class.model_fields.items():
+        annotation = field_info.annotation
+        value = getattr(model_instance, field_name, None)
+        if value is None:
+            continue
+
+        current_path = f"{field_path}.{field_name}" if field_path else field_name
+
+        # Check if this field is a ComponentRef
+        component_ref_class = get_component_ref_from_annotation(annotation)
+
+        if component_ref_class:
+            # This is a ComponentRef field - extract the reference
+            try:
+                if isinstance(value, str):
+                    ref_instance = component_ref_class(value)
+                    target_group = ref_instance.component_group
+                    ref_names = [value]
+                elif isinstance(value, list | tuple):
+                    ref_names = [str(v) for v in value if v]
+                    if ref_names:
+                        ref_instance = component_ref_class(ref_names[0])
+                        target_group = ref_instance.component_group
+                    else:
+                        continue
+                else:
+                    continue
+
+                ref_type = COMPONENT_GROUP_TO_REF_TYPE.get(target_group, RefType.FUNCTION)
+
+                # Find target components
+                for ref_name in ref_names:
+                    group_components = component_group_lookup.get(target_group, {})
+                    source_id = None
+
+                    if ref_name in group_components:
+                        source_id = group_components[ref_name].id
+                    elif ref_name in component_lookup:
+                        source_id = ref_name
+
+                    if source_id:
+                        # Use the nested path as the field name for connection display
+                        refs.append((source_id, current_path, ref_type))
+                    else:
+                        logger.debug("Reference '%s' at %s not found", ref_name, current_path)
+
+            except Exception as e:
+                logger.debug("Error extracting ref from %s: %s", current_path, e)
+                continue
+
+        # Check if this is a nested BaseModel to scan recursively
+        elif isinstance(value, BaseModel):
+            nested_refs = _extract_refs_from_model(value, component_lookup, component_group_lookup, current_path)
+            refs.extend(nested_refs)
+
+    return refs
+
+
 def extract_connections_from_component(
     component: ImportedComponent,
     config_instance: BaseModel,
@@ -844,6 +923,9 @@ def extract_connections_from_component(
 ) -> list[ImportedConnection]:
     """
     Extract connections from a component by scanning its ComponentRef fields.
+
+    This function recursively scans nested BaseModel fields to find ComponentRefs
+    in nested structures (e.g., server.auth_provider in MCP configs).
 
     Args:
         component: The ImportedComponent
@@ -855,65 +937,20 @@ def extract_connections_from_component(
         List of connections from this component
     """
     connections: list[ImportedConnection] = []
-    config_class = type(config_instance)
 
-    # Get model fields and their annotations
-    for field_name, field_info in config_class.model_fields.items():
-        annotation = field_info.annotation
-        component_ref_class = get_component_ref_from_annotation(annotation)
+    # Recursively extract all refs from the config instance
+    refs = _extract_refs_from_model(config_instance, component_lookup, component_group_lookup)
 
-        if not component_ref_class:
-            continue
-
-        # Get the value from the config instance
-        value = getattr(config_instance, field_name, None)
-        if value is None:
-            continue
-
-        # Determine the component group this ref points to
-        # Instantiate the ref to get its component_group property
-        try:
-            if isinstance(value, str):
-                ref_instance = component_ref_class(value)
-                target_group = ref_instance.component_group
-                ref_names = [value]
-            elif isinstance(value, list | tuple):
-                ref_names = [str(v) for v in value if v]
-                if ref_names:
-                    ref_instance = component_ref_class(ref_names[0])
-                    target_group = ref_instance.component_group
-                else:
-                    continue
-            else:
-                continue
-        except Exception as e:
-            logger.debug("Error getting component_group for %s: %s", field_name, e)
-            continue
-
-        ref_type = COMPONENT_GROUP_TO_REF_TYPE.get(target_group, RefType.FUNCTION)
-
-        # Find target components and create connections
-        for ref_name in ref_names:
-            # Look up in the component group
-            group_components = component_group_lookup.get(target_group, {})
-            source_id = None
-
-            if ref_name in group_components:
-                source_id = group_components[ref_name].id
-            elif ref_name in component_lookup:
-                source_id = ref_name
-
-            if source_id:
-                connections.append(
-                    ImportedConnection(
-                        id=f"conn_{uuid.uuid4().hex[:8]}",
-                        source_id=source_id,
-                        target_id=component.id,
-                        target_field=field_name,
-                        ref_type=ref_type,
-                    ))
-            else:
-                logger.debug("Reference '%s' in %s.%s not found", ref_name, component.id, field_name)
+    # Create connections for each ref found
+    for source_id, field_path, ref_type in refs:
+        connections.append(
+            ImportedConnection(
+                id=f"conn_{uuid.uuid4().hex[:8]}",
+                source_id=source_id,
+                target_id=component.id,
+                target_field=field_path,
+                ref_type=ref_type,
+            ))
 
     return connections
 

@@ -22,7 +22,6 @@ from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts import MessagesPlaceholder
 from pydantic import Field
-from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
@@ -30,8 +29,6 @@ from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
-from nat.utils.sdk.nat_llm import NatLLM
 
 from . import utils
 from .prompts import MaintenanceCheckPrompts
@@ -53,23 +50,6 @@ class MaintenanceCheckToolConfig(FunctionBaseConfig, name="maintenance_check"):
         description=(
             "Whether to skip the maintenance check. If True, the tool will not check for maintenance and default to"
             " NO_ONGOING_MAINTENANCE_STR."))
-
-
-class MaintenanceCheckTool(MaintenanceCheckToolConfig, NatFunction):
-    """Maintenance Check Tool"""
-
-    llm_name: LLMRef = Field(description="LLM to use for the maintenance check task.",
-                             default=LLMRef(value=""),
-                             init=False)
-
-    llm: NatLLM = Field(exclude=True)
-
-    @model_validator(mode='after')
-    def set_references(self):
-        """Set llm_name from llm object if llm is provided."""
-        if self.llm:
-            self.llm_name = LLMRef(value=self.llm.computed_name)
-        return self
 
 
 def _load_maintenance_data(path: str) -> pd.DataFrame:

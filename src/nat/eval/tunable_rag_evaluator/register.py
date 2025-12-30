@@ -14,7 +14,6 @@
 # limitations under the License.
 
 from pydantic import Field
-from pydantic import model_validator
 
 from nat.builder.builder import EvalBuilder
 from nat.builder.evaluator import EvaluatorInfo
@@ -22,8 +21,6 @@ from nat.builder.framework_enum import LLMFrameworkEnum
 from nat.cli.register_workflow import register_evaluator
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.evaluator import EvaluatorBaseConfig
-from nat.utils.sdk.nat_evaluator import NatEvaluator
-from nat.utils.sdk.nat_llm import NatLLM
 
 
 class TunableRagEvaluatorConfig(EvaluatorBaseConfig, name="tunable_rag_evaluator"):
@@ -43,20 +40,6 @@ class TunableRagEvaluatorConfig(EvaluatorBaseConfig, name="tunable_rag_evaluator
             "coverage": 0.5, "correctness": 0.3, "relevance": 0.2
         },
         description="Weights for the different scoring components when using default scoring")
-
-
-class TunableRagEvaluator(TunableRagEvaluatorConfig, NatEvaluator):
-    """Tunable RAG Evaluator"""
-
-    llm: NatLLM = Field(exclude=True)
-    llm_name: LLMRef = Field(description="", default=LLMRef(value=""), init=False)
-
-    @model_validator(mode='after')
-    def set_references(self):
-        """Set llm_name from llm object if llm is provided."""
-        if self.llm:
-            self.llm_name = LLMRef(value=self.llm.computed_name)
-        return self
 
 
 @register_evaluator(config_type=TunableRagEvaluatorConfig)

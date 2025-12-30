@@ -21,7 +21,6 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.common import OptionalSecretStr
 from nat.data_models.common import get_secret_value
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
 
 
 # Internet Search tool
@@ -36,10 +35,6 @@ class TavilyInternetSearchToolConfig(FunctionBaseConfig, name="tavily_internet_s
     """
     max_results: int = 3
     api_key: OptionalSecretStr = Field(default=None, description="The API key for the Tavily service.")
-
-
-class TavilyInternetSearchTool(TavilyInternetSearchToolConfig, NatFunction):
-    """Tavily Internet Search Tool"""
 
 
 @register_function(config_type=TavilyInternetSearchToolConfig)

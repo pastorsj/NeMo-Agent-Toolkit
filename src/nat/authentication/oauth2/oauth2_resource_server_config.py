@@ -21,7 +21,6 @@ from pydantic import model_validator
 
 from nat.data_models.authentication import AuthProviderBaseConfig
 from nat.data_models.common import OptionalSecretStr
-from nat.utils.sdk.nat_auth_provider import NatAuthProvider
 
 
 class OAuth2ResourceServerConfig(AuthProviderBaseConfig, name="oauth2_resource_server"):
@@ -129,7 +128,3 @@ class OAuth2ResourceServerConfig(AuthProviderBaseConfig, name="oauth2_resource_s
                              "  • Opaque path: set introspection_endpoint + client_id + client_secret")
 
         return self
-
-
-class OAuth2ResourceServer(OAuth2ResourceServerConfig, NatAuthProvider):
-    """OAuth2 Resource Server Authentication Provider"""

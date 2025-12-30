@@ -20,7 +20,7 @@ re-exports of the underlying configuration classes for convenience.
 
 Example:
     ```python
-    from nat.llm.nim_llm import NimLLM
+    from nat.llm.sdk import NimLLM
     from nat.utils.sdk.nat_optimizer import (
         NatOptimizer,
         OptimizerMetric,

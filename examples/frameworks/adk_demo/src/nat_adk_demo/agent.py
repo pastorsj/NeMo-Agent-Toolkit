@@ -16,7 +16,6 @@
 import logging
 
 from pydantic import Field
-from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.context import Context
@@ -25,8 +24,6 @@ from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
-from nat.utils.sdk.nat_llm import NatLLM
 
 logger = logging.getLogger(__name__)
 
@@ -41,20 +38,6 @@ class ADKFunctionConfig(FunctionBaseConfig, name="adk"):
     tool_names: list[str] = Field(default_factory=list)
     workflow_alias: str = Field(default="adk_agent")
     user_id: str = Field(default="nat")
-
-
-class ADKTool(ADKFunctionConfig, NatFunction):
-    """ADK Demo Tool"""
-
-    llm: LLMRef = Field(description="", default=LLMRef(value=""), init=False)
-    nat_llm: NatLLM = Field(exclude=True)
-
-    @model_validator(mode='after')
-    def set_references(self):
-        """Set llm_name from llm object if llm is provided."""
-        if self.nat_llm:
-            self.llm = LLMRef(value=self.nat_llm.computed_name)
-        return self
 
 
 @register_function(config_type=ADKFunctionConfig, framework_wrappers=[LLMFrameworkEnum.ADK])

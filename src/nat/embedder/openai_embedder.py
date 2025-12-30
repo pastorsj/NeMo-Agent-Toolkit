@@ -23,7 +23,6 @@ from nat.cli.register_workflow import register_embedder_provider
 from nat.data_models.common import OptionalSecretStr
 from nat.data_models.embedder import EmbedderBaseConfig
 from nat.data_models.retry_mixin import RetryMixin
-from nat.utils.sdk.nat_embedder import NatEmbedder
 
 
 class OpenAIEmbedderModelConfig(EmbedderBaseConfig, RetryMixin, name="openai"):
@@ -42,10 +41,6 @@ class OpenAIEmbedderModelConfig(EmbedderBaseConfig, RetryMixin, name="openai"):
     model_name: str = Field(validation_alias=AliasChoices("model_name", "model"),
                             serialization_alias="model",
                             description="The OpenAI hosted model name.")
-
-
-class OpenAIEmbedder(OpenAIEmbedderModelConfig, NatEmbedder):
-    """OpenAI Model Embedder Provider"""
 
 
 @register_embedder_provider(config_type=OpenAIEmbedderModelConfig)

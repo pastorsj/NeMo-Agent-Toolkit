@@ -15,16 +15,11 @@
 
 import logging
 
-from pydantic import Field
-from pydantic import model_validator
-
 from nat.builder.builder import Builder
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import EmbedderRef
 from nat.data_models.function import FunctionBaseConfig
 from nat.llm.nim_llm import NIMModelConfig
-from nat.utils.sdk.nat_embedder import NatEmbedder
-from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
@@ -53,20 +48,6 @@ class HaystackDeepResearchWorkflowConfig(FunctionBaseConfig, name="haystack_deep
     data_dir: str = "/data"
     embedder_name: EmbedderRef = "nv-embed"
     embedding_dim: int = 1024
-
-
-class HaystackDeepResearchAgentWorkflow(HaystackDeepResearchWorkflowConfig, NatFunction):
-
-    embedder_name: EmbedderRef = Field(description="", default=EmbedderRef(value=""), init=False)
-
-    embedder: NatEmbedder = Field(exclude=True)
-
-    @model_validator(mode='after')
-    def set_references(self):
-        """Set component names from objects if they are provided."""
-        if self.embedder:
-            self.embedder_name = EmbedderRef(value=self.embedder.computed_name)
-        return self
 
 
 @register_function(config_type=HaystackDeepResearchWorkflowConfig)

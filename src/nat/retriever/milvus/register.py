@@ -17,7 +17,6 @@ from typing import Annotated
 from pydantic import Field
 from pydantic import HttpUrl
 from pydantic import PlainSerializer
-from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.builder import LLMFrameworkEnum
@@ -25,8 +24,6 @@ from nat.builder.retriever import RetrieverProviderInfo
 from nat.cli.register_workflow import register_retriever_client
 from nat.cli.register_workflow import register_retriever_provider
 from nat.data_models.retriever import RetrieverBaseConfig
-from nat.utils.sdk.nat_embedder import NatEmbedder
-from nat.utils.sdk.nat_retriever import NatRetriever
 
 
 class MilvusRetrieverConfig(RetrieverBaseConfig, name="milvus_retriever"):
@@ -58,20 +55,6 @@ class MilvusRetrieverConfig(RetrieverBaseConfig, name="milvus_retriever"):
                                     description="If present it will be used as the tool description",
                                     alias="collection_description")
     use_async_client: bool = Field(default=False, description="Use AsyncMilvusClient for async I/O operations. ")
-
-
-class MilvusRetriever(MilvusRetrieverConfig, NatRetriever):
-    """Milvus Retriever Provider"""
-
-    embedder: NatEmbedder = Field(exclude=True)
-    embedding_model: str = Field(description="", default="", init=False)
-
-    @model_validator(mode='after')
-    def set_embedder_name(self):
-        """Set embedder name from embedder object if embedder is provided."""
-        if self.embedder is not None:
-            self.embedding_model = self.embedder.computed_name
-        return self
 
 
 @register_retriever_provider(config_type=MilvusRetrieverConfig)

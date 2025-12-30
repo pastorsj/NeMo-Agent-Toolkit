@@ -27,7 +27,6 @@ from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
 from nat_profiler_agent.tool.utils import first_valid_query
 
 logger = logging.getLogger(__name__)
@@ -53,10 +52,6 @@ class PxQueryConfig(FunctionBaseConfig, name="px_query"):
         if not value or not value.strip():
             raise ValueError("default_project_name must be explicitly set in PxQueryConfig.")
         return value
-
-
-class PxQueryTool(PxQueryConfig, NatFunction):
-    """Px Query Tool"""
 
 
 class PxQueryOutput(BaseModel):

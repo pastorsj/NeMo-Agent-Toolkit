@@ -28,8 +28,8 @@ SDK components can be created in two ways:
 Use specific classes like `NatReActAgent`, `NimLLM`, etc. for the most convenient API:
 
 ```python
-from nat.llm.nim_llm import NimLLM
-from nat.agent.react_agent.register import NatReActAgent
+from nat.llm.sdk import NimLLM
+from nat.agent.sdk import NatReActAgent
 
 llm = NimLLM(model_name="meta/llama-3.1-70b-instruct")
 agent = NatReActAgent(llm=llm, tools=[...])
@@ -68,7 +68,7 @@ Both patterns work interchangeably in workflows and produce the same results.
 The most common LLM for NVIDIA NIMs:
 
 ```python
-from nat.llm.nim_llm import NimLLM
+from nat.llm.sdk import NimLLM
 
 llm = NimLLM(
     model_name="meta/llama-3.1-70b-instruct",
@@ -115,7 +115,7 @@ Tools are functions that agents can call. NeMo Agent toolkit provides built-in t
 **CurrentTimeTool**: Get the current date and time:
 
 ```python
-from nat.tool.datetime_tools import CurrentTimeTool
+from nat.tool.sdk import CurrentTimeTool
 
 time_tool = CurrentTimeTool()
 ```
@@ -123,7 +123,7 @@ time_tool = CurrentTimeTool()
 **WikiSearchTool**: Search Wikipedia (requires `nvidia-nat-langchain` plugin):
 
 ```python
-from nat.plugins.langchain.tools.wikipedia_search import WikiSearchTool
+from nat.plugins.langchain.sdk import WikiSearchTool
 
 wiki_tool = WikiSearchTool(max_results=3)
 ```
@@ -132,7 +132,7 @@ wiki_tool = WikiSearchTool(max_results=3)
 
 ```python
 from pydantic import SecretStr
-from nat.plugins.langchain.tools.tavily_internet_search import TavilyInternetSearchTool
+from nat.plugins.langchain.sdk import TavilyInternetSearchTool
 
 tavily_tool = TavilyInternetSearchTool(
     name="web_search",
@@ -212,7 +212,7 @@ Agents use LLMs to reason about tasks and call tools. NeMo Agent toolkit provide
 The ReAct (Reasoning and Acting) agent:
 
 ```python
-from nat.agent.react_agent.register import NatReActAgent
+from nat.agent.sdk import NatReActAgent
 
 agent = NatReActAgent(
     tools=[time_tool, calculator],
@@ -282,7 +282,7 @@ Middleware provides a mechanism for adding cross-cutting concerns to functions w
 The cache middleware memoizes function outputs based on input similarity:
 
 ```python
-from nat.middleware.cache_middleware import CacheMiddleware
+from nat.middleware.sdk import CacheMiddleware
 
 cache_middleware = CacheMiddleware(
     enabled_mode="always",       # "always" or "eval" (only during evaluation)
@@ -303,7 +303,7 @@ cache_middleware = CacheMiddleware(
 Use the `mw` parameter to attach middleware to any function:
 
 ```python
-from nat.tool.datetime_tools import CurrentTimeTool
+from nat.tool.sdk import CurrentTimeTool
 
 # Create a function with middleware attached
 time_tool = CurrentTimeTool(
@@ -413,9 +413,9 @@ Here's a complete example combining components:
 
 ```python
 import asyncio
-from nat.llm.nim_llm import NimLLM
-from nat.agent.react_agent.register import NatReActAgent
-from nat.tool.datetime_tools import CurrentTimeTool
+from nat.llm.sdk import NimLLM
+from nat.agent.sdk import NatReActAgent
+from nat.tool.sdk import CurrentTimeTool
 from nat.utils.sdk.nat_workflow import NatWorkflow
 
 # Create LLM

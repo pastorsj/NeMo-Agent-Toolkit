@@ -14,15 +14,12 @@
 # limitations under the License.
 
 from pydantic import Field
-from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
-from nat.utils.sdk.nat_llm import NatLLM
 
 from . import utils
 from .playbooks import MONITOR_PROCESS_CHECK_PLAYBOOK
@@ -36,23 +33,6 @@ class MonitoringProcessCheckToolConfig(FunctionBaseConfig, name="monitoring_proc
     prompt: str = Field(default=MonitoringProcessCheckPrompts.PROMPT,
                         description="Main prompt for the monitoring process check task.")
     offline_mode: bool = Field(default=True, description="Whether to run in offline model")
-
-
-class MonitoringProcessCheckTool(MonitoringProcessCheckToolConfig, NatFunction):
-    """Monitoring Process Check Tool"""
-
-    llm_name: LLMRef = Field(description="LLM to use for the monitoring process check task.",
-                             default=LLMRef(value=""),
-                             init=False)
-
-    llm: NatLLM = Field(exclude=True)
-
-    @model_validator(mode='after')
-    def set_references(self):
-        """Set llm_name from llm object if llm is provided."""
-        if self.llm:
-            self.llm_name = LLMRef(value=self.llm.computed_name)
-        return self
 
 
 async def _run_ansible_playbook_for_monitor_process_check(ansible_host: str,

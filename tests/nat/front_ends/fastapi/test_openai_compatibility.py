@@ -25,9 +25,9 @@ from nat.data_models.api_server import Usage
 from nat.data_models.api_server import UserMessageContentRoleType
 from nat.data_models.config import Config
 from nat.data_models.config import GeneralConfig
-from nat.front_ends.fastapi.fastapi_front_end_config import FastApiFrontEndConfig
-from nat.test.functions import EchoFunctionConfig
-from nat.test.functions import StreamingEchoFunctionConfig
+from nat.front_ends.sdk import FastApiFrontEndConfig
+from nat.test.sdk import EchoFunctionConfig
+from nat.test.sdk import StreamingEchoFunctionConfig
 from nat.test.utils import build_nat_client
 
 

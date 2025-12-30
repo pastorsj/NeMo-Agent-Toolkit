@@ -60,10 +60,10 @@ from nat.data_models.llm import LLMBaseConfig
 from nat.data_models.memory import MemoryBaseConfig
 from nat.data_models.object_store import ObjectStoreBaseConfig
 from nat.data_models.retriever import RetrieverBaseConfig
-from nat.embedder.nim_embedder import NIMEmbedderModelConfig
+from nat.embedder.sdk import NIMEmbedderModelConfig
 from nat.llm.nim_llm import NIMModelConfig
 from nat.object_store.in_memory_object_store import InMemoryObjectStoreConfig
-from nat.retriever.nemo_retriever.register import NemoRetrieverConfig
+from nat.retriever.sdk import NemoRetrieverConfig
 from nat.runtime.session import SessionManager
 from nat.test.memory import DummyMemoryConfig
 

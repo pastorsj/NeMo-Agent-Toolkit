@@ -20,11 +20,12 @@ from unittest.mock import MagicMock
 import pytest
 import pytest_asyncio
 
+from nat.agent.reasoning_agent.reasoning_agent import build_reasoning_function
+
 #
 # The "build_reasoning_function" to be tested:
 #
-from nat.agent.reasoning_agent.reasoning_agent import ReasoningFunctionConfig
-from nat.agent.reasoning_agent.reasoning_agent import build_reasoning_function
+from nat.agent.sdk import ReasoningFunctionConfig
 from nat.builder.builder import Builder
 from nat.builder.function import Function
 from nat.builder.function import LambdaFunction

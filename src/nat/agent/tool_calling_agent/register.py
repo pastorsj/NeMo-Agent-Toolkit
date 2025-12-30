@@ -16,7 +16,6 @@
 import logging
 
 from pydantic import Field
-from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
@@ -27,11 +26,6 @@ from nat.data_models.api_server import ChatRequest
 from nat.data_models.api_server import ChatRequestOrMessage
 from nat.data_models.component_ref import FunctionGroupRef
 from nat.data_models.component_ref import FunctionRef
-from nat.data_models.component_ref import LLMRef
-from nat.utils.sdk.nat_agent import NatAgent
-from nat.utils.sdk.nat_function import NatFunction
-from nat.utils.sdk.nat_function_group import NatFunctionGroup
-from nat.utils.sdk.nat_llm import NatLLM
 from nat.utils.type_converter import GlobalTypeConverter
 
 logger = logging.getLogger(__name__)
@@ -58,44 +52,6 @@ class ToolCallAgentWorkflowConfig(AgentBaseConfig, name="tool_calling_agent"):
                                                 description="Additional instructions appended to the system prompt.")
     return_direct: list[FunctionRef] | None = Field(
         default=None, description="List of tool names that should return responses directly without LLM processing.")
-
-
-class ToolCallingAgent(ToolCallAgentWorkflowConfig, NatAgent):
-    """Tool Calling Agent Workflow"""
-
-    llm_name: LLMRef = Field(description="The LLM model to use with the agent.", default=LLMRef(value=""), init=False)
-    tool_names: list[FunctionRef | FunctionGroupRef] = Field(
-        default_factory=list, description="The list of tools to provide to the tool calling agent.", init=False)
-    return_direct: list[FunctionRef] | None = Field(
-        default=None,
-        description="List of tool names that should return responses directly without LLM processing.",
-        init=False)
-
-    llm: NatLLM = Field(exclude=True)
-    tools: list[NatFunction | NatFunctionGroup | NatAgent] | None = Field(default=None, exclude=True)
-    return_direct_functions: list[NatFunction] | None = Field(default=None, exclude=True)
-
-    @model_validator(mode='after')
-    def set_references(self):
-        """Set component names from objects if they are provided."""
-        if self.llm:
-            self.llm_name = LLMRef(value=self.llm.computed_name)
-        if self.tools and len(self.tools) > 0:
-            refs = []
-            for tool in self.tools:
-                if isinstance(tool, NatFunctionGroup):
-                    refs.append(FunctionGroupRef(value=tool.computed_name))
-                else:
-                    # NatFunction and NatAgent both use FunctionRef
-                    refs.append(FunctionRef(value=tool.computed_name))
-            self.tool_names = refs
-        if self.return_direct_functions and len(self.return_direct_functions) > 0:
-            self.return_direct = [FunctionRef(value=fn.computed_name) for fn in self.return_direct_functions]
-        return self
-
-
-# Backward compatibility alias
-ToolCallAgentWorkflow = ToolCallingAgent
 
 
 @register_function(config_type=ToolCallAgentWorkflowConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])

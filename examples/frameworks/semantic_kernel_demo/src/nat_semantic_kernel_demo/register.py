@@ -16,7 +16,6 @@
 import logging
 
 from pydantic import Field
-from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
@@ -25,7 +24,6 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import FunctionRef
 from nat.data_models.component_ref import LLMRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
 
 from . import hotel_price_tool  # noqa: F401, pylint: disable=unused-import
 from . import local_events_tool  # noqa: F401, pylint: disable=unused-import
@@ -46,29 +44,6 @@ class SKTravelPlanningWorkflowConfig(FunctionBaseConfig, name="semantic_kernel")
     summarize_agent_instructions: str = Field(description="The instructions for the summarizer agent.")
     long_term_memory_instructions: str = Field(default="",
                                                description="The instructions for using the long term memory.")
-
-
-class SKTravelPlanningWorkflow(SKTravelPlanningWorkflowConfig, NatFunction):
-    """Semantic Kernel Travel Planning Workflow"""
-
-    tool_names: list[FunctionRef] = Field(default_factory=list,
-                                          description="The list of tools to provide to the semantic kernel.",
-                                          init=False)
-    llm_name: LLMRef = Field(description="The LLM model to use with the semantic kernel.",
-                             default=LLMRef(value=""),
-                             init=False)
-
-    tools: list[NatFunction] | None = Field(default=None, exclude=True)
-    llm: NatFunction = Field(exclude=True)
-
-    @model_validator(mode='after')
-    def set_references(self):
-        """Set component names from objects if they are provided."""
-        if self.tools and len(self.tools) > 0:
-            self.tool_names = [FunctionRef(value=tool.computed_name) for tool in self.tools]
-        if self.llm:
-            self.llm_name = LLMRef(value=self.llm.computed_name)
-        return self
 
 
 @register_function(config_type=SKTravelPlanningWorkflowConfig, framework_wrappers=[LLMFrameworkEnum.SEMANTIC_KERNEL])

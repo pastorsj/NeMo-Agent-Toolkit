@@ -22,7 +22,6 @@ from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +43,6 @@ class NVIDIARAGToolConfig(FunctionBaseConfig, name="nvidia_rag"):
     top_k: int = Field(default=4, description="The number of results to return from the RAG service.")
     collection_name: str = Field(default="nvidia_api_catalog",
                                  description=("The name of the collection to use when retrieving documents."))
-
-
-class NVIDIARAGTool(NVIDIARAGToolConfig, NatFunction):
-    """NVIDIA RAG Tool"""
 
 
 @register_function(config_type=NVIDIARAGToolConfig)

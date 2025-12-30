@@ -22,7 +22,6 @@ from nat.builder.builder import Builder
 from nat.cli.register_workflow import register_object_store
 from nat.data_models.common import OptionalSecretStr
 from nat.data_models.object_store import ObjectStoreBaseConfig
-from nat.utils.sdk.nat_object_store import NatObjectStore
 
 
 class S3ObjectStoreClientConfig(ObjectStoreBaseConfig, name="s3"):
@@ -40,10 +39,6 @@ class S3ObjectStoreClientConfig(ObjectStoreBaseConfig, name="s3"):
     secret_key: OptionalSecretStr = Field(default=os.environ.get(SECRET_KEY_ENV),
                                           description=f"Secret key. If omitted, reads from {SECRET_KEY_ENV}")
     region: str | None = Field(default=None, description="Region to access (or none if unspecified)")
-
-
-class S3ObjectStore(S3ObjectStoreClientConfig, NatObjectStore):
-    """S3 Object Store Provider"""
 
 
 @register_object_store(config_type=S3ObjectStoreClientConfig)

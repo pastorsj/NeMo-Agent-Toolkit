@@ -26,7 +26,7 @@ from pydantic import BaseModel
 from nat.builder.builder import Builder
 from nat.builder.function import Function
 from nat.builder.function_info import FunctionInfo
-from nat.control_flow.sequential_executor import SequentialExecutorConfig
+from nat.control_flow.sdk import SequentialExecutorConfig
 from nat.control_flow.sequential_executor import ToolExecutionConfig
 from nat.control_flow.sequential_executor import _validate_function_type_compatibility
 from nat.control_flow.sequential_executor import _validate_tool_list_type_compatibility

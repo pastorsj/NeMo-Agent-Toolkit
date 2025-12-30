@@ -21,15 +21,12 @@ import re
 
 import httpx
 import requests
-from pydantic import Field
-from pydantic import model_validator
 
 from nat.builder.builder import Builder
 from nat.builder.function_info import FunctionInfo
 from nat.cli.register_workflow import register_function
 from nat.data_models.component_ref import FunctionRef
 from nat.data_models.function import FunctionBaseConfig
-from nat.utils.sdk.nat_function import NatFunction
 
 logger = logging.getLogger(__name__)
 
@@ -264,19 +261,6 @@ class CreateJiraToolConfig(FunctionBaseConfig, name="create_jira_tickets_tool"):
     hitl_approval_fn: FunctionRef
 
 
-class CreateJiraTicketsTool(CreateJiraToolConfig, NatFunction):
-
-    hitl_approval_fn: FunctionRef = Field(description="Reference to the HITL approval function", init=False)
-
-    hitl_approval_tool: NatFunction = Field(exclude=True)
-
-    @model_validator(mode="after")
-    def set_references(self):
-        if self.hitl_approval_tool:
-            self.hitl_approval_fn = FunctionRef(value=self.hitl_approval_tool.computed_name)
-        return self
-
-
 @register_function(config_type=CreateJiraToolConfig)
 async def create_jira_tickets_tool(config: CreateJiraToolConfig, builder: Builder):
 
@@ -342,10 +326,6 @@ class GetJiraToolConfig(FunctionBaseConfig, name="get_jira_tickets_tool"):
     root_path: str
     jira_domain: str
     jira_project_key: str
-
-
-class GetJiraTicketsTool(GetJiraToolConfig, NatFunction):
-    pass
 
 
 @register_function(config_type=GetJiraToolConfig)

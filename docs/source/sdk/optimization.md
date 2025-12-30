@@ -43,7 +43,7 @@ NeMo Agent toolkit supports two types of optimization:
 Mark LLM parameters as optimizable when creating the LLM:
 
 ```python
-from nat.llm.nim_llm import NimLLM
+from nat.llm.sdk import NimLLM
 from nat.utils.sdk.nat_optimizer import SearchSpace
 
 llm = NimLLM(
@@ -160,10 +160,10 @@ await workflow.optimize()
 import asyncio
 import json
 from pathlib import Path
-from nat.llm.nim_llm import NimLLM
-from nat.agent.react_agent.register import NatReActAgent
-from nat.tool.datetime_tools import CurrentTimeTool
-from nat.eval.rag_evaluator.register import RagasEvaluator
+from nat.llm.sdk import NimLLM
+from nat.agent.sdk import NatReActAgent
+from nat.tool.sdk import CurrentTimeTool
+from nat.eval.sdk import RagasEvaluator
 from nat.utils.sdk.nat_evaluation import NatEvaluation, EvalDatasetJsonConfig
 from nat.utils.sdk.nat_optimizer import (
     NatOptimizer,
